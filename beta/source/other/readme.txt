@@ -1,0 +1,1 @@
+This folder stores old versions of the Sprites subsystem that use other mechanisms instead of the 3Dsprites of PAlib. The purpose of these old versions is to show how "easy" ;-) is to change the sprite subsystem.

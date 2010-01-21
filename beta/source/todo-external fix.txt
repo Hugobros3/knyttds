@@ -1,0 +1,43 @@
+(FIXES TO THE OTHER LIBRARIES)
+
+Hi, I like the library. I've got 2 bugfixes and 3 propositions.
+
+1. After iniparser.c:581, it's missing
+if (len < 0) {
+  len = 0;
+}
+
+2. In iniparser:557-560 use ASCIILINE
+SZ+1.
+
+----------------------------------------------------
+
+Hello!
+
+Small bug? If an .ini file does not end in a newline, then a parsing error is generated complaining that the 'line is too long'. So for example:
+
+>>>>>> begin document
+[video] ;new line here
+fullscreen=false ;NO new line here
+<<<<<< end of document
+
+In my copy, I have changed line 567/iniparser.c from:
+
+if (line[len]!='\n') {
+
+to:
+
+if ((ASCIILINESZ-last == len+1) && line[len]!='\n') {
+---------------
+Actually that's close but still not 'right', because it would give a false positive in the very rare case that the last line in the file is exactly as long as the maximum line limit.
+
+But, you know, whatever :)
+
+----------------------------------------------------
+
+For RyanA - I simply compiled the 2 .c files as .cpp files by changing the extensions on them. I got one error on dictionary.cpp (because malloc returns a void * and t is a char * but fixed it by changing from:
+t = malloc(strlen(s)+1) ;
+to:
+t = (char *)malloc(strlen(s)+1) ;
+
+After that, no problems at all linking in to my .cpp program.

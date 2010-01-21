@@ -1,0 +1,106 @@
+DIARY
+=====
+
+August
+------
+
+bwansy
+drasha - 2
+Fredriks Brother
+bludwulf
+ll_ye - 2
+pale imitation - 3
+dailyman
+boxtop
+SonikkuKitten
+chezzy
+vdweller
+Jerk Douglas
+CopyCatastrophe
+MacDee
+
+July 20th 2008
+--------------
+
+Scanlines! Too much data to copy to vram. Too much data to VRAM = corrupted images
+
+
+July 12th 2008
+--------------
+
+Fixed juni helper objects (sprite management, < instead of <=!!!!)
+
+July 7th 2008
+--------------
+
+Fix particles!!!
+
+July 6th 2008
+--------------
+
+Check getPos en LL :-)
+
+problems with rain:
+	Add object when moving through list
+	Sprite HW
+
+REVISAR TODO COMPORTAMIENTO PARTICULAS
+
+
+July 4th 2008
+--------------
+
+sospecha: añadir ll basado ID (posicion). Si borro un elemento...
+
+TODO From tutorial
+
+- Particle Subsystem
+	- Rain, rain drops
+- Signs
+- Critters
+- Waterfall
+
+
+...
+
+June 11th 2008
+--------------
+
+- Adding "Juni" information to the 3DSprite subsystem. 
+- Moved the 15bpp management into its own library.
+
+April-June 2008
+---------------
+
+- Researching which libraries I should use for implementing "Knytt stories" on the DS.
+- Initial skeleton of the "Knytt Stories" game. 
+- Loading maps.
+- Loading basic object information.
+- Creation of the 3DSprite subsystem.
+
+
+TODO
+====
+
+- System Screens (start in menu, ...)
+	- HOWTO! - Menu management
+- Credit map format!
+- Load map information (and game data!) from specific directories
+- Implement L+R cameras, Up-Down cameras
+- Simplify the creation of the HW texture in 3Dsprite
+- Use iteration in reset of objects
+- Management of objects with size greater than 24x24
+- Preload Juni images in loading screen
+- Delete particles on 3dspritehdd... maybe maintain a memory size limit?
+- png error management
+- loading raw images 
+- from magenta to texture (cost)
+- IMPROVE juni's movements!!!!!!!!!!!!!!!!!!
+- types of collisions
+- Cyan glow
+- Teleport??????????? (keep umbrella, dlbjump, etc)
+- Save to disk!
+- Save only in special states
+- All particles are DS_C_OBJ_F_GLOBAL_IMA!!!!
+- TODO: Climb and umbrella!
+- Flower jump!!!
