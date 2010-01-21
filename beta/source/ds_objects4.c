@@ -921,7 +921,7 @@ int _ds_objects_b04o16_manage(void *objp) {
 
 	if (res) {
 	   particle = ds_objects_createParticle(object->x + 6, object->y - 12, object->layer, 12);
-	   ds_objects_lib_beh_particleMMF2_Init(particle,0,-20,1,0,3);
+	   ds_objects_lib_beh_particleMMF2_Init(particle,0,-20,2,0,3);
 	   ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	}   
 

@@ -3233,6 +3233,7 @@ int ds_objects_lib_beh_flower(ds_t_object *object, int startCond, int startVal, 
 int ds_objects_lib_beh_spikeFloat(ds_t_object *object, int minMov, int maxMov) {
 /*
 	[0] - State
+	[7] - Partial Speed
 	[8] - Direction
 	[9] - Speed
 */
@@ -3240,6 +3241,7 @@ int ds_objects_lib_beh_spikeFloat(ds_t_object *object, int minMov, int maxMov) {
 	int collided = 0;
 	int outofmap = 0;
 	int tmpx, tmpy;
+	int movPix;
 
 	switch (object->inner[0]) {
 	   case 0:
@@ -3252,47 +3254,54 @@ int ds_objects_lib_beh_spikeFloat(ds_t_object *object, int minMov, int maxMov) {
 	      // MOVE :-)
 	      tmpx = object->x;
 	      tmpy = object->y;
-	      switch (object->inner[8]) {
-	         case 0:
-	            tmpy -= object->inner[9];
-	            break;
-	         case 1:
-	            tmpx += object->inner[9];
-	            break;
-	         case 2:
-	            tmpy += object->inner[9];
-	            break;
-	         case 3:
-	            tmpx -= object->inner[9];
-	            break;
-	      }   
-	      // Check Collision!
-	   	collided = ds_map_collideFlag(ds_3dsprite_getSpriteFrame(object->sprite, ds_3dsprite_getFrame(object->sprite)),
-										 ds_3dsprite_getXSize(object->sprite),
-										 ds_3dsprite_getYSize(object->sprite),
-										 tmpx,
-										 tmpy,
-										 &ds_global_map.tileMapCol);
-			if (!collided) {
-			   outofmap = ds_map_outOfMap_center(ds_3dsprite_getXSize(object->sprite),
-										 ds_3dsprite_getYSize(object->sprite),
-										 tmpx,
-										 tmpy);
-			}   
-			if (outofmap) {
-			   // It ends for me...
-			   object->_deleteme = 1;
-			   return 1;
-			} else if (collided) {
-			   // Changes direction AND speed!
-			   object->inner[8] = PA_RandMinMax(0,3);
-			} else {
-			   // Move :-)
-				object->x = tmpx;
-				object->y = tmpy;
-				ds_3dsprite_setX(object->sprite,object->x);
-				ds_3dsprite_setY(object->sprite,object->y);			   
-			}     		      	      
+	      
+   		object->inner[7] += object->inner[9];
+			movPix = object->inner[7] / 10; // REAL speed
+			object->inner[7] -= (object->inner[7] / 10) * 10; // Works due to integer calculations...
+	      
+	      if (movPix > 0) {
+		      switch (object->inner[8]) {
+		         case 0:
+		            tmpy -= movPix;
+		            break;
+		         case 1:
+		            tmpx += movPix;
+		            break;
+		         case 2:
+		            tmpy += movPix;
+		            break;
+		         case 3:
+		            tmpx -= movPix;
+		            break;
+		      }   
+		      // Check Collision!
+		   	collided = ds_map_collideFlag(ds_3dsprite_getSpriteFrame(object->sprite, ds_3dsprite_getFrame(object->sprite)),
+											 ds_3dsprite_getXSize(object->sprite),
+											 ds_3dsprite_getYSize(object->sprite),
+											 tmpx,
+											 tmpy,
+											 &ds_global_map.tileMapCol);
+				if (!collided) {
+				   outofmap = ds_map_outOfMap_center(ds_3dsprite_getXSize(object->sprite),
+											 ds_3dsprite_getYSize(object->sprite),
+											 tmpx,
+											 tmpy);
+				}   
+				if (outofmap) {
+				   // It ends for me...
+				   object->_deleteme = 1;
+				   return 1;
+				} else if (collided) {
+				   // Changes direction AND speed!
+				   object->inner[8] = PA_RandMinMax(0,3);
+				} else {
+				   // Move :-)
+					object->x = tmpx;
+					object->y = tmpy;
+					ds_3dsprite_setX(object->sprite,object->x);
+					ds_3dsprite_setY(object->sprite,object->y);			   
+				}     		      	      
+			}			
 	      break;
 	}
 	return 0;
@@ -3818,6 +3827,32 @@ int ds_objects_lib_beh_diskMovementLR(ds_t_object *object, int useX,
 			}   
 			// Change state?
 			if (collided) {
+			   // Correct position
+			   int i;
+			   int ix = ds_3dsprite_getX(object->sprite);
+			   int iy = ds_3dsprite_getY(object->sprite);
+			   int corrB;
+			   if (useX) {
+			   	ix = newP;
+			   } else {
+			   	iy = newP;
+			 	}  	
+			   for (i = 0; i < 24; i++) {
+			      corrB = (object->inner[2] == 1)?(24 - i):i;
+      			if (!ds_map_collMovBasic(ix,iy,corrB)) {
+      			   int corr = (object->inner[2] == 1)?-1:1;
+      			   if (useX) {
+						   object->x += (i * corr);
+						   ds_3dsprite_setX(object->sprite,object->x);
+						} else {
+						   object->y += (i * corr);
+						   ds_3dsprite_setY(object->sprite,object->y);
+						}   
+         			break;
+      			}   
+   			} 
+			   // New state
+			   object->inner[2] = (object->inner[2] == 1)?-1:1;
 			   _inner_getRealVal(object, object->inner[2], endR, endL, endRG, endLG,&realStart,&realEnd);
 			   object->inner[1] = realStart;
 			   object->inner[3] = changeSpeedS + (PA_RandMinMax(0,changeSpeedR) * changeSpeedM);

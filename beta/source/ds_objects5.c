@@ -113,15 +113,19 @@ int _ds_objects_b05o01_manage(void *objp) {
 	// State!
 	if (!object->inner[2]) { // Not Scary?
 		if (ds_juni_faceRight() == lookLeft) {
-			object->inner[0]++;
-			if (object->inner[0] == 255) {
+			object->inner[0] += ((ds_global_tick % 2) == 0)?1:2;
+			if (object->inner[0] >= 255) {
+			   object->inner[0] = 255;
 			   object->inner[1] = 2; // Force Change!
 			   object->inner[2] = 1;
 				object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL); // Pain!		   
 			}   
 		} else {
-		   if (object->inner[0] > 8)
-		   	object->inner[0]--;
+		   if (object->inner[0] > 8) {
+		   	object->inner[0] -= ((ds_global_tick % 2) == 0)?1:2;
+		 	} else {
+		 	   object->inner[0] = 8;
+			}     	
 		}   		
 		ds_3dsprite_setAlpha(object->sprite,object->inner[0]);
 	} else { // Scary?

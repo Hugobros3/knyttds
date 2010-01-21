@@ -109,7 +109,7 @@ int _ds_objects_b06spikeblock_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b06spikeblockGREY_manage(void *objp) {
    ds_t_object *object = objp;
    
-   ds_objects_lib_beh_spikeFloat(object, 1, 1);
+   ds_objects_lib_beh_spikeFloat(object, 10, 10);
    
    return 1;
 }
@@ -117,7 +117,7 @@ int _ds_objects_b06spikeblockGREY_manage(void *objp) {
 int _ds_objects_b06spikeblockRED_manage(void *objp) {
    ds_t_object *object = objp;
    
-   ds_objects_lib_beh_spikeFloat(object, 1, 2);
+   ds_objects_lib_beh_spikeFloat(object, 5, 15);
    
    return 1;
 }
@@ -125,7 +125,7 @@ int _ds_objects_b06spikeblockRED_manage(void *objp) {
 int _ds_objects_b06spikeblockWHITE_manage(void *objp) {
    ds_t_object *object = objp;
    
-   ds_objects_lib_beh_spikeFloat(object, 2, 2);
+   ds_objects_lib_beh_spikeFloat(object, 15, 15);
    
    return 1;
 }
@@ -263,7 +263,7 @@ int _ds_objects_b06shooter_manageDROP(void *objp) {
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 49);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, 
 						0, 
-						20, 
+						30, 
 				 		0, 0, 3);
 		particle->inner[11] = -1;
 	   ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);	   

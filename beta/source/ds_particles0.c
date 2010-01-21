@@ -810,6 +810,16 @@ int _ds_objects_p_o38_manage(void *objp) {
    return 1;
 }            
 
+int _ds_objects_p_o39_manage(void *objp) {
+   ds_t_object *object = objp;
+   
+   // MMF2-style particle
+	ds_objects_lib_beh_particleMMF2(object,4); // This one is slower
+   
+   // Everything went OK...
+   return 1;
+}
+
 // GLOW "DIE ON END" [O40]
 //..........................................................................................
 int _ds_objects_p_o40_create(u8 bank, u8 obj, void *objp) {
@@ -1566,7 +1576,7 @@ int ds_particles0_assign(u8 obj, ds_t_object *object) {
       case 39:
          // Fireball (=seed)
          object->fcreate = _ds_objects_p_o38_create;
-         object->fmanage = _ds_objects_p_o38_manage;
+         object->fmanage = _ds_objects_p_o39_manage;
          return 1;
          break; // not really necessary...                           
       case 40:
