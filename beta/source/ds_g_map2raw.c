@@ -28,8 +28,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					IF not Loading First Game, Cutscene that must be played
 	State[0] = Type of LOADGAME, see constants @ds_global
 	State[1] = Reset (1 - load again the world information, including certain subsystems)
-	State[2] = Save Slot. -1 if no save slot
-	
+	State[2] = Save Slot. -1 if no save slot	
+*/
+
+/*
+	NOTE: This state does not follow the behaviour of other states. In particular, 
+	some substates (e.g. _DS_MAP2RAW_CHECK) will steal the CPU to perform the required 
+	tasks, only returning to main() after the calculations have been finished. 
+	As a result, it is necessary to put special calls to _paint() inside the loops
+	of those substates.
 */
 
 #include "ds_util_bit.h"
@@ -41,6 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_mapfile.h"
 #include "ds_input.h"
 #include "ds_15bpp.h"
+#include "ds_3dspritehdd.h"
 #include "PA_Text16bitBuffer.h"
 
 #define _DS_MAP2RAW_CHECK 0
@@ -56,15 +64,68 @@ int _ds_map2raw_tilesets[256];
 int _ds_map2raw_gradients[256];
 int _ds_map2raw_raws;
 int _ds_map2raw_forcePNG;
+int _ds_map2raw_cntPaint;
+int _ds_map2raw_nextVBlank;
+
+/* Put this declaration here to be used by other functions */
+void ds_g_map2raw_paint();
+
+/* Checks condition to enter this state */
+int ds_g_map2raw_condition(char *level) {
+   FILE *ftmp;
+
+   // First, if there is no optimization, do not enter
+   if (!ds_global_optimizationUncompress) {
+		return 0;
+	}
+	// Second, check if the raw files are there
+	sprintf(ds_global_string,"%s%s/_%s.dat",DS_DIR_MAIN,DS_DIR_RAW,level);
+   if (!ds_util_fileExists(ds_global_string)) {
+      return 2;
+	}	
+   // Now, check the state of the files
+   sprintf(ds_global_string,"%s%s/%s/Map.bin.dat",DS_DIR_MAIN,DS_DIR_WORLD,level);
+   if (ds_util_fileExists(ds_global_string)) {
+      // Get Map.bin date
+      long dateMapBin = 0;
+      sprintf(ds_global_string,"%s%s/%s/Map.bin",DS_DIR_MAIN,DS_DIR_WORLD,level);
+      dateMapBin = ds_util_fileGetDate(ds_global_string);
+      // Get Map.bin.raw date from map.bin.dat
+      long dateMapRaw = 0;
+      sprintf(ds_global_string,"%s%s/%s/Map.bin.dat",DS_DIR_MAIN,DS_DIR_WORLD,level);
+		ftmp = fopen(ds_global_string, "rb");
+		if (ftmp != NULL) {
+		   fscanf(ftmp,"%ld",&dateMapRaw);
+			fclose(ftmp);
+		}
+		if (dateMapBin != dateMapRaw) {
+		   // The map changed... enter in the new state!
+			return 2;   
+		} else {
+		   // OK, no need to enter in the new state
+		   return 0;
+		}     
+   } else {
+      // If the optimization file does not exist, we must enter
+      return 1;
+   }   
+   
+   // (To avoid warnings) In any other case, enter optimization
+   return 1;
+}   
 
 /* Starts this subScreen */
 void ds_g_map2raw_start() {
-   // First... check 
-   if (!ds_global_optimizationUncompress) {
-		// No need :-) - ds_state_var_setStr(level->dir); 
-		ds_state_assignState(DSKNYTT_LOADMENU);
+   // First... check (even if the probably did it outside, we must init variables :-P)
+   int val = ds_g_map2raw_condition(ds_state_var_getStr());
+   if (!val) {
+      // Finishing state!
+      _ds_map2raw_state = _DS_MAP2RAW_ENDOK;
 		return;
-	}
+   } else {
+      // Check the value for forcePNG (if the map was changed, maybe the pngs were changed too)
+      _ds_map2raw_forcePNG = (val == 2);
+	}      
 	
 	// Inits the TileRaw variables
 	int i;
@@ -78,10 +139,20 @@ void ds_g_map2raw_start() {
    _ds_map2raw_state = _DS_MAP2RAW_CHECK;
    _ds_map2raw_finish = 0;
    _ds_map2raw_forcePNG = 0;
+   _ds_map2raw_cntPaint = 0;
+   _ds_map2raw_nextVBlank = 0;
    
-   // Clear the lower screen...
+   // Clear the lower screen and fills standard text...
    ds_global_fillScreen(0,ds_global_getScreen0(),PA_RGB(31,31,31));
-}   
+   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
+										0, 0,  // base
+										255, 80, // max
+										"OPTIMIZING MAP",PA_RGB(0,0,0), 3, 1);
+   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
+										0, 140,  // base
+										255, 160, // max
+										"Please Wait...",PA_RGB(0,0,0), 2, 1);
+}
 
 /* Finish this subScreen */
 void ds_g_map2raw_finish() {
@@ -104,52 +175,11 @@ void ds_g_map2raw_input() {
 /* Manages the state of the game - Check */
 void ds_g_map2raw_state_check() {
    FILEMAP gzf;
-   FILE *f,*ftmp;
+   FILE *f, *ftmp;
    char dummybuffer[5];
    ds_t_room roombuffer;
    
-   // First, say what you are going to do at this stage...
-   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 0,  // base
-										255, 80, // max
-										"OPTIMIZATION A)\n Saving uncompressed map\n Please Wait...",PA_RGB(0,0,0), 2, 1); // Features
-   ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
-
-   
-   // OK, but check if the map already exists...
-   // Note - this is already checked through the map.bin.dat check
-   //sprintf(ds_global_string,"%s%s/%s/Map.bin.raw",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr());
-   //if (ds_util_fileExists(ds_global_string)) {
-	//   _ds_map2raw_state = _DS_MAP2RAW_ENDOK; // TODO - READCHECK
-	//   return;
-   //}
-   
-   // Now, check the date of the Map.bin file...
-   sprintf(ds_global_string,"%s%s/%s/Map.bin.dat",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr());
-   if (ds_util_fileExists(ds_global_string)) {
-      // Get Map.bin date
-      long dateMapBin = 0;
-      sprintf(ds_global_string,"%s%s/%s/Map.bin",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr());
-      dateMapBin = ds_util_fileGetDate(ds_global_string);
-      // Get Map.bin.raw date
-      long dateMapRaw = 0;
-      sprintf(ds_global_string,"%s%s/%s/Map.bin.dat",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr());
-		ftmp = fopen(ds_global_string, "rb");
-		if (ftmp != NULL) {
-		   fscanf(ftmp,"%ld",&dateMapRaw);
-			fclose(ftmp);
-		}
-		if (dateMapBin != dateMapRaw) {
-		   // Backup belongs to old level - update EVERYTHING
-			_ds_map2raw_forcePNG = 1;   
-		} else {
-		   // OK, no need to continue
-			_ds_map2raw_state = _DS_MAP2RAW_ENDOK; // TODO - READCHECK
-			return;
-		}     
-   }
-   
-   // OK, from map.bin to map.bin.raw - opens begin and destination
+   // OK, now convert from map.bin to map.bin.raw - opens begin and destination
    sprintf(ds_global_string,"%s%s/%s/Map.bin",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr());
 	gzf = ds_mapfile_open(ds_global_string, "rb", DS_C_FILE_BIN);
 	if (gzf == NULL) {
@@ -194,6 +224,8 @@ void ds_g_map2raw_state_check() {
 	      _ds_map2raw_gradients[roombuffer.background] = 1;
 	      _ds_map2raw_raws++;
 	   }   
+	   // Shall we paint?
+	   ds_g_map2raw_paint();
 	} 
   	ds_mapfile_close(gzf);
   	fclose(f);
@@ -216,31 +248,18 @@ void ds_g_map2raw_state_check() {
 /* Manages the state of the game - Check */
 void ds_g_map2raw_state_checkPng() {
 	int isGlobal;
+	FILE *ftmp;
 	char source_image[255];
 	ds_t_15bpp ima;
    int i;
-   
-   // First, say what you are going to do at this stage...
-   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 80,  // base
-										255, 160, // max
-										"OPTIMIZATION B)\n Saving uncompressed tilesets\n Please Wait...",PA_RGB(0,0,0), 2, 1); // Features
-   ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
-   
+      
 	// For every tileset that was marked...
 	for (i = 0; i < 256; i++) {
+	   // Shall we paint?
+	   ds_g_map2raw_paint();
 	   // Checked?
 	   if (_ds_map2raw_tilesets[i]) {
-	      sprintf(ds_global_string,"...Converting T %d...",i);
-		   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 160,  // base
-										255, 191, // max
-										ds_global_string,PA_RGB(31,31,31), 2, 0); // Features
-		   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 160,  // base
-										255, 191, // max
-										ds_global_string,PA_RGB(0,0,0), 2, 1); // Features
-			ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
+	      _ds_map2raw_raws--;
 	      // OK! Now, check the type of tileset (world-specific or general)
          sprintf(ds_global_string,"%s%s/%s%s/Tileset%d.png",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr(),DS_DIR_TILE,i);
 			isGlobal = (!ds_util_fileExists(ds_global_string));
@@ -258,7 +277,7 @@ void ds_g_map2raw_state_checkPng() {
          		sprintf(source_image,"%s%s/%s%s/Tileset%d.png",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr(),DS_DIR_TILE,i);
 			   // Now, load and save!!!!!
 		   	if (ds_15bpp_load(source_image, &ima, 1, 0)) {
-		   	   if (!ds_15bpp_saveRawFile(ds_global_string,&ima,1)) {
+		   	   if (!ds_15bpp_saveRawFileCallback(ds_global_string,&ima,1,&ds_g_map2raw_paint)) {
 		   	      ds_15bpp_delete(&ima);
 		   	      _ds_map2raw_state = _DS_MAP2RAW_ENDERR;
 		   	   	break;
@@ -273,18 +292,11 @@ void ds_g_map2raw_state_checkPng() {
 	}   
 	// Now, for every gradient that was marked...
 	for (i = 0; i < 256; i++) {
+	   // Shall we paint?
+	   ds_g_map2raw_paint();
 	   // Checked?
 	   if (_ds_map2raw_gradients[i]) {
-	      sprintf(ds_global_string,"...Converting G %d...",i);
-		   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 160,  // base
-										255, 191, // max
-										ds_global_string,PA_RGB(31,31,31), 2, 0); // Features
-		   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 160,  // base
-										255, 191, // max
-										ds_global_string,PA_RGB(0,0,0), 2, 1); // Features
-			ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
+	      _ds_map2raw_raws--;
 	      // OK! Now, check the type of gradient (world-specific or general)
          sprintf(ds_global_string,"%s%s/%s%s/Gradient%d.png",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr(),DS_DIR_GRAD,i);
 			isGlobal = (!ds_util_fileExists(ds_global_string));
@@ -302,7 +314,7 @@ void ds_g_map2raw_state_checkPng() {
          		sprintf(source_image,"%s%s/%s%s/Gradient%d.png",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr(),DS_DIR_GRAD,i);
 			   // Now, load and save!!!!!
 		   	if (ds_15bpp_load(source_image, &ima, 1, 0)) {
-		   	   if (!ds_15bpp_saveRawFile(ds_global_string,&ima,0)) {
+		   	   if (!ds_15bpp_saveRawFileCallback(ds_global_string,&ima,0,&ds_g_map2raw_paint)) {
 		   	      ds_15bpp_delete(&ima);
 		   	      _ds_map2raw_state = _DS_MAP2RAW_ENDERR;
 		   	   	break;
@@ -315,18 +327,23 @@ void ds_g_map2raw_state_checkPng() {
 			}   
 	   }   
 	}   
+	
+	// Now, point out that we saved the raws
+	sprintf(ds_global_string,"%s%s/_%s.dat",DS_DIR_MAIN,DS_DIR_RAW,ds_state_var_getStr());
+	ftmp = fopen(ds_global_string, "wb");
+	if (ftmp != NULL) {
+	   fprintf(ftmp,"%d",0);
+		fclose(ftmp);
+	}
 
   	_ds_map2raw_state = _DS_MAP2RAW_ENDOK;
 }      
 
 /* Manages the state of the game - OK! */
 void ds_g_map2raw_state_ok() {
-   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 168,  // base
-										255, 191, // max
-										"Successful!\n Touch - Press anything...",PA_RGB(0,0,0), 2, 1); // Features
-   ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
+   // Just finishes...
 	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
+	_ds_map2raw_finish = 1;
 }
 
 /* Manages the state of the game - OK! */
@@ -334,7 +351,7 @@ void ds_g_map2raw_state_err() {
    PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
 										0, 168,  // base
 										255, 191, // max
-										"Unsuccessful (but you can continue)\n Touch - Press anything...",PA_RGB(31,0,0), 2, 1); // Features
+										"Low HDD! Please delete files in your flashcart!\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
    ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
 	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
 }
@@ -371,5 +388,48 @@ void ds_g_map2raw_state() {
 
 /* Paints this actual game state */
 void ds_g_map2raw_paint() {
-	// Nothing to do here...
+   u16 *ima;
+   ds_t_15bpp ima15bpp;
+   // Check if we allow to paint
+   if ((PA_GetVcount() >= 0) && (PA_GetVcount() <= 192)) {
+		_ds_map2raw_nextVBlank = 1; // When we arrive to the next VBlank, we can paint
+   }   
+	// Check if we are in state for painting something (after VBlank!)
+	if ((PA_GetVcount() > 192) && (_ds_map2raw_nextVBlank)) {
+	   _ds_map2raw_nextVBlank = 0; // Do not paint this anymore on this cycle
+	   // Angle!
+	   _ds_map2raw_cntPaint += 3; // One per 1/2 second
+	   if (_ds_map2raw_cntPaint >= 360)
+	   	_ds_map2raw_cntPaint = 0;
+	   // Clear the lower screen...
+		ds_global_fillScreenRange(0,ds_global_getScreen0(),PA_RGB(31,31,31),50,160);
+      // Write Juni
+      ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANK, DS_C_JUNI_ST_STOP_R, 0);
+      ds_15bpp_initRaw(&ima15bpp,ima,24,24,1);
+      ds_15bpp_putScreenAlpha(ds_global_getScreen0(),&ima15bpp,
+			(256 >> 1) - (24 >> 1), (192 >> 1) - (24 >> 1));
+      // Get the moving particles & other stuff
+      if (_ds_map2raw_state == _DS_MAP2RAW_CHECK) {
+         ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_REDGLOW, 0);
+         sprintf(ds_global_string,"Please Wait (map)...");
+      } else {
+         ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_CYANGLOW, 0);
+         sprintf(ds_global_string,"Please Wait (%d to go)...",_ds_map2raw_raws);
+		}      
+      ds_15bpp_initRaw(&ima15bpp,ima,24,24,1);
+      // Paint the moving particles
+      int d = 32; // Distance from the center of Juni
+      int dy = (int)(ds_util_fastSin(_ds_map2raw_cntPaint) * d);
+      int dx = (int)(ds_util_fastCos(_ds_map2raw_cntPaint) * d);
+      ds_15bpp_putScreenAlpha(ds_global_getScreen0(),&ima15bpp,
+			(256 >> 1) - (24 >> 1) + dx, (192 >> 1) - (24 >> 1) + dy);      
+		// Paint the countdown
+	   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
+											0, 140,  // base
+											255, 160, // max
+											ds_global_string,PA_RGB(0,0,0), 2, 1);
+
+      // Paint
+	   ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
+   }   
 }

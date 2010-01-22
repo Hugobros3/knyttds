@@ -28,6 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _DS_G_MAP2RAW_
 #define _DS_G_MAP2RAW_
 
+/* Checks condition to enter this state */
+int ds_g_map2raw_condition(char *level);
+
 /* Starts this subScreen */
 void ds_g_map2raw_start();
 

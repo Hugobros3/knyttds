@@ -190,16 +190,21 @@ void ds_global_paintScreen(int dsscreen, u16 *screen, int x, int y) {
 }
 
 
-void ds_global_fillScreen(int dsscreen, u16 *screen, u16 color) {
+void ds_global_fillScreenRange(int dsscreen, u16 *screen, u16 color, int yi, int ye) {
 	u16 * ptr;
 	int j;
 	
 	ptr = (screen);		
-	for (j=0; j < 192; j++) {
+	for (j = yi; j < ye; j++) {
 	   //<TODO> If bugs, use memcopy 
 		toncset16((ptr + ((j) * 600) ), color, 256);
 	}
 }
+
+void ds_global_fillScreen(int dsscreen, u16 *screen, u16 color) {
+   ds_global_fillScreenRange(dsscreen, screen, color, 0, 192);
+}
+
 
 int ds_global_safeguardMem(int minmem) {
 	return (getMemFree() < minmem);

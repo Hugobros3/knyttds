@@ -533,8 +533,9 @@ void ds_15bpp_delete(ds_t_15bpp *ima) {
 }
 
 /* Saves a 15bpp structure to the HDD, into a raw 15bpp file. 
+	Also calls a callback function.
    NOTE: The Raw File is "tile-optimized" if indicated. */
-int ds_15bpp_saveRawFile(char *file, ds_t_15bpp *ima, int tileOptimized) {
+int ds_15bpp_saveRawFileCallback(char *file, ds_t_15bpp *ima, int tileOptimized, void (*callback)()) {
    FILE *f;
    u16* ptr16;
    u8* ptr8;
@@ -562,10 +563,22 @@ int ds_15bpp_saveRawFile(char *file, ds_t_15bpp *ima, int tileOptimized) {
 	// Store the image itself
 	if (!tileOptimized) {
 		s = (ima->width * ima->height);
-		if (fwrite(ima->png_screen,sizeof(u16),s,f) != s) {
-		   fclose(f);
-		   return 0;
-		}   
+		if (((s % 32) == 0) && (callback != NULL)) {
+   	   for (c = 0; c < (s / 32); c++) {
+				if (fwrite(ima->png_screen,sizeof(u16),32,f) != 32) {
+				   fclose(f);
+				   return 0;
+				}   
+				// Special: Call the callback function
+				if (callback != NULL)
+					(*callback)();
+			}			
+		} else {
+			if (fwrite(ima->png_screen,sizeof(u16),s,f) != s) {
+			   fclose(f);
+			   return 0;
+			}
+		}   		
 	} else {
 	   // Linear tile write
 	   w = 0;
@@ -581,6 +594,9 @@ int ds_15bpp_saveRawFile(char *file, ds_t_15bpp *ima, int tileOptimized) {
 				ptr16 += 384; // Next line  
 				w += 24; // We wrote these elements inside the file 
 		   }   
+			// Special: Call the callback function
+			if (callback != NULL)
+				(*callback)();
 	   }   
 	   // "Dummy" write
 	   offset = ((ima->width * ima->height) - (w));
@@ -619,6 +635,9 @@ int ds_15bpp_saveRawFile(char *file, ds_t_15bpp *ima, int tileOptimized) {
 					ptr8 += 384; // Next line  
 					w += 24; // We wrote these elements inside the file 
 			   }   
+				// Special: Call the callback function
+				if (callback != NULL)
+					(*callback)();
 		   }   
 		   // "Dummy" write
 		   offset = ((ima->width * ima->height) - (w));
@@ -635,6 +654,12 @@ int ds_15bpp_saveRawFile(char *file, ds_t_15bpp *ima, int tileOptimized) {
 	
 	return 1;
 }   
+
+/* Saves a 15bpp structure to the HDD, into a raw 15bpp file. 
+   NOTE: The Raw File is "tile-optimized" if indicated. */
+int ds_15bpp_saveRawFile(char *file, ds_t_15bpp *ima, int tileOptimized) {
+   return ds_15bpp_saveRawFileCallback(file, ima, tileOptimized, NULL);
+}
       
 /* Loads a 15bpp raw structure from the HDD */
 int ds_15bpp_loadRawFile(char *file, ds_t_15bpp *ima) {

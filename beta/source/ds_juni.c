@@ -1686,7 +1686,7 @@ void _ds_juni_manageSpecialsSystem() {
 		
    } else if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_SELECT)) {
       // Try to leave the story
-      if (ds_global_tick % 10 == 0) {
+      if (ds_global_tick % 5 == 0) {
          if (!ds_global_fadeWhite_Continue())
          	ds_state_assignState(DSKNYTT_DESTROYGAME);
       }

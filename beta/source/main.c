@@ -38,9 +38,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		- Minimap management of big COs (respect layer order)
 		- Special "we should load this and that 'cause memory is limited" for COs
 	- Optimization CHECK (Seems that "out of cache" check does not work)
+		LOCATED - file date does not work
 	
 = Details / Other
-	- Implement a "optimization" screen.
 	- Include all critter/juni sounds into the engine
 	- Optimize the source code to reduce the use of RAM.
 	- Small fixes everywhere.

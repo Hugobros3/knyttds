@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_linkedlist.h"
 #include "ds_15bpp.h"
 #include "ds_ini.h"
+#include "ds_g_map2raw.h"
 #include <sys/dir.h>
 
 //-------------------------------------------------------------------------------------------------
@@ -123,22 +124,38 @@ int _ds_levelmenu_btnLevel(void *btn) {
    int id = ds_button_getID(btn);
    int selectedlocal = ds_button_getInner(id);
    int selected = selectedlocal + ((levelmenu_actual-1)*3);
-   int i;
    ds_t_levelInfo *level = ds_linkedlist_getPos(_ds_levels, selected);
+
+   // Load Level! (Load/Save Screen) - Choose between optimization and load 
+   ds_state_var_setStr(level->dir);
+   if (ds_g_map2raw_condition(ds_state_var_getStr())) {
+      // Go to the optimization screen
+		ds_state_assignState(DSKNYTT_MAP2RAW);
+	} else {
+	   // Go to the normal load menu screen
+	   ds_state_assignState(DSKNYTT_LOADMENU);
+	}   
    
-   if (ds_button_getSelect(id)) {
-      // Load Level! (Load/Save Screen)  
-		ds_state_var_setStr(level->dir); 
-		ds_state_assignState(DSKNYTT_MAP2RAW); // Loadmenu?
+   /*if (ds_button_getSelect(id)) {
+      // Load Level! (Load/Save Screen) - Choose between optimization and load 
+      ds_state_var_setStr(level->dir);
+      if (ds_g_map2raw_condition(ds_state_var_getStr())) {
+         // Go to the optimization screen
+			ds_state_assignState(DSKNYTT_MAP2RAW);
+		} else {
+		   // Go to the normal load menu screen
+		   ds_state_assignState(DSKNYTT_LOADMENU);
+		}   
 	} else {
 	   // De-Selects other buttons, load new button
+	   int i;
 		for (i = 0; i < 3; i++) {
 	   	ds_button_select(levelmenu_btn[i].id,(i == selectedlocal));
 		}      
    	// Also, changes the description button!
 	   ds_button_updateText(levelmenu_btnLvlDes,levelmenu_btnLvlDes_Text,level->dir);
 	   levelmenu_drawBtn = 1;	   			
-	}   
+	}   */
 
    return 1;
 }   
@@ -321,14 +338,6 @@ void ds_g_levelmenu_finish() {
 	// Now, reset the button information
 	ds_button_reset();   
 
-	// Finish 	
-	
-	// Now, change screens
-   //int flag = 0;
-   //switch (ds_state_getNextState()) {
-   //   case DSKNYTT_:
-   //      break;
-   //}   
 }   
 
 /* Manages the input of the user */

@@ -551,6 +551,8 @@ void ds_global_paintScreen(int dsscreen, u16 *screen, int x, int y);
 
 void ds_global_paintScreenCropped(int dsscreen, u16 *screen, int x, int y, int ys);
 
+void ds_global_fillScreenRange(int dsscreen, u16 *screen, u16 color, int yi, int ye);
+
 void ds_global_fillScreen(int dsscreen, u16 *screen, u16 color);
 
 int ds_global_safeguardMem(int minmem);

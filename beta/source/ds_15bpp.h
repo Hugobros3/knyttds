@@ -40,6 +40,11 @@ void ds_15bpp_init(ds_t_15bpp *ima);
 void ds_15bpp_initRaw(ds_t_15bpp *ima, u16 *rawImage, int width, int height, int noDel);
 
 /* Saves a 15bpp structure to the HDD, into a raw 15bpp file. 
+	Also calls a callback function.
+   NOTE: The Raw File is "tile-optimized" if indicated. */
+int ds_15bpp_saveRawFileCallback(char *file, ds_t_15bpp *ima, int tileOptimized, void (*callback)());
+
+/* Saves a 15bpp structure to the HDD, into a raw 15bpp file. 
    NOTE: The Raw File is "tile-optimized" if indicated. */
 int ds_15bpp_saveRawFile(char *file, ds_t_15bpp *ima, int tileOptimized);
 
