@@ -416,9 +416,9 @@ int _ds_objects_b13o05_manage(void *objp) {
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	if ((object->inner[11] > 0) && (object->inner[11] < 68)) {
 	   // Rain!
-	   particle = ds_objects_createParticle(object->x + 8, object->y, object->layer, 42);
+	   particle = ds_objects_createParticle(object->x + 8 + PA_RandMinMax(0,1), object->y, object->layer, 42);
 	   int gravity = 10 + PA_RandMinMax(0,4); 
-	   int speed = 2;
+	   int speed = 0;
 		ds_objects_lib_beh_particleMMF2_Init(particle, 
 					0, 
 					speed, 
@@ -457,11 +457,11 @@ int _ds_objects_b13o06_manage(void *objp) {
 
 	ds_objects_lib_beh_cycle(object,5);
 
-	if ((ds_global_tick % 110) == 0) {
+	if ((ds_global_tick % 120) == 0) {
 	   ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	   particle = ds_objects_createParticle(object->x + 18, object->y, object->layer, 53);
 		ds_objects_lib_beh_particleMMF2_Init(particle, 
-					20, 
+					15, 
 					0, 
 		 			0, 0, 3);
 	}   									 
@@ -499,7 +499,7 @@ int _ds_objects_b13o13_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b13o13_manage(void *objp) {
    ds_t_object *object = objp;
 
-	ds_objects_lib_beh_followPath(object,1,ds_b13_RotoRobo,ds_b13_RotoRoboM,ds_b13_RotoRoboD,0,1);   
+	ds_objects_lib_beh_followPath(object,1,ds_b13_RotoRobo,ds_b13_RotoRoboM,ds_b13_RotoRoboD,0,3);   
    return 1;
 }
 

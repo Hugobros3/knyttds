@@ -63,8 +63,8 @@ int _ds_objects_b09o01_manage(void *objp) {
 
 	if (ds_objects_lib_beh_flower(object,0,200,0,215,36,6)) {
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 38);
-	   ds_objects_lib_beh_particleMMF2_Init(particle, (PA_RandMinMax(0,1)==0)?-10:10, 0 - PA_RandMinMax(35,70), 
-						10, 10, 0);
+	   ds_objects_lib_beh_particleMMF2_Init(particle, (PA_RandMinMax(0,1)==0)?-10:10, 0 - PA_RandMinMax(25,60), 
+						8, 10, 0);
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);						
 
 	}   
@@ -100,8 +100,8 @@ int _ds_objects_b09o02_manage(void *objp) {
 
 	if (ds_objects_lib_beh_flower(object,1,160,1,160,10,6)) {
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 38);
-	   ds_objects_lib_beh_particleMMF2_Init(particle, (PA_RandMinMax(0,1)==0)?-10:10, 0 - PA_RandMinMax(35,70), 
-						10, 20, 0);
+	   ds_objects_lib_beh_particleMMF2_Init(particle, (PA_RandMinMax(0,1)==0)?-10:10, 0 - PA_RandMinMax(25,60), 
+						8, 20, 0);
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);				
 
 	}   
@@ -210,8 +210,8 @@ int _ds_objects_b09o05_manage(void *objp) {
 
 	if (ds_objects_lib_beh_flower(object,1,146,2,10,1,6)) {
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 38);
-	   ds_objects_lib_beh_particleMMF2_Init(particle, -30 + PA_RandMinMax(0,60), 0 - PA_RandMinMax(25,70), 
-						10, 10, 0);
+	   ds_objects_lib_beh_particleMMF2_Init(particle, -30 + PA_RandMinMax(0,60), 0 - PA_RandMinMax(20,60), 
+						8, 10, 0);
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);				
 
 	}   

@@ -220,7 +220,7 @@ int _ds_objects_b08oFire_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b08oFire_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_cycle(object,12);
+	ds_objects_lib_beh_cycle(object,7);
 
    return 1;
 }
@@ -289,8 +289,8 @@ int _ds_objects_b08o10_manage(void *objp) {
 	
 	// Special... change coordinates!
 	if ((ds_global_tick % 15) == 0) {
-	   ds_3dsprite_setX(object->sprite, object->inner[10] + PA_RandMinMax(0,13) - 6);
-	   ds_3dsprite_setY(object->sprite, object->inner[11] + PA_RandMinMax(0,13) - 6);
+	   ds_3dsprite_setX(object->sprite, object->inner[10] + PA_RandMinMax(0,13));
+	   ds_3dsprite_setY(object->sprite, object->inner[11] + PA_RandMinMax(0,13));
 	}   
 
    return 1;
@@ -320,7 +320,7 @@ int _ds_objects_b08oCycle_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b08oCycle_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_cycle(object,8);
+	ds_objects_lib_beh_cycle(object,5);
 
    return 1;
 }
@@ -392,9 +392,9 @@ int _ds_objects_b08o16_manage(void *objp) {
    ds_t_object *object = objp;
    ds_t_object *particle;
    
-   // Create falling leaves...
-   if ((ds_global_tick % 50) == 0) {
-      particle = ds_objects_createParticle(object->x + PA_RandMax(16), object->y, object->layer, 50);
+   // Create falling "leaves"...
+   if ((ds_global_tick % 25) == 0) {
+      particle = ds_objects_createParticle(object->x + PA_RandMax(16), object->y - 12, object->layer, 50);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, 
 						0, 
 						10, 
@@ -438,7 +438,7 @@ int _ds_objects_b08o17_manage(void *objp) {
    object->inner[10]++;
 	
 	// Behaviour	
-	if ((object->inner[10] % 10) == 0) {
+	if ((object->inner[10] % 5) == 0) {
 	   int i;
 		for (i = 0; i < 32; i++) {
 			int s,sx,sy;

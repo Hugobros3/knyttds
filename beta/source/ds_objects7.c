@@ -136,7 +136,7 @@ int _ds_objects_b07o03_manage(void *objp) {
    
    // Create falling snow...
 	if ((ds_global_tick % 50) == 0) {
-      ds_objects_createParticle(object->x + PA_RandMax(23), object->y, object->layer, 21);
+      ds_objects_createParticle(object->x + PA_RandMax(23), object->y - 12, object->layer, 21);
    }   
    
    // Everything went OK...
@@ -310,8 +310,8 @@ int _ds_objects_b07o08_manage(void *objp) {
    // Create drops of rain...
    object->inner[0]--;
    if (object->inner[0] <= 0) {
-      ds_objects_createParticle(object->x + PA_RandMax(23), object->y + PA_RandMax(23), object->layer, part);
-      object->inner[0] = 20 + PA_RandMax(20);
+      ds_objects_createParticle(object->x + PA_RandMax(23), object->y - 12, object->layer, part);
+      object->inner[0] = 10 + PA_RandMax(10); // More rain!
    }   
    
    // Everything went OK...

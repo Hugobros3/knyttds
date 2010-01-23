@@ -240,13 +240,13 @@ int _ds_3dsprite_realYS(_ds_t_sprite* sprite, int y, int ys) {
 /* Returns if the ima of this sprite (global) have been already updated in this iteration */
 int _ds_3dsprite_getGlobalPainted(_ds_t_sprite* sprite) {
    if (sprite != NULL) {
-      if (sprite->data.bank == DS_C_PART_BANK)
+      if ((sprite->data.bank == DS_C_PART_BANK) && (sprite->data.obj < DS_C_MAX_OBJ_PART)) {
       	return particleGlobalPainted[sprite->data.obj];
-      else
-      if (sprite->data.bank == DS_C_CO_BANK)
+      } else if ((sprite->data.bank == DS_C_CO_BANK)) { // DS_C_MAX_OBJ_CO
       	return coGlobalPainted[sprite->data.obj];
-      else if (sprite->data.bank < DS_C_MAX_BANK)
+      } else if ((sprite->data.bank < DS_C_MAX_BANK) && (sprite->data.obj < DS_C_MAX_OBJ)) {
       	return spriteGlobalPainted[sprite->data.bank][sprite->data.obj];
+    	}  	
 	}     
 	return 0; // By defect (juni and special sprites), UPDATE :-)
 }
@@ -254,13 +254,13 @@ int _ds_3dsprite_getGlobalPainted(_ds_t_sprite* sprite) {
 /* Set that the ima of this sprite (global) have been already updated in this iteration */
 void _ds_3dsprite_setGlobalPainted(_ds_t_sprite* sprite, u8 val) {
    if (sprite != NULL) {
-      if (sprite->data.bank == DS_C_PART_BANK)
+      if ((sprite->data.bank == DS_C_PART_BANK) && (sprite->data.obj < DS_C_MAX_OBJ_PART)) {
       	particleGlobalPainted[sprite->data.obj] = val;
-      else
-      if (sprite->data.bank == DS_C_CO_BANK)
+      } else if ((sprite->data.bank == DS_C_CO_BANK)) { // DS_C_MAX_OBJ_CO
       	coGlobalPainted[sprite->data.obj]= val;
-      else if (sprite->data.bank < DS_C_MAX_BANK)
+      } else if ((sprite->data.bank < DS_C_MAX_BANK) && (sprite->data.obj < DS_C_MAX_OBJ)) {
       	spriteGlobalPainted[sprite->data.bank][sprite->data.obj] = val;
+    	}  	
 	}     
 }
 
@@ -1389,20 +1389,13 @@ void ds_3dsprite_setFrame(int id, int frame) {
    	
    	if (!ds_util_bitOne8(sprite->flags,_DS_C_3D_SPECIAL_GLOBAL)) {
    	   // Non-global sprites always need to be updated
-   	   sprite->flags = ds_util_bitSet8(sprite->flags, _DS_C_3D_SPECIAL_UPDATE);
-   	   	// \- you must update the VRAM Banks!
 			_ds_3dsprite_updateSpriteImage(sprite); // Update Cache Image!
 		} else {
 		   // Check if we need to update this sprite...
 		   if (!_ds_3dsprite_getGlobalPainted(sprite)) {
 		      _ds_3dsprite_setGlobalPainted(sprite,1); // We painted one global sprite!  
-	   	   sprite->flags = ds_util_bitSet8(sprite->flags, _DS_C_3D_SPECIAL_UPDATE);
-	   	   	// \- you must update the VRAM Banks!
 			   _ds_3dsprite_updateSpriteImage(sprite); // Update Cache Image!
-		   } else {
-		      sprite->flags = ds_util_bitDel8(sprite->flags, _DS_C_3D_SPECIAL_UPDATE);
-		      	// \- DO NOT update the VRAM Banks!
-			}     
+		   } 
 		}   			
    }   
 }
@@ -1550,9 +1543,6 @@ void ds_3dsprite_drawAll(int camX, int camY) {
    for (i = 0; i <= ds_util_arrNumMax(spriteListArr); i++) {      
       sprite = spriteList[i];
 		if (sprite != NULL) {
-		   // /HACK
-		   // -_ds_3dsprite_setGlobalPainted(sprite,0); // HACK !!!! - Some problems with updates 
-		   // \HACK
 		   if (ds_util_bitOne8(sprite->flags, _DS_C_3D_SPECIAL_UPDATE)) { // Speed up things ;-)
 		   	// SPECIAL Update
 		   	if (ds_util_bitOne8(sprite->flags, _DS_C_3D_SPECIAL_LOAD)) {
@@ -1611,14 +1601,12 @@ void ds_3dsprite_drawAll(int camX, int camY) {
 					   ds_3dsprite_setPrio(sprite->id,sprite->data.prio);
 					   sprite->flags = ds_util_bitDel8(sprite->flags, _DS_C_3D_SPECIAL_PRIO);
 					}   
-					sprite->flags = ds_util_bitSet8(sprite->flags, _DS_C_3D_SPECIAL_UPDATE);
 		 		} else {
 		 		   // FIRST! If I am a global sprite, nullify other updates from other sprites!
 					if (ds_util_bitOne8(sprite->flags,_DS_C_3D_SPECIAL_GLOBAL))
 		 		   	_ds_3dsprite_setGlobalPainted(sprite,0); // Clean flags, for next iteration!
 		   		// Now, Normal Update
 					_ds_3dsprite_updateSpriteInner(sprite,0,1,0,NULL);
-					sprite->flags = ds_util_bitSet8(sprite->flags, _DS_C_3D_SPECIAL_UPDATE);
 				}			
 				updated++;
 			}			

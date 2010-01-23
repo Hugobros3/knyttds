@@ -3505,7 +3505,7 @@ int ds_objects_lib_beh_disk(ds_t_object *object, int useX,
          	object->inner[9]--;
          if (object->inner[9] <= 0) {
             object->inner[1]++;	            
-		      if (object->inner[1] > (spritesM + spritesG)) {
+		      if (object->inner[1] >= (spritesM + spritesG)) {
 		      	// SHOOT!
 		      	res = 1;
 		      	object->inner[0] = 1;
@@ -4384,13 +4384,13 @@ int ds_objects_lib_beh_plaunchStop(ds_t_object *object,
 */
 
 	int res = 0;
-	int cF = (countFlash*6)/5;
-	int cM = (countMax*6)/5;
+	int cF = countFlash; 
+	int cM = countMax;  
 
 	switch (object->inner[0]) {
 	   case 0:
 	      // INIT
-	      object->inner[2] = cM; // Fixes the 50fps-60fps problem
+	      object->inner[2] = cM;
 	      object->inner[0] = 1;
 	      break;
 	   case 1:
@@ -4407,7 +4407,7 @@ int ds_objects_lib_beh_plaunchStop(ds_t_object *object,
 		   object->inner[2]--;
 		   if (object->inner[2] == 0) {
 		      // Shoot, return back
-     	      object->inner[2] = cM; // Fixes the 50fps-60fps problem
+     	      object->inner[2] = cM;
      	      object->inner[1] = 0;
      	      ds_3dsprite_setFrame(object->sprite,object->inner[1]);
 		      object->inner[0] = 1;

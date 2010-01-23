@@ -558,8 +558,14 @@ int _ds_objects_p_o21_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_p_o21_manage(void *objp) {
    ds_t_object *object = objp;
    
-   // Let the leave fall...
+   // Let the leave (snow) fall...
    _ds_objects_p_manageLeave2(object,0,0,40,60,100);   
+   
+   // And manage alpha-ness
+   if ((ds_global_tick % 6) == 0) {
+      int rnd = PA_RandMinMax(160,255);
+      ds_3dsprite_setAlpha(object->sprite,rnd);
+   }   
    
    // Everything went OK...
    return 1;
@@ -804,7 +810,7 @@ int _ds_objects_p_o38_manage(void *objp) {
    ds_t_object *object = objp;
    
    // MMF2-style particle
-	ds_objects_lib_beh_particleMMF2(object,6);
+	ds_objects_lib_beh_particleMMF2(object,4); // Slow particle
    
    // Everything went OK...
    return 1;
@@ -847,7 +853,7 @@ int _ds_objects_p_o40_manage(void *objp) {
    ds_t_object *object = objp;
    
    // MMF2-style particle
-	ds_objects_lib_beh_particleMMF2(object,6);
+	ds_objects_lib_beh_particleMMF2(object,5);
 	if (ds_objects_lib_beh_particleMMF2_isStopped(object)) {
 	   object->_deleteme = 1;
 	}   
@@ -883,7 +889,7 @@ int _ds_objects_p_o42_manage(void *objp) {
    ds_t_object *object = objp;
    
    // MMF2-style particle
-	ds_objects_lib_beh_particleMMF2(object,6);
+	ds_objects_lib_beh_particleMMF2(object,4);
    
    // Everything went OK...
    return 1;
