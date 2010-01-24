@@ -570,8 +570,9 @@ int ds_15bpp_saveRawFileCallback(char *file, ds_t_15bpp *ima, int tileOptimized,
 				   return 0;
 				}   
 				// Special: Call the callback function
-				if (callback != NULL)
+				if (callback != NULL) {
 					(*callback)();
+				}			
 			}			
 		} else {
 			if (fwrite(ima->png_screen,sizeof(u16),s,f) != s) {
@@ -595,8 +596,9 @@ int ds_15bpp_saveRawFileCallback(char *file, ds_t_15bpp *ima, int tileOptimized,
 				w += 24; // We wrote these elements inside the file 
 		   }   
 			// Special: Call the callback function
-			if (callback != NULL)
+			if (callback != NULL) {
 				(*callback)();
+			}			
 	   }   
 	   // "Dummy" write
 	   offset = ((ima->width * ima->height) - (w));
@@ -636,8 +638,9 @@ int ds_15bpp_saveRawFileCallback(char *file, ds_t_15bpp *ima, int tileOptimized,
 					w += 24; // We wrote these elements inside the file 
 			   }   
 				// Special: Call the callback function
-				if (callback != NULL)
+				if (callback != NULL) {
 					(*callback)();
+				}			
 		   }   
 		   // "Dummy" write
 		   offset = ((ima->width * ima->height) - (w));

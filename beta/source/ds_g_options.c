@@ -60,6 +60,9 @@ int options_btnOptimizationMus;
 int options_btnOptimizationMusYesNo;
 int options_btnOptimizationMusYesNo_Text;
 
+int options_btnOptimizationSty;
+int options_btnOptimizationStyYesNo;
+int options_btnOptimizationStyYesNo_Text;
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL FUNCTIONS (Button pushing)
@@ -119,7 +122,24 @@ int _ds_options_toggleOptimizationMus(void *btn) {
 	options_drawDown = 1;
    
    return 1;
-}   
+}
+
+int _ds_options_toggleOptimizationSty(void *btn) {
+   ds_global_optimizationStylusCamera = !ds_global_optimizationStylusCamera;
+	if (ds_global_optimizationStylusCamera) {
+		sprintf(ds_global_string,"%s%s/Gui_btn_mediumGreen.png",DS_DIR_MAIN,DS_DIR_SYS);   
+		ds_button_updateLocalImage(options_btnOptimizationStyYesNo,ds_global_string);
+		ds_button_updateText(options_btnOptimizationStyYesNo,options_btnOptimizationStyYesNo_Text,"ON");
+	} else {
+		sprintf(ds_global_string,"%s%s/Gui_btn_mediumErase.png",DS_DIR_MAIN,DS_DIR_SYS);   
+		ds_button_updateLocalImage(options_btnOptimizationStyYesNo,ds_global_string);
+		ds_button_updateText(options_btnOptimizationStyYesNo,options_btnOptimizationStyYesNo_Text,"OFF");
+	}   
+	
+	options_drawDown = 1;
+   
+   return 1;
+}      
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL FUNCTIONS (Management)
@@ -149,6 +169,10 @@ void _ds_g_options_createButtons() {
 /*	options_btnOptimization = ds_button_create(24,96,96,16,0,ds_global_string);
 	ds_button_addText(options_btnOptimization,-1,0,"Preload maps?",PA_RGB(0,0,0),1,1);
 	ds_button_addManagement(options_btnOptimization,_ds_options_toggleOptimization,0);	*/
+	
+	options_btnOptimizationSty = ds_button_create(24,96,96,16,0,ds_global_string);
+	ds_button_addText(options_btnOptimizationSty,-1,0,"Stylus-only Camera?",PA_RGB(0,0,0),1,1);
+	ds_button_addManagement(options_btnOptimizationSty,_ds_options_toggleOptimizationSty,0);
 
 	if (ds_global_optimizationUncompress) {
 		sprintf(ds_global_string,"%s%s/Gui_btn_mediumGreen.png",DS_DIR_MAIN,DS_DIR_SYS);   
@@ -185,6 +209,18 @@ void _ds_g_options_createButtons() {
 		ds_button_addManagement(options_btnOptimizationYesNo,_ds_options_toggleOptimization,0);				
 		options_btnOptimizationYesNo_Text = ds_button_addText(options_btnOptimizationYesNo,-1,0,"OFF",PA_RGB(0,0,0),1,1);	   
 	}   */
+	
+	if (ds_global_optimizationStylusCamera) {
+		sprintf(ds_global_string,"%s%s/Gui_btn_mediumGreen.png",DS_DIR_MAIN,DS_DIR_SYS);   
+		options_btnOptimizationStyYesNo = ds_button_create(136,96,96,16,0,ds_global_string);
+		ds_button_addManagement(options_btnOptimizationStyYesNo,_ds_options_toggleOptimizationSty,0);		
+		options_btnOptimizationStyYesNo_Text = ds_button_addText(options_btnOptimizationStyYesNo,-1,0,"ON",PA_RGB(0,0,0),1,1);
+	} else {
+		sprintf(ds_global_string,"%s%s/Gui_btn_mediumErase.png",DS_DIR_MAIN,DS_DIR_SYS);   
+		options_btnOptimizationStyYesNo = ds_button_create(136,96,96,16,0,ds_global_string);
+		ds_button_addManagement(options_btnOptimizationStyYesNo,_ds_options_toggleOptimizationSty,0);				
+		options_btnOptimizationStyYesNo_Text = ds_button_addText(options_btnOptimizationStyYesNo,-1,0,"OFF",PA_RGB(0,0,0),1,1);	   
+	}   
 	
 }
    

@@ -141,6 +141,7 @@ void ds_global_initVariables() {
 	ds_global_optimizationPreload = 0;
 	ds_global_optimizationUncompress = 1;
 	ds_global_optimizationMusic = 1;
+	ds_global_optimizationStylusCamera = 0;
 	   
    // Subsystems
    //-----------

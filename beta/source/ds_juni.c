@@ -467,9 +467,9 @@ void _ds_juni_manageMovement() {
 			}			
 		}		    
       // If in certain states, "look up" (camera)
-      if (ds_juni_isOnTheGround()) {
+      if ((ds_juni_isOnTheGround()) && (!ds_global_optimizationStylusCamera)) {
          // If we are on the ground, continue with the camera!!!!
-         ds_camera_moveCoord(0,-1);
+         ds_camera_moveCoord(0,-1,4);
       }   
    } else  
    if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_DOWN)) {
@@ -481,9 +481,9 @@ void _ds_juni_manageMovement() {
 			} 
 		}		          
       // If in certain states, "look down" (camera)
-      if (ds_juni_isOnTheGround()) {
+      if ((ds_juni_isOnTheGround()) && (!ds_global_optimizationStylusCamera)) {
          // If we are on the ground, continue with the camera!!!!
-         ds_camera_moveCoord(0,1);
+         ds_camera_moveCoord(0,1,4);
       }         
    } else { // (ds_util_bitOne16(ds_global_input.Held,PLAYER DOES NOT HELD ANY MOV KEY!)) ^_-
       // State "Normal" -> ...
@@ -528,42 +528,58 @@ void _ds_juni_manageMovement() {
 			ds_global_juni.actualpix = 0;
 		}    		
    }   
-   
-   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_DOWN)) {
-      // If in certain states, START "look down" (camera)
-      if (ds_juni_isOnTheGround()) {
-         // If we are on the ground, activate the camera!!!!
-         ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
-         ds_camera_moveCoord(0,1);
-      }         
-   }    
-   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_UP)) {
-      // If in certain states, START "look up" (camera)
-      if (ds_juni_isOnTheGround()) {
-         // If we are on the ground, activate the camera!!!!
-         ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
-         ds_camera_moveCoord(0,-1);
-      }         
-   }       
-   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_L)) {
+
+	// Camera-related movement
+   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_STYLUS)) {
       // Camera!!!! We want to look to a certain direction
       ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
-      ds_camera_moveCoord(-1,0);
+      int styX = (ds_global_input.stylusx - 128) / 22;
+      int styY = (ds_global_input.stylusy - 96) / 16;
+      ds_camera_moveCoord(styX,styY,1);
    } else
-   if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_L)) {
+   if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_STYLUS)) {
       // Camera!!!! Move!!!!
-      ds_camera_moveCoord(-1,0);      
-   }	  
-   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_R)) {
-      // Camera!!!! We want to look to a certain direction
-      ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
-      ds_camera_moveCoord(1,0);
-   } else
-   if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_R)) {
-      // Camera!!!! Move!!!!
-      ds_camera_moveCoord(1,0);      
-   } 
-	 
+      int styX = (ds_global_input.stylusx - 128) / 22;
+      int styY = (ds_global_input.stylusy - 96) / 16;
+      ds_camera_moveCoord(styX,styY,1);
+   } else if (!ds_global_optimizationStylusCamera) { // OK, buttons can also move the camera	  
+	   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_DOWN)) {
+	      // If in certain states, START "look down" (camera)
+	      if (ds_juni_isOnTheGround()) {
+	         // If we are on the ground, activate the camera!!!!
+	         ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
+	         ds_camera_moveCoord(0,1,4);
+	      }         
+	   }    
+	   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_UP)) {
+	      // If in certain states, START "look up" (camera)
+	      if (ds_juni_isOnTheGround()) {
+	         // If we are on the ground, activate the camera!!!!
+	         ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
+	         ds_camera_moveCoord(0,-1,4);
+	      }         
+	   }       
+	   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_L)) {
+	      // Camera!!!! We want to look to a certain direction
+	      ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
+	      ds_camera_moveCoord(-1,0,4);
+	   } else
+	   if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_L)) {
+	      // Camera!!!! Move!!!!
+	      ds_camera_moveCoord(-1,0,4);      
+	   }	  
+	   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_R)) {
+	      // Camera!!!! We want to look to a certain direction
+	      ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
+	      ds_camera_moveCoord(1,0,4);
+	   } else
+	   if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_R)) {
+	      // Camera!!!! Move!!!!
+	      ds_camera_moveCoord(1,0,4);      
+	   } 
+	}
+	
+	// Certain Action Buttons 		 
    if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_TJUMP)) {
       // Jump Juni Jump!!!! (only once per click)
       // Normal (Note: Check NOJUMP existence)

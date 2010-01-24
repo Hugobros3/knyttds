@@ -534,6 +534,7 @@ char ds_global_debug;
 int ds_global_optimizationPreload;
 int ds_global_optimizationUncompress;
 int ds_global_optimizationMusic;
+int ds_global_optimizationStylusCamera;
 
 //--------------------------------------
 // FUNCTIONS

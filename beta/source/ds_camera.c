@@ -59,6 +59,7 @@ typedef struct ds_tt_camera{
    int coordy;
    int dx;
    int dy;   
+   int changed;
 } ds_t_camera;
 
 //-------------------------------------------------------------------------------------------------
@@ -79,6 +80,7 @@ void ds_camera_initCamera(int x, int y) {
    _ds_camera_coord.coordy = y;   
    _ds_camera_coord.dx = 0;
    _ds_camera_coord.dy = 0;     
+   _ds_camera_coord.changed = 0;
    _ds_camera_coord.type = DS_C_CAM_JUNI;
 }   
 
@@ -115,7 +117,7 @@ void ds_camera_update(int junix, int juniy) {
          break;
       case DS_C_CAM_COORD:
          // <TODO> Fix usability :-P
-         if ((_ds_camera_coord.dx == 0) && (_ds_camera_coord.dy == 0)) {
+         if ((_ds_camera_coord.dx == 0) && (_ds_camera_coord.dy == 0) && (!_ds_camera_coord.changed)) {
             // Go back to Juni!!!! - Both (Juni & Camera) in fixed position
             if ((junix > (600 - 128)) && (_ds_camera_coord.coordx > (600 - 128)))
             	_ds_camera_coord.coordx = junix;
@@ -173,6 +175,7 @@ void ds_camera_update(int junix, int juniy) {
          actualY = _ds_camera_coord.coordy;         
 		   _ds_camera_coord.dx = 0; // Restart!
   			_ds_camera_coord.dy = 0; // Restart - yup!  			         
+  			_ds_camera_coord.changed = 0; // Restart - yup^2!  			         
          break;         
    }   
    // X-coordinate
@@ -207,13 +210,15 @@ void ds_camera_setType(int type, int x, int y) {
    			_ds_camera_coord.coordy = y;
 			   _ds_camera_coord.dx = 0;
    			_ds_camera_coord.dy = 0;   			
+   			_ds_camera_coord.changed = 1;
 	         break;         
 	   }      
 	}   
 }      
 
 /* Indicates the camera that it should move in a certain direction in this frame */
-void ds_camera_moveCoord(int x, int y) {
-   _ds_camera_coord.dx += (x * 4);
-	_ds_camera_coord.dy += (y * 4);   			   
+void ds_camera_moveCoord(int x, int y, int factor) {
+   _ds_camera_coord.dx += (x * factor);
+	_ds_camera_coord.dy += (y * factor);   			   
+	_ds_camera_coord.changed = 1;
 }   

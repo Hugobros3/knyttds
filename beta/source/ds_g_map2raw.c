@@ -278,6 +278,7 @@ void ds_g_map2raw_state_checkPng() {
 			   // Now, load and save!!!!!
 		   	if (ds_15bpp_load(source_image, &ima, 1, 0)) {
 		   	   if (!ds_15bpp_saveRawFileCallback(ds_global_string,&ima,1,&ds_g_map2raw_paint)) {
+		   	   //if (!ds_15bpp_saveRawFileCallback(ds_global_string,&ima,1,NULL)) {
 		   	      ds_15bpp_delete(&ima);
 		   	      _ds_map2raw_state = _DS_MAP2RAW_ENDERR;
 		   	   	break;
@@ -315,6 +316,7 @@ void ds_g_map2raw_state_checkPng() {
 			   // Now, load and save!!!!!
 		   	if (ds_15bpp_load(source_image, &ima, 1, 0)) {
 		   	   if (!ds_15bpp_saveRawFileCallback(ds_global_string,&ima,0,&ds_g_map2raw_paint)) {
+		   	   //if (!ds_15bpp_saveRawFileCallback(ds_global_string,&ima,0,NULL)) {
 		   	      ds_15bpp_delete(&ima);
 		   	      _ds_map2raw_state = _DS_MAP2RAW_ENDERR;
 		   	   	break;

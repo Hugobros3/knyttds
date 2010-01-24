@@ -53,6 +53,6 @@ void ds_camera_update(int x, int y);
 void ds_camera_setType(int type, int x, int y);
 
 /* Indicates the camera that it should move in a certain direction in this frame */
-void ds_camera_moveCoord(int x, int y);
+void ds_camera_moveCoord(int x, int y, int factor);
 
 #endif
