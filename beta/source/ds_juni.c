@@ -1163,7 +1163,11 @@ void _ds_juni_manageMovement() {
 	if (ds_util_bitOne16(ds_global_map.flag,DS_C_MAP_SPRING)) {
 		if ((ds_global_juni.state == DS_C_JUNI_ST_FALL_L) || 
 			 (ds_global_juni.state == DS_C_JUNI_ST_FALL_R)) {
-			if (ds_map_collBankObj(newx + (24 >> 1), newy + (24), 16, 1)) { // SPRING OBJECT - <TODO>: Limit to the upper part of the spring
+			if ((ds_map_collBankObj(newx + (24 >> 1), newy + (24), 16, 1)) &&
+				 ((newy % 24) < 8)) { // SPRING OBJECT (Limited to the upper part)
+				ds_t_object *particle;
+				particle = ds_objects_createParticle(((newx + 12) / 24) * 24, 
+									((newy + (24)) / 24) * 24, 4, 58);
 				newstate = (ds_global_juni.state == DS_C_JUNI_ST_FALL_L)?DS_C_JUNI_ST_JUMP_L:DS_C_JUNI_ST_JUMP_R;
 				_ds_juni_change(newstate,1);
 				ds_global_juni.inDblJump = 1; // After state change. This means: I "may" DblJump later

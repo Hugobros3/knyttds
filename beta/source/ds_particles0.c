@@ -810,7 +810,7 @@ int _ds_objects_p_o38_manage(void *objp) {
    ds_t_object *object = objp;
    
    // MMF2-style particle
-	ds_objects_lib_beh_particleMMF2(object,4); // Slow particle
+	ds_objects_lib_beh_particleMMF2(object,3); // Slow particle
    
    // Everything went OK...
    return 1;
@@ -1210,7 +1210,7 @@ int _ds_objects_p_o52_manage(void *objp) {
    ds_t_object *object = objp;
    ds_t_object *particle;
    
- 	ds_objects_lib_beh_particleMMF2(object,6);
+ 	ds_objects_lib_beh_particleMMF2(object,3);
  	
 	if (object->_deleteme) {
 	   int i,s,sx,sy;
@@ -1416,6 +1416,46 @@ int _ds_objects_p_o57_manage(void *objp) {
    // Everything went OK...
    return 1;
 }
+
+// SPRING PARTICLE [O58]
+//..........................................................................................
+int _ds_objects_p_o58_create(u8 bank, u8 obj, void *objp) {
+   ds_t_object *object = objp;
+   
+   // Initialize
+	if (ds_objects_lib_initObject(bank, obj, object) == 0)
+		return 0;
+		
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA);
+		
+	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
+		return 0;
+		
+	object->inner[11] = 100;
+	ds_3dsprite_setAlpha(object->sprite,object->inner[11]);
+
+	// Specific Operations
+   object->type = DS_C_OBJ_PARTICLE;
+   object->managed = 1;
+   
+   // Return 1 if I'm an event/item
+   return ds_objects_lib_iseventitem(object->type);
+}   
+
+int _ds_objects_p_o58_manage(void *objp) {
+   ds_t_object *object = objp;
+   
+   // Fade away...
+	object->inner[11] -= 4;
+	if (object->inner[11] <= 0) {
+		object->_deleteme = 1;
+	} else {
+	   ds_3dsprite_setAlpha(object->sprite,object->inner[11]);
+	}   		
+   
+   // Everything went OK...
+   return 1;
+}                                                                        
 
                                                  
 //-------------------------------------------------------------------------------
@@ -1691,6 +1731,12 @@ int ds_particles0_assign(u8 obj, ds_t_object *object) {
          // Ninja Star
          object->fcreate = _ds_objects_p_o57_create;
          object->fmanage = _ds_objects_p_o57_manage;
+         return 1;
+         break; // not really necessary...                           
+      case 58:
+         // Spring Fade
+         object->fcreate = _ds_objects_p_o58_create;
+         object->fmanage = _ds_objects_p_o58_manage;
          return 1;
          break; // not really necessary...                           
    }   

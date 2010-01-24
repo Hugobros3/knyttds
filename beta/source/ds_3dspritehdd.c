@@ -358,6 +358,10 @@ void _ds_3dspritehdd_getParticleSize(int obj, int *x, int *y) {
       	*x = 24;
       	*y = 24;
          break;
+      case 58: 
+      	*x = 24;
+      	*y = 24;
+         break;
    }   
 }      
 

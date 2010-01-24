@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_linkedlist.h"
 
 /* Debug Flag */
-//#define DEBUG_KSDS
+#define DEBUG_KSDS
 
 //--------------------------------------
 // CONSTANTS

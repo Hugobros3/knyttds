@@ -86,38 +86,51 @@ void _ds_objects_b15_keys(ds_t_object *object, int item) {
 
 void _ds_objects_b15_appear(ds_t_object *object, int distance) {
    int val = 0;
-   if (distance > 96) {
-      if (ds_3dsprite_getAlpha(object->sprite) != 0)
-      	ds_3dsprite_setAlpha(object->sprite,0);
-   } else {   
-      val = 255 - ((distance * 26) / 10);
+   if (distance > 144) {
+      if (!ds_3dsprite_getInvisible(object->sprite))
+      	ds_3dsprite_markInvisible(object->sprite,1);
+   } else if (distance <= 36) {
+      if (ds_3dsprite_getInvisible(object->sprite))
+      	ds_3dsprite_markInvisible(object->sprite,0);
+      if (ds_3dsprite_getAlpha(object->sprite) != 255)
+      	ds_3dsprite_setAlpha(object->sprite,255);
+	} else {   
+      if (ds_3dsprite_getInvisible(object->sprite))
+      	ds_3dsprite_markInvisible(object->sprite,0);
+      val = 255 - (((distance - 36) * 255) / 108);
    	ds_3dsprite_setAlpha(object->sprite, val);
 	}   
 }
 
 void _ds_objects_b15_disappear(ds_t_object *object, int distance) {
    int val = 0;
-   if (distance > 96) {
+   if (distance > 144) {
+      if (ds_3dsprite_getInvisible(object->sprite))
+      	ds_3dsprite_markInvisible(object->sprite,0);
       if (ds_3dsprite_getAlpha(object->sprite) != 255)
       	ds_3dsprite_setAlpha(object->sprite,255);
-   } else {   
-      val = ((distance * 26) / 10);
+   } else if (distance <= 36) {
+      if (!ds_3dsprite_getInvisible(object->sprite))
+      	ds_3dsprite_markInvisible(object->sprite,1);
+	} else {   
+      if (ds_3dsprite_getInvisible(object->sprite))
+      	ds_3dsprite_markInvisible(object->sprite,0);
+      val = (((distance - 36) * 255) / 108);
    	ds_3dsprite_setAlpha(object->sprite, val);
 	}   
 }   
  
 void _ds_objects_b15_fastDissappear(ds_t_object *object, int distance) {
-   int val = 0;
-   if (distance > 36) {
+   if (distance > 30) {
       if (ds_3dsprite_getInvisible(object->sprite))
       	ds_3dsprite_markInvisible(object->sprite,0);
       if (ds_3dsprite_getAlpha(object->sprite) != 255)
       	ds_3dsprite_setAlpha(object->sprite,255);
-   } else if (distance > 24) {
-      val = 255 - ((36 - distance) * 21);
+/*   } else if (distance > 24) {
+      val = 255 - ((30 - distance) * 42);
       if (ds_3dsprite_getInvisible(object->sprite))
       	ds_3dsprite_markInvisible(object->sprite,0);
-   	ds_3dsprite_setAlpha(object->sprite, val);      
+   	ds_3dsprite_setAlpha(object->sprite, val);*/
 	} else {   
 	   if (!ds_3dsprite_getInvisible(object->sprite))
       	ds_3dsprite_markInvisible(object->sprite,1);
@@ -131,9 +144,9 @@ void _ds_objects_b15_PasswordTriggered() {
    myiterator = ds_linkedlist_startIterator(&ds_global_objects);
    while ((object = ds_linkedlist_getIterator(&ds_global_objects,&myiterator)) != NULL) {
       if ((object->bank == 15) &&  // Our bank
-			 ((object->obj >= 23) && (object->obj <= 24)) && // Our object
+			 ((object->obj == 12) || ((object->obj >= 23) && (object->obj <= 24))) && // Our object
 			 (object->inner[10] == 0)) { // Object is not being destroyed :-)
-			// Dissapear, clean area, destroy "one cycle" flag
+			// Dissapear, clean area, destroy "one cycle" flag (to allow self-destruction)
 			object->fmanage = _ds_objects_b15opblock_manageA;    
 			ds_map_copyFlagValue(0,object->xs,object->ys,object->x,object->y, &ds_global_map.tileMapCol);
 			object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE);
@@ -190,7 +203,7 @@ int _ds_objects_b15odiss_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b15odiss_manage(void *objp) {
    ds_t_object *object = objp;
    
-	_ds_objects_b15_fastDissappear(object, ds_objects_lib_distanceJuniCorrected(object,1));
+	_ds_objects_b15_fastDissappear(object, ds_objects_lib_distancePhyJuniCorrected(object,1));
    
    return 1;
 }   
@@ -371,7 +384,7 @@ int _ds_objects_b15o06_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b15o06_manage(void *objp) {
    ds_t_object *object = objp;
    
-	_ds_objects_b15_appear(object, ds_objects_lib_distanceJuniCorrected(object,1));
+	_ds_objects_b15_appear(object, ds_objects_lib_distancePhyJuniCorrected(object,1));
    
    return 1;
 }   
@@ -403,7 +416,7 @@ int _ds_objects_b15o07_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b15o07_manage(void *objp) {
    ds_t_object *object = objp;
    
-	_ds_objects_b15_disappear(object, ds_objects_lib_distanceJuniCorrected(object,1));
+	_ds_objects_b15_disappear(object, ds_objects_lib_distancePhyJuniCorrected(object,1));
    
    return 1;
 }
@@ -437,7 +450,8 @@ int _ds_objects_b15opblock_manage(void *objp) {
    ds_t_object *object = objp;
 
 	if ((!object->_deleteme) && // Guard against management after deletion (it WAS a onecycle)
-	    (ds_global_map.pass == ds_global_map.passMax)) { // Password is known!!!! 
+	    (ds_global_map.pass == ds_global_map.passMax) && // Password is known!!!! 
+	    (object->inner[10] == 0)) { // we are not fading already
 	   // Password achieved!
 	   ds_objects_addAfterManagementFunction((void *) _ds_objects_b15_PasswordTriggered);
 	}      
@@ -449,7 +463,7 @@ int _ds_objects_b15opblock_manageA(void *objp) { // Special for disappearing
    ds_t_object *object = objp;
 
 	// Fade out!
-	object->inner[10]+= 3;
+	object->inner[10] += 3;
 	if (object->inner[10] < 192) {
 	   ds_3dsprite_setAlpha(object->sprite,192 - object->inner[10]);
 	} else {
@@ -721,8 +735,9 @@ int ds_objects15_assign(u8 obj, ds_t_object *object) {
       return 1;
    }   
    if (obj == 12) {
-      // More fixed blocks
-      object->fcreate = _ds_objects_b15ofixed_create;      
+      // More fixed blocks, but password-linked
+      object->fcreate = _ds_objects_b15opblock_create;      
+      object->fmanage = _ds_objects_b15opblock_manage;
       return 1;
    }      
    switch (obj) {

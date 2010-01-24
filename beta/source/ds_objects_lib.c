@@ -554,7 +554,7 @@ int ds_objects_lib_par_make4Following(ds_t_object *object, int sec, int waitTime
 	int y;
 	ds_t_object *particle;
 	
-	if ((ds_global_tick % (60)) == 0) {
+	if ((ds_global_tick % (60 * sec)) == 0) {
 	      x = ds_3dsprite_getX(object->sprite) - 2;
 	      y = ds_3dsprite_getY(object->sprite) - 16;
 		   particle = ds_objects_createParticle(x + 7, y + 5, object->layer, 12);  // UL
