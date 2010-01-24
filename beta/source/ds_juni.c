@@ -51,6 +51,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 u8 _ds_juni_varDbl = 0;
 
+#define _DS_JUNI_GPJUMP 6;
+
 //-------------------------------------------------------------------------------------------------
 // INTERNAL FUNCTIONS
 //-------------------------------------------------------------------------------------------------
@@ -272,6 +274,7 @@ int ds_juni_init(int x, int y, int resetmov, int resetinner) {
 	   ds_global_juni.umbrellaOn = 0;
 	   ds_global_juni.umb_state = 0;
 	   ds_global_juni.umb_dir = 0;
+	   ds_global_juni.gracePeriodJump = 0;
 	}
 	
 	// CONSISTENCY CHECKS - Due to shifting, I may have lost an item.  
@@ -329,11 +332,18 @@ void _ds_juni_manageMovement() {
    int ok, flag;
    int _inner_checknojump = 0;
    int diagonals;
+   
+   // (0) Small details in every frame
+   //---------------------------------
+   if (ds_global_juni.gracePeriodJump > 0)
+   	ds_global_juni.gracePeriodJump--; // For Wall jumping and jump-climb 
       
    // (1) Manages Juni's movements from input
    //----------------------------------------
+   int heldMov = 0; // To check if we held a movement key
    if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_LEFT) || 
 	    ds_util_bitOne16(ds_global_input.Held,DS_C_IN_RIGHT)) {
+	   heldMov = 1;
       // Normal Movement...
       if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_LEFT))
       	direction = -1; // Left
@@ -431,10 +441,13 @@ void _ds_juni_manageMovement() {
 				_ds_juni_change(newstate,1);
 			   ds_global_juni.movstateX = (_ds_juni_isRunning())?DS_C_JUNI_MOVST_X_RUN:DS_C_JUNI_MOVST_X_WALK;          
 			   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_STOP;
+			   int gp_tmp = _DS_JUNI_GPJUMP;
+			   ds_global_juni.gracePeriodJump = (gp_tmp >> 1); // Special "can jump" for free
 			} 
 		}
-	} else
+	} 
    if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_UP)) {
+      heldMov = 1;
       // Check if we need to go climbing
       if (_ds_juni_canClimb()) {
          if ((ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L) || 
@@ -473,6 +486,7 @@ void _ds_juni_manageMovement() {
       }   
    } else  
    if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_DOWN)) {
+      heldMov = 1;
       // Check if we need to go climbing
       if (_ds_juni_canClimb()) {
          if ((ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L) || 
@@ -485,7 +499,8 @@ void _ds_juni_manageMovement() {
          // If we are on the ground, continue with the camera!!!!
          ds_camera_moveCoord(0,1,4);
       }         
-   } else { // (ds_util_bitOne16(ds_global_input.Held,PLAYER DOES NOT HELD ANY MOV KEY!)) ^_-
+   } 
+	if (!heldMov) { // (ds_util_bitOne16(ds_global_input.Held,PLAYER DOES NOT HELD ANY MOV KEY!)) ^_-
       // State "Normal" -> ...
       if ((ds_global_juni.state == DS_C_JUNI_ST_STOP_L) || 
 		    (ds_global_juni.state == DS_C_JUNI_ST_STOP_R)) {
@@ -628,19 +643,21 @@ void _ds_juni_manageMovement() {
 			ds_global_juni.movstateY = (ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_JUMP))?
 													DS_C_JUNI_MOVST_Y_JUMP:DS_C_JUNI_MOVST_Y_JUMPSOFT;
 			_ds_juni_correctJumpUmbrella(); // If Umbrella, jump is a bit slower
-			ds_3dsprite_setX(ds_global_juni.sprite, ds_3dsprite_getX(ds_global_juni.sprite) + (-3 * direction)); // Allows fast climbing :-)
+			ds_global_juni.gracePeriodJump = _DS_JUNI_GPJUMP; // Special "can jump"
 		} else
-		// Jump - Dbl Jump
+		// Jump - Dbl Jump (only if not in "grace period" for jumping)
       if ((ds_global_juni.state == DS_C_JUNI_ST_JUMP_L) || 
 		    (ds_global_juni.state == DS_C_JUNI_ST_JUMP_R)) {
-		   if (_ds_juni_canDblJump()) {
-				newstate = (ds_global_juni.state == DS_C_JUNI_ST_JUMP_L)?DS_C_JUNI_ST_JUMP_L:DS_C_JUNI_ST_JUMP_R;
-				_ds_juni_change(newstate,1);		      
-				ds_global_juni.movstateY = (ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_JUMP))?
-														DS_C_JUNI_MOVST_Y_JUMP:DS_C_JUNI_MOVST_Y_JUMPSOFT;
-				_ds_juni_correctJumpUmbrella(); // If Umbrella, jump is a bit slower
-				_ds_juni_varDbl = 1;
-		   }   
+		   if (!ds_global_juni.gracePeriodJump) { // I am in "GP" if I was climbing
+			   if (_ds_juni_canDblJump()) {
+					newstate = (ds_global_juni.state == DS_C_JUNI_ST_JUMP_L)?DS_C_JUNI_ST_JUMP_L:DS_C_JUNI_ST_JUMP_R;
+					_ds_juni_change(newstate,1);		      
+					ds_global_juni.movstateY = (ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_JUMP))?
+															DS_C_JUNI_MOVST_Y_JUMP:DS_C_JUNI_MOVST_Y_JUMPSOFT;
+					_ds_juni_correctJumpUmbrella(); // If Umbrella, jump is a bit slower
+					_ds_juni_varDbl = 1;
+			   }   
+			}   
 		} else
 		// Fly - Fly Faster (or double jump...)
       if ((ds_global_juni.state == DS_C_JUNI_ST_FLY_L) || 
@@ -668,25 +685,29 @@ void _ds_juni_manageMovement() {
 				}			
 		   }   
 		} else		
-		// Fall - Dbl Jump
+		// Fall - Dbl Jump OR "GP"
       if ((ds_global_juni.state == DS_C_JUNI_ST_FALL_L) || 
 		    (ds_global_juni.state == DS_C_JUNI_ST_FALL_R)) {
-		   if (_ds_juni_canDblJump()) {
+		   int wasDblJump = ((_ds_juni_canDblJump()) && (!ds_global_juni.gracePeriodJump));
+		   if ((wasDblJump) || (ds_global_juni.gracePeriodJump)) { 
 				newstate = (ds_global_juni.state == DS_C_JUNI_ST_FALL_L)?DS_C_JUNI_ST_JUMP_L:DS_C_JUNI_ST_JUMP_R;
 				_ds_juni_change(newstate,1);		      
 				ds_global_juni.movstateY = (ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_JUMP))?
 														DS_C_JUNI_MOVST_Y_JUMP:DS_C_JUNI_MOVST_Y_JUMPSOFT;
 				_ds_juni_correctJumpUmbrella(); // If Umbrella, jump is a bit slower
-				_ds_juni_varDbl = 1;
+				if (wasDblJump)
+					_ds_juni_varDbl = 1;
 		   }   
 		}		
    } else if (!ds_util_bitOne16(ds_global_input.Held,DS_C_IN_TJUMP)) {   
-      // Don't Jump Juni, Don't Jump!!!!
-      if ((ds_global_juni.state == DS_C_JUNI_ST_JUMP_L) || 
-		    (ds_global_juni.state == DS_C_JUNI_ST_JUMP_R)) {
-		   if (ds_global_juni.movstateY == DS_C_JUNI_MOVST_Y_JUMP)
-			   _inner_checknojump = 1;
-		} 
+      // Don't Jump Juni, Don't Jump!!!! But in "grace period", can jump fast!
+      if (!ds_global_juni.gracePeriodJump) { // I am in "GP" if I was climbing
+	      if ((ds_global_juni.state == DS_C_JUNI_ST_JUMP_L) || 
+			    (ds_global_juni.state == DS_C_JUNI_ST_JUMP_R)) {
+			   if (ds_global_juni.movstateY == DS_C_JUNI_MOVST_Y_JUMP)
+				   _inner_checknojump = 1;
+			} 
+		}			
 	} else if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_TJUMP)) {   	
 		// Fly - Fly Faster (no double jump... :-P)
       if ((ds_global_juni.state == DS_C_JUNI_ST_FLY_L) || 
@@ -1007,11 +1028,13 @@ void _ds_juni_manageMovement() {
 	         // But... maybe juni should start Climbing?
 		      if ((ds_global_juni.state == DS_C_JUNI_ST_JUMP_R) ||
 				    (ds_global_juni.state == DS_C_JUNI_ST_FALL_R)) {
-				       // Climb time!
-					   newstate = DS_C_JUNI_ST_CLIMB_R;
-					   _ds_juni_change(newstate,1);
-					   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
-					   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;									          
+				      // Climb time! - only if we weren't jump-climbing
+				      if (!ds_global_juni.gracePeriodJump) { 
+						   newstate = DS_C_JUNI_ST_CLIMB_R;
+						   _ds_juni_change(newstate,1);
+						   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
+						   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;									          
+						}   
 				}   
 	      }
 	   }   
@@ -1037,11 +1060,13 @@ void _ds_juni_manageMovement() {
 	         // But... maybe juni should start Climbing? :-) <TODO> Flying
 		      if ((ds_global_juni.state == DS_C_JUNI_ST_JUMP_L) || 
 					 (ds_global_juni.state == DS_C_JUNI_ST_FALL_L)) {
-				       // Climb time!
-					   newstate = DS_C_JUNI_ST_CLIMB_L;
-					   _ds_juni_change(newstate,1);
-					   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
-					   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;									          
+				      // Climb time! - only if we weren't jump-climbing
+				      if (!ds_global_juni.gracePeriodJump) { 
+						   newstate = DS_C_JUNI_ST_CLIMB_L;
+						   _ds_juni_change(newstate,1);
+						   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
+						   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;									          
+						}   
 				}   
 	      }
 	   }

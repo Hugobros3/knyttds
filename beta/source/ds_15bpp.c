@@ -563,7 +563,7 @@ int ds_15bpp_saveRawFileCallback(char *file, ds_t_15bpp *ima, int tileOptimized,
 	// Store the image itself
 	if (!tileOptimized) {
 		s = (ima->width * ima->height);
-		if (((s % 32) == 0) && (callback != NULL)) {
+		/*if (((s % 32) == 0) && (callback != NULL)) {
    	   for (c = 0; c < (s / 32); c++) {
 				if (fwrite(ima->png_screen,sizeof(u16),32,f) != 32) {
 				   fclose(f);
@@ -574,12 +574,16 @@ int ds_15bpp_saveRawFileCallback(char *file, ds_t_15bpp *ima, int tileOptimized,
 					(*callback)();
 				}			
 			}			
-		} else {
+		} else {*/
 			if (fwrite(ima->png_screen,sizeof(u16),s,f) != s) {
 			   fclose(f);
 			   return 0;
 			}
-		}   		
+			// Special: Call the callback function
+			if (callback != NULL) {
+				(*callback)();
+			}			
+		//}   		
 	} else {
 	   // Linear tile write
 	   w = 0;
@@ -621,6 +625,10 @@ int ds_15bpp_saveRawFileCallback(char *file, ds_t_15bpp *ima, int tileOptimized,
 		   if (fwrite(ima->png_alpha,sizeof(u8),s,f) != s) {
 		   	fclose(f);
 		   	return 0;
+			}
+			// Special: Call the callback function
+			if (callback != NULL) {
+				(*callback)();
 			}
 		} else {
 		   // Linear tile write

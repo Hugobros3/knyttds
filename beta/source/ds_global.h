@@ -414,6 +414,7 @@ typedef struct ds_tt_juni {
    int state;
    int movstateX;
 	int movstateY;
+	int gracePeriodJump;
 	int inDblJump;
 	int inNoBtnJump;
    int x;  // Absolute
