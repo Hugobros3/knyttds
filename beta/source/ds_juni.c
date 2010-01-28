@@ -39,11 +39,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_camera.h"
 
 // <TODO> - The system must be REDEFINED to fit the Box made by Juni
-// <TODO> - Also, BUGS NEED TO BE FIXED!!!!! (Diagonals hacks, and so on)
-// <TODO> - Besides, climb must be refined
-// <TODO> - Oh, also forgot... Achieve a "natural" feeling in Juni's movement
+// <TODO> - Also, HACKS NEED TO BE FIXED!!!!! (Diagonals hacks, and so on)
 // ...
-// & <TODO> - Various types of collisions (not only "in the same tile as")
+// OK, everything is working right, so I'll leave it "as is". Sorry! :-P
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL TYPES AND VARIABLES
@@ -51,7 +49,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 u8 _ds_juni_varDbl = 0;
 
-#define _DS_JUNI_GPJUMP 6;
+#define _DS_JUNI_GPCLIMB 24
+#define _DS_JUNI_GPCLIMB_BASIC 16
+#define _DS_JUNI_GPJCLIMB 8
+#define _DS_JUNI_GPJUMP 3
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL FUNCTIONS
@@ -75,15 +76,16 @@ void _ds_juni_change(u8 state, u8 reset) {
 	}		
 }
 
-/* Checks if Juni is facing to the right */
-int ds_juni_faceRight() {
+/* Checks if Juni is facing to the right (INTERNAL) */
+int _ds_juni_faceRight() {
    return ((ds_global_juni.state % 2) == 0); // HACK!!!! :-D
 }
 
-/* Checks if Juni is facing to the right (INTERNAL) */
-int _ds_juni_faceRight() {
-   return ds_juni_faceRight();
+/* Checks if Juni is facing to the right */
+int ds_juni_faceRight() {
+   return _ds_juni_faceRight();
 }
+
 
 /* Checks if Juni is stepping onto a NOJUMP tile */
 int _ds_juni_checkNoJump() {
@@ -165,10 +167,15 @@ int _ds_juni_canDblJump() {
 			  (ds_global_juni.inDblJump));
 }
 
-/* Knows if Juni has the umbrella */
+/* Knows if Juni has the umbrella "on" - INTERNAL */
 int _ds_juni_umbrellaOn() {
    return ((ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_UMBRELLA)) && 
 			  (ds_global_juni.umbrellaOn));
+}
+
+/* Knows if Juni has the umbrella "on" */
+int ds_juni_umbrellaOn() {
+   return _ds_juni_umbrellaOn();
 }
 
 /* Knows if Juni has the hologram */
@@ -204,6 +211,10 @@ void ds_juni_updateSprites(int newx, int newy) {
 	if (!ds_util_bitOne16(ds_global_map.flag,DS_C_MAP_ISHIDE)) {
 		ds_3dsprite_setX(ds_global_juni.sprite, newx);
 		ds_3dsprite_setY(ds_global_juni.sprite, newy);
+		
+		ds_3dsprite_setX(ds_global_juni.umb_sprite, newx);
+		ds_3dsprite_setY(ds_global_juni.umb_sprite, newy);	
+	
 	} else {	
 	   // NOTE: This is a *NASTY HACK* to allow Juni to go behind big COs.
 	   // Yup, I know something like this should be done for all objects,
@@ -213,11 +224,11 @@ void ds_juni_updateSprites(int newx, int newy) {
 		// Sorry :-P. 
 		ds_3dsprite_setXY_HackCO(ds_global_juni.sprite, newx, newy,
  			&ds_global_map.tileMapHide, 600, 240);
+ 			
+		ds_3dsprite_setXY_HackCO(ds_global_juni.umb_sprite, newx, newy,
+ 			&ds_global_map.tileMapHide, 600, 240);
 	} 		
-	
-	ds_3dsprite_setX(ds_global_juni.umb_sprite, newx);
-	ds_3dsprite_setY(ds_global_juni.umb_sprite, newy);	
-	
+		
 	ds_3dsprite_setX(ds_global_juni.redglow_sprite, newx);
 	ds_3dsprite_setY(ds_global_juni.redglow_sprite, newy);	
 
@@ -275,6 +286,7 @@ int ds_juni_init(int x, int y, int resetmov, int resetinner) {
 	   ds_global_juni.umb_state = 0;
 	   ds_global_juni.umb_dir = 0;
 	   ds_global_juni.gracePeriodJump = 0;
+	   ds_global_juni.gracePeriodClimb = 0;
 	}
 	
 	// CONSISTENCY CHECKS - Due to shifting, I may have lost an item.  
@@ -337,6 +349,8 @@ void _ds_juni_manageMovement() {
    //---------------------------------
    if (ds_global_juni.gracePeriodJump > 0)
    	ds_global_juni.gracePeriodJump--; // For Wall jumping and jump-climb 
+   if (ds_global_juni.gracePeriodClimb > 0)
+   	ds_global_juni.gracePeriodClimb--; // Also, for Wall jumping and jump-climb 
       
    // (1) Manages Juni's movements from input
    //----------------------------------------
@@ -429,11 +443,12 @@ void _ds_juni_manageMovement() {
 			   ds_global_juni.movstateX = (_ds_juni_isRunning())?DS_C_JUNI_MOVST_X_RUN:DS_C_JUNI_MOVST_X_WALK;          
 			} 
 		} else
-		// State "Climb" -> Don't want to climb? Falls down. Fast.
+		// State "Climb" -> Don't want to climb? Falls down. Fast. Want to climb? Keep doing that.
       if ((ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L) || 
 		    (ds_global_juni.state == DS_C_JUNI_ST_CLIMB_R)) {
 			if (((direction == 1) && (ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L)) ||
 				 ((direction == -1) && (ds_global_juni.state == DS_C_JUNI_ST_CLIMB_R))) {
+				// Fall! Uuu~~~ Uuu~~~ Fall!!!
 				if (direction == 1)
 					newstate = (_ds_juni_isRunning())?DS_C_JUNI_ST_RUN_R:DS_C_JUNI_ST_WALK_R;
 				else
@@ -441,9 +456,21 @@ void _ds_juni_manageMovement() {
 				_ds_juni_change(newstate,1);
 			   ds_global_juni.movstateX = (_ds_juni_isRunning())?DS_C_JUNI_MOVST_X_RUN:DS_C_JUNI_MOVST_X_WALK;          
 			   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_STOP;
-			   int gp_tmp = _DS_JUNI_GPJUMP;
-			   ds_global_juni.gracePeriodJump = (gp_tmp >> 1); // Special "can jump" for free
-			} 
+			   ds_global_juni.gracePeriodJump = _DS_JUNI_GPJUMP; // Special "can jump" for free
+			   ds_global_juni.gracePeriodClimb = 0; // ...but no more "climb" for free (If I had)
+			} else {
+			   // OK, Let's see if Juni wants to climb a bit more or stop and relax...
+				if ((!ds_util_bitOne16(ds_global_input.Held,DS_C_IN_UP)) &&
+				    (!ds_util_bitOne16(ds_global_input.Held,DS_C_IN_DOWN))) {		   
+				   if (!ds_global_juni.gracePeriodClimb) {
+				      // Only stop climbing when there is no grace period
+				      if (ds_global_juni.movstateY != DS_C_JUNI_MOVST_Y_SLIDESOFT) {
+							ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;
+							ds_global_juni.actualpix = 0;
+						}			
+					}				   
+				}   
+			}   
 		}
 	} 
    if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_UP)) {
@@ -487,11 +514,12 @@ void _ds_juni_manageMovement() {
    } else  
    if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_DOWN)) {
       heldMov = 1;
-      // Check if we need to go climbing
+      // Check if we need to go down while climbing
       if (_ds_juni_canClimb()) {
          if ((ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L) || 
 			    (ds_global_juni.state == DS_C_JUNI_ST_CLIMB_R)) {
 			   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDE;
+			   ds_global_juni.gracePeriodClimb = 0; // No more "climb" for free (If I had)
 			} 
 		}		          
       // If in certain states, "look down" (camera)
@@ -539,8 +567,13 @@ void _ds_juni_manageMovement() {
       // State "Climb" -> Landslide downfall! (<-meaningless, but wanted to write it - sounds cool! XD)
       if ((ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L) || 
 		    (ds_global_juni.state == DS_C_JUNI_ST_CLIMB_R)) {
-			ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;
-			ds_global_juni.actualpix = 0;
+		   if (!ds_global_juni.gracePeriodClimb) {
+		      // Only stop climbing when there is no grace period
+		      if (ds_global_juni.movstateY != DS_C_JUNI_MOVST_Y_SLIDESOFT) {
+					ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;
+					ds_global_juni.actualpix = 0;
+				}			
+			}			
 		}    		
    }   
 
@@ -643,7 +676,7 @@ void _ds_juni_manageMovement() {
 			ds_global_juni.movstateY = (ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_JUMP))?
 													DS_C_JUNI_MOVST_Y_JUMP:DS_C_JUNI_MOVST_Y_JUMPSOFT;
 			_ds_juni_correctJumpUmbrella(); // If Umbrella, jump is a bit slower
-			ds_global_juni.gracePeriodJump = _DS_JUNI_GPJUMP; // Special "can jump"
+			ds_global_juni.gracePeriodJump = _DS_JUNI_GPJCLIMB; // Special "can jump"
 		} else
 		// Jump - Dbl Jump (only if not in "grace period" for jumping)
       if ((ds_global_juni.state == DS_C_JUNI_ST_JUMP_L) || 
@@ -1030,10 +1063,29 @@ void _ds_juni_manageMovement() {
 				    (ds_global_juni.state == DS_C_JUNI_ST_FALL_R)) {
 				      // Climb time! - only if we weren't jump-climbing
 				      if (!ds_global_juni.gracePeriodJump) { 
+						   // Special: If I was in JUMP, I can have a grace period for climb...
+					      if (ds_global_juni.state == DS_C_JUNI_ST_JUMP_R) {
+					      	if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_TJUMP)) {
+					      	   ds_global_juni.gracePeriodClimb = 
+										_DS_JUNI_GPCLIMB - _DS_JUNI_GPJCLIMB;
+					      	} else {
+					      	   ds_global_juni.gracePeriodClimb =
+										_DS_JUNI_GPCLIMB_BASIC - _DS_JUNI_GPJCLIMB;
+								}      
+					      }   
+						   // Now, change state
 						   newstate = DS_C_JUNI_ST_CLIMB_R;
 						   _ds_juni_change(newstate,1);
-						   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
-						   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;									          
+						   // OK, assign speed...
+						   if (ds_global_juni.gracePeriodClimb) {
+						      // Climb alone due to "jump-climb!"
+  							   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
+		      			   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_CLIMB;
+						   } else {   
+						      // Normal "Can climb"
+							   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
+							   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;
+							}   
 						}   
 				}   
 	      }
@@ -1062,10 +1114,29 @@ void _ds_juni_manageMovement() {
 					 (ds_global_juni.state == DS_C_JUNI_ST_FALL_L)) {
 				      // Climb time! - only if we weren't jump-climbing
 				      if (!ds_global_juni.gracePeriodJump) { 
+						   // Special: If I was in JUMP, I can have a grace period for climb...
+					      if (ds_global_juni.state == DS_C_JUNI_ST_JUMP_L) {
+					      	if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_TJUMP)) {
+					      	   ds_global_juni.gracePeriodClimb = 
+										_DS_JUNI_GPCLIMB - _DS_JUNI_GPJCLIMB;
+					      	} else {
+					      	   ds_global_juni.gracePeriodClimb =
+										_DS_JUNI_GPCLIMB_BASIC - _DS_JUNI_GPJCLIMB;
+								}      
+					      }   
+						   // Now, change state
 						   newstate = DS_C_JUNI_ST_CLIMB_L;
 						   _ds_juni_change(newstate,1);
-						   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
-						   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;									          
+						   // OK, assign speed...
+						   if (ds_global_juni.gracePeriodClimb) {
+						      // Climb alone due to "jump-climb!"
+  							   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
+		      			   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_CLIMB;
+						   } else {   
+						      // Normal "Can climb"
+							   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
+							   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_SLIDESOFT;
+							}   
 						}   
 				}   
 	      }
@@ -1690,7 +1761,7 @@ void _ds_juni_manageSpecials() {
 //				ds_3dsprite_updateSprite(ds_global_juni.umb_sprite);
 			}		
 		}
-	}	
+	}
 	
 	// MENU OPTIONS (Juni-Related)
 	//----------------------------
@@ -1791,4 +1862,33 @@ int ds_juni_getYVirtual() {
    	return ds_3dsprite_getY(ds_global_juni.holo_sprite);
    else
 	   return ds_global_juni.y; // <TODO>
+}   
+
+/* Returns if something has collided with the umbrella */
+int ds_juni_umbrellaCollide(int x, int y, int xs, int ys) {
+   int xu, yu, xus, yus;
+   // First, check if the umbrella is on :-)
+   if (!_ds_juni_umbrellaOn()) {
+      return 0; // No collision
+   }   
+   // Now, get the coordinates of the umbrella
+   xus = 13;
+   yus = 8;
+   yu = ds_3dsprite_getY(ds_global_juni.umb_sprite);
+   if (_ds_juni_faceRight()) {
+      xu = ds_3dsprite_getX(ds_global_juni.umb_sprite);
+   } else {
+      xu = ds_3dsprite_getX(ds_global_juni.umb_sprite) + 11;
+	}      
+	
+	// Finally, check the collision
+	if (((x + xs) < xu) || (x > (xu + xus))) {
+	   return 0; // No collision on the X plane
+	} else { // Possible collision on the Y plane
+		if (((y + ys) < yu) || (y > (yu + yus))) {
+		   return 0; // No collision on the Y plane
+		} else {
+		   return 1; // Collision!
+		}      
+	}   
 }   

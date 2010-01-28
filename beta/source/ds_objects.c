@@ -49,6 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_3dspritehdd.h"
 #include "ds_world.h"
 #include "ds_input.h"
+#include "ds_juni.h"
 #include "ds_particles0.h"
 #include "ds_objects0.h"
 #include "ds_objects1.h"
@@ -628,6 +629,35 @@ void ds_objects_collide(int layer, int xtile, int ytile) {
       	}   
    	}   
    }   
+}
+
+void ds_objects_damageMatrix(ds_t_object *object) {
+   if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_HARMFUL)) && 
+			(!ds_util_bitOne16(object->flags,DS_C_OBJ_F_INVISIBLE))) {
+      // Damage Matrix
+      int distX = ds_objects_lib_distanceJuniX(object, 0, 1);
+      int distY = ds_objects_lib_distanceJuniY(object, 0, 1);
+      if ((distX < (object->xs * 2)) && // Optimization:
+          (distY < (object->ys * 2))) { // Only objets near Juni may harm her!!!!
+         // Before anything, check if I am a particle
+         if (object->type == DS_C_OBJ_PARTICLE) {
+            // If I am a particle, maybe the umbrella will stop me!
+            if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_STOPUMBRELLA))) {
+               if (ds_juni_umbrellaCollide(object->x, object->y, object->xs, object->ys)) {
+                  object->_deleteme = 1; // The umbrella stopped me!
+               	return; 
+             	}  	
+            }   
+         }   
+         // Copy damage matrix
+	      ds_map_copyFlag(ds_3dsprite_getSpriteFrame(object->sprite, ds_3dsprite_getFrame(object->sprite)),
+								 ds_3dsprite_getXSize(object->sprite),
+								 ds_3dsprite_getYSize(object->sprite),
+								 ds_3dsprite_getX(object->sprite),
+								 ds_3dsprite_getY(object->sprite),
+								 &ds_global_map.tileMapDamTemp);
+      }   
+	} 
 }   
 
 void ds_objects_postmanage(ds_t_object *object) {
@@ -643,22 +673,7 @@ void ds_objects_postmanage(ds_t_object *object) {
       if (ds_objects_lib_distanceJuni(object,0) < ds_global_juni.redGlow)
       	ds_global_juni.redGlow = ds_objects_lib_distanceJuni(object,0);
    }  	
-   if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_HARMFUL)) && 
-			(!ds_util_bitOne16(object->flags,DS_C_OBJ_F_INVISIBLE))) {
-      // Damage Matrix
-      int distX = ds_objects_lib_distanceJuniX(object, 0, 1);
-      int distY = ds_objects_lib_distanceJuniY(object, 0, 1);
-      if ((distX < (object->xs * 2)) && // Optimization:
-          (distY < (object->ys * 2))) { // Only objets near Juni may harm her!!!!
-         // Copy damage matrix
-	      ds_map_copyFlag(ds_3dsprite_getSpriteFrame(object->sprite, ds_3dsprite_getFrame(object->sprite)),
-								 ds_3dsprite_getXSize(object->sprite),
-								 ds_3dsprite_getYSize(object->sprite),
-								 ds_3dsprite_getX(object->sprite),
-								 ds_3dsprite_getY(object->sprite),
-								 &ds_global_map.tileMapDamTemp);
-      }   
-	}   
+	ds_objects_damageMatrix(object);   
 	
 	// A.3) Blink management
 	if (object->blink > 0)
@@ -694,22 +709,7 @@ void ds_objects_manage() {
 				(ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE))
 				 ) {
          	// Do nothing! Nothing?... at least the collision check!!!!!
-            if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_HARMFUL)) && 
-						(!ds_util_bitOne16(object->flags,DS_C_OBJ_F_INVISIBLE))) {
-               // Damage Matrix
-					int distX = ds_objects_lib_distanceJuniX(object, 0, 1);
-					int distY = ds_objects_lib_distanceJuniY(object, 0, 1);
-					if ((distX < (object->xs * 2)) && // Optimization:
-					    (distY < (object->ys * 2))) { // Only objets near Juni may harm her!!!!
-	               // Copy damage matrix
-				      ds_map_copyFlag(ds_3dsprite_getSpriteFrame(object->sprite, ds_3dsprite_getFrame(object->sprite)),
-											 ds_3dsprite_getXSize(object->sprite),
-											 ds_3dsprite_getYSize(object->sprite),
-											 ds_3dsprite_getX(object->sprite),
-											 ds_3dsprite_getY(object->sprite),
-											 &ds_global_map.tileMapDamTemp);
-	            }   
-         	}            	
+         	ds_objects_damageMatrix(object);
          } else {
             // Managed...
             (*oManaged) = 1;

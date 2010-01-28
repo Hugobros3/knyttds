@@ -306,6 +306,7 @@ int _ds_objects_p_o03_create(u8 bank, u8 obj, void *objp) {
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
 																								  // <TODO> Good stress test: Delete this flag ^_-
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -340,6 +341,7 @@ int _ds_objects_p_oflying_create(u8 bank, u8 obj, void *objp) {
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
 																								  // <TODO> Good stress test: Delete this flag ^_-
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -374,6 +376,7 @@ int _ds_objects_p_o12_create(u8 bank, u8 obj, void *objp) {
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
 																								  // <TODO> Good stress test: Delete this flag ^_-
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -806,6 +809,28 @@ int _ds_objects_p_o38_create(u8 bank, u8 obj, void *objp) {
    return ds_objects_lib_iseventitem(object->type);
 }   
 
+int _ds_objects_p_o38_createU(u8 bank, u8 obj, void *objp) {
+   ds_t_object *object = objp;
+   
+   // Initialize
+	if (ds_objects_lib_initObject(bank, obj, object) == 0)
+		return 0;
+		
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
+		
+	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
+		return 0;
+
+	// Specific Operations
+   object->type = DS_C_OBJ_PARTICLE;
+   object->managed = 1;
+   
+   // Return 1 if I'm an event/item
+   return ds_objects_lib_iseventitem(object->type);
+}   
+
 int _ds_objects_p_o38_manage(void *objp) {
    ds_t_object *object = objp;
    
@@ -873,6 +898,7 @@ int _ds_objects_p_o42_create(u8 bank, u8 obj, void *objp) {
 		
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -906,6 +932,7 @@ int _ds_objects_p_o43_create(u8 bank, u8 obj, void *objp) {
 		
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -1278,6 +1305,7 @@ int _ds_objects_p_o54_create(u8 bank, u8 obj, void *objp) {
 		
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -1355,6 +1383,7 @@ int _ds_objects_p_o56_create(u8 bank, u8 obj, void *objp) {
 		
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -1395,6 +1424,7 @@ int _ds_objects_p_o57_create(u8 bank, u8 obj, void *objp) {
 		
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STOPUMBRELLA);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -1615,13 +1645,13 @@ int ds_particles0_assign(u8 obj, ds_t_object *object) {
          break; // not really necessary...                           
       case 38:
          // Seed
-         object->fcreate = _ds_objects_p_o38_create;
+         object->fcreate = _ds_objects_p_o38_createU;
          object->fmanage = _ds_objects_p_o38_manage;
          return 1;
          break; // not really necessary...                           
       case 39:
          // Fireball (=seed)
-         object->fcreate = _ds_objects_p_o38_create;
+         object->fcreate = _ds_objects_p_o38_createU;
          object->fmanage = _ds_objects_p_o39_manage;
          return 1;
          break; // not really necessary...                           
@@ -1657,7 +1687,7 @@ int ds_particles0_assign(u8 obj, ds_t_object *object) {
          break; // not really necessary...                           
       case 45:
          // Special Firewall particle (=seed)
-         object->fcreate = _ds_objects_p_o38_create;
+         object->fcreate = _ds_objects_p_o38_createU;
          object->fmanage = _ds_objects_p_o38_manage;
          return 1;
          break; // not really necessary...                           

@@ -141,6 +141,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE 10
 #define DS_C_OBJ_F_GLOBAL_RADAR 11
 #define DS_C_OBJ_F_WARN_SPECIAL 12
+#define DS_C_OBJ_F_STOPUMBRELLA 13
 
 // Object constants - Arrays
 #define DS_C_LIMITS_VAROBJ 12
@@ -415,6 +416,7 @@ typedef struct ds_tt_juni {
    int movstateX;
 	int movstateY;
 	int gracePeriodJump;
+	int gracePeriodClimb;
 	int inDblJump;
 	int inNoBtnJump;
    int x;  // Absolute

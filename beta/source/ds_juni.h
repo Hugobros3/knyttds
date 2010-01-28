@@ -56,4 +56,11 @@ int ds_juni_isOnTheGroundMoving();
 /* Checks if Juni is facing to the right */
 int ds_juni_faceRight();
 
+/* Knows if Juni has the umbrella "on" */
+int ds_juni_umbrellaOn();
+
+/* Returns if something has collided with the umbrella */
+int ds_juni_umbrellaCollide(int x, int y, int xs, int ys);
+
+
 #endif
