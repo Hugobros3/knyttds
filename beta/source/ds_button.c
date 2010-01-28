@@ -292,8 +292,8 @@ int ds_button_addText(int id, int cx, int cy, char *text, u16 color, int size, i
       btnText->cy = cy;      
       btnText->color = color;     
 		btnText->size = size;       
-		btnText->centered = centered;       
-      PA_CopyText(btnText->text,text);
+		btnText->centered = centered;
+	  sprintf(btnText->text,"%s",text);
       return btnText->id;
    }   
    
@@ -469,7 +469,7 @@ int ds_button_updateText(int id, int textid, char *text) {
    if (btn != NULL) {
       btnText = _ds_button_getText(btn,textid);
       if (btnText != NULL) {
-         PA_CopyText(btnText->text,text);
+		 sprintf(btnText->text,"%s",text);
       }         
    }   
    return 0;   

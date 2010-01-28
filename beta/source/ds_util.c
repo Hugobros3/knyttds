@@ -362,4 +362,14 @@ void ds_util_arrNum_Del(void *param, int id) {
 	ptr->Cnt = (id < ptr->Cnt)?id:ptr->Cnt; // Assuring a free place for next element :-D
 	ptr->Num--;    // Normal, one element got away :-P
 }
-   
+
+/* Compare text, PAlib impl */   
+u8 PA_CompareText(char *text1, char *text2){
+	u8 ok = 1; // Devrait etre bon
+	u8 i = 0; 
+	while(ok && text2[i]){
+		if (text1[i] != text2[i]) ok = 0;
+		i++;
+	}
+	return ok;
+}

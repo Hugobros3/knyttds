@@ -1041,7 +1041,7 @@ void _ds_juni_manageMovement() {
 	
    // Clash with environment, Horizontal Speed. 17 ->, 5 <-.
 	if (ds_global_juni.velX > 0) {
-	   if (ds_map_collMovBasic(newx,newy,17)) {
+	   if (ds_map_collMovBasic(newx,newy,17)) { // <TODO> 17 [ori] vs 16
 	      // Collision! - Let's move Juni to a safe place...
 	      ok = 0;
 	      for (i = 1; i <= ds_global_juni.velX; i++) {
@@ -1092,11 +1092,11 @@ void _ds_juni_manageMovement() {
 	   }   
 	} else 
 	if (ds_global_juni.velX < 0) {
-	   if (ds_map_collMovBasic(newx,newy,6)) { // <TODO> 6 vs 5
+	   if (ds_map_collMovBasic(newx,newy,6)) { 
 	      // Collision! - Let's move Juni to a safe place...
 	      ok = 0;
 	      for (i = 1; i <= abs(ds_global_juni.velX); i++) {
-	         if (!ds_map_collMovBasic(newx,oldy,6 + i)) { // <TODO> 6 vs 5
+	         if (!ds_map_collMovBasic(newx,oldy,6 + i)) {
 	            ok = 1;
 	            newx = newx + i;
 	            break;
@@ -1108,7 +1108,7 @@ void _ds_juni_manageMovement() {
 			}			
 	      if ((ok) && (_ds_juni_canClimb()) && 
 					(ds_map_collClimbBasic(newx - 1,oldy,6)) &&
-					(!_ds_juni_checkNoClimb(newx-1, oldy,6)) ) { // <TODO> 6 vs 5
+					(!_ds_juni_checkNoClimb(newx-1, oldy,6)) ) {
 	         // But... maybe juni should start Climbing? :-) <TODO> Flying
 		      if ((ds_global_juni.state == DS_C_JUNI_ST_JUMP_L) || 
 					 (ds_global_juni.state == DS_C_JUNI_ST_FALL_L)) {

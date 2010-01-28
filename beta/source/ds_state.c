@@ -54,7 +54,7 @@ void ds_state_var_resetArrInt()
 
 void state_reset() {
 	int i;
-	PA_CopyText(lc_str,"");
+	sprintf(lc_str,"");
 	for (i = 0; i < 16; i++) {
 		lc_val[i] = 0;
    }		
@@ -105,7 +105,7 @@ void ds_state_updateState()
 /* Assigns var. - String */
 void ds_state_var_setStr(char *str)
 {
-	PA_CopyText(lc_str,str);
+	sprintf(lc_str,"%s",str);
 }
 
 /* Gets var. - String */

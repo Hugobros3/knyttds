@@ -105,5 +105,7 @@ int ds_util_arrNum_Get(void *param);
 /* Deletes an unique ID from the ArrNum structure */
 void ds_util_arrNum_Del(void *param, int id);
 
+/* Compare text, PAlib impl */
+u8 PA_CompareText(char *text1, char *text2);
 
 #endif

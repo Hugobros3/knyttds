@@ -24,12 +24,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* Details to solve:
+= New PAlib
+	ADD -lm ! (math)
+	return in PA_3DCreateSprite!
 = Details / Bugs (Mayor)
 	- Hunt and Destroy BO
 		- Symptoms:
 		   + "Cannot load map.bin" on changing screen
 		   + Signs and (icon) objects cannot be touched
-		- DELETE (-fbounds-check) from makefile
 
 = Details / Bugs (Minor)
 	- INI line too long if not CR at the end
