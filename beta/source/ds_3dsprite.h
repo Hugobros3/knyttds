@@ -133,4 +133,7 @@ int ds_3dsprite_hasHWSprite(int id);
 /* Gets "invisible" state */
 int ds_3dsprite_getInvisible(int id);
 
+/* Tells the 3DSprite system how muh memory we will need for the objects on this screen */ 
+void ds_3dsprite_setObjVRAM(int size);
+
 #endif

@@ -402,6 +402,16 @@ int ds_3dspritehdd_getHeight(u8 bank, u8 obj) {
 	return sprite->y;
 }   
 
+/* Returns both width and height of the sprite bank/obj */
+void ds_3dspritehdd_getXY(u8 bank, u8 obj, int *x, int *y) {
+   _ds_t_spritehdd *sprite;
+   sprite = _ds_3dspritehdd_getSprite(bank,obj);
+
+	// Get X/Y
+	*x =  sprite->x;
+	*y =  sprite->y;
+}   
+
 /* Returns the max number of frames contained inside the sprite bank/obj */
 int ds_3dspritehdd_getFrames(u8 bank, u8 obj) {
    _ds_t_spritehdd *sprite;
@@ -587,4 +597,5 @@ int ds_3dspritehdd_load(u8 bank, u8 obj) {
 	
 	// Return...
 	return val;
-}   
+}  
+  

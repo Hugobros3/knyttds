@@ -46,6 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_linkedlist.h"
 #include "ds_util.h"
 #include "ds_3dsprite.h"
+#include "ds_3dspritehdd.h"
 #include "ds_world.h"
 #include "ds_input.h"
 #include "ds_particles0.h"
@@ -528,24 +529,39 @@ int ds_objects_loadHDD() {
    u8 obj,bank;
    void *res;
    int nobj = 0;
+   int totalsize = 0;
    int safety = 0;
 
-   // For every object in the world... Count!
+   // For every object in the world... Count and check things like size!
    for (zz = 0; zz < 4; zz++) {
 	   for (yy = 0; yy < 10; yy++) {
 		   for (xx = 0; xx < 25; xx++) {
 		      obj = ds_global_map.room.objlayer[zz].obj[yy][xx];
-		      if (obj != 0)
+		      if (obj != 0) {
+		         // First, count objects
 					nobj++;
+					// Consider the size of the objects in the screen
+					// Only for certain banks
+					bank = ds_global_map.room.objlayer[zz].bank[yy][xx];
+					int xo,yo;
+					if ((bank != 16) || (bank != 15) || 
+					    (bank != 7) || (bank != 1) || 
+						 (bank != 0)) {	      
+						ds_3dspritehdd_getXY(bank, obj, &xo, &yo);
+						totalsize += (ds_util_convertPow2(xo) * ds_util_convertPow2(yo));
+					}			
+				}			
 			}
 		}				   
 	}		
 	
+	// Execute safety checks, related to aspects such as the size of the objects
+	ds_3dsprite_setObjVRAM(totalsize);	
 	// FIXME: SAFETY CHECK!! (Special Anti-Mushroom for Beta ;-) )
-	if (nobj > (250 + 125)) {
+	/*if (nobj > (250 + 125)) {
 	   // WTF!!!!!!!!!!!!!! Sorry, only bank 0 allowed on this screen :-O 
 	   safety = 1;
-	}   	
+	} */  	
    
    // For every object in the world...
    for (zz = 0; zz < 4; zz++) {

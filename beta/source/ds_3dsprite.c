@@ -73,6 +73,9 @@ Bugs?
 // Max number of objects/sprites in the screen
 #define _MAX_OBJSPRITE 1024
 
+// Max size of the VRAM for object textures (a 256x256 texture)
+#define _MAX_VRAMTEX 65536
+
 // Max number of parts for an sprite
 #define _MAX_PARTSSPRITE 64
 
@@ -159,8 +162,10 @@ u8 spriteGlobalPainted[DS_C_MAX_BANK][DS_C_MAX_OBJ];
 u8 particleGlobalPainted[DS_C_MAX_OBJ_PART];
 u8 coGlobalPainted[DS_C_MAX_OBJ_CO];
 
+// RAW Size of the VRAM (not considering optimizations)
+int _vramSize3D = 0;
 
-//const unsigned char _texture[10 * 64 * 64 * 2] __attribute__ ((aligned (4)));
+// Number of textures in this screen (for debug purposes)
 int _maxtexture = 0;
 
 // Big Screen - textures
@@ -327,9 +332,15 @@ int _ds_3dsprite_imaInfo_partition(_ds_t_sprite* sprite, int createSpr, int crea
    xsize = sprite->data.xsize;
    ysize = sprite->data.ysize;
    	
-   // 1st CASE: Sprite is < 64x64. Make a normal sprite
+   // 1st CASE: Sprite is < 64x64. Make a normal sprite (if there are no optimizations)
    if ((xsize <= 64) && (ysize <= 64)) {
-      mixed = 0;
+      if ((xsize > 24) && (ysize > 24)) {
+      	if (_vramSize3D < _MAX_VRAMTEX)
+      		mixed = 0; // Fit the texture to the size of the sprite
+      	else mixed = 3; // Special "as small as possible" check
+   	} else {
+   	   mixed = 0; // For 24x24, fit the texture to the size of the sprite
+		}     
    } else  
    // 2nd CASE: Sprite is Squared   
    if (xsize == ysize) {
@@ -394,7 +405,11 @@ int _ds_3dsprite_imaInfo_partition(_ds_t_sprite* sprite, int createSpr, int crea
 		tmp2 = tmp2 * j; // Area Y
 	   if ((tmp*tmp2) > 16384)	
 	   	return 0; // No HW sprite!!!!!!!
-	}  
+	} else if (mixed == 3) {
+	   // Special optimization
+	   i = 16;
+	   j = 16;
+	}    
 		
 	// 3) Create the normal/mixed sprite
 	if (!mixed) { // NORMAL
@@ -1623,8 +1638,25 @@ void ds_3dsprite_drawAll(int camX, int camY) {
 	ds_gamestatus_debugOutput(1,0,7,ds_global_string,DS_C_STA_DEBUG);		
 	sprintf(ds_global_string,"Updated: [%d] %d (%d)          ",ds_util_arrNumMax(spriteListArr),updated,_maxtexture); 
 	ds_gamestatus_debugOutput(1,0,8,ds_global_string,DS_C_STA_DEBUG);
-	sprintf(ds_global_string,"DEBUG: [%d]",ds_global_debug); 
+	sprintf(ds_global_string,"DEBUG VRAM: [%d]",_vramSize3D); 
 	ds_gamestatus_debugOutput(1,0,9,ds_global_string,DS_C_STA_DEBUG);	
 	_maxtexture = 0;
 }
-     
+   
+/* Tells the 3DSprite system how muh memory we will need for the objects on this screen */ 
+void ds_3dsprite_setObjVRAM(int size) {
+   /*
+   	This function requires an explanation. The amount of VRAM in the DS is limited, 
+   	and there are some critters who will use a lot of extra VRAM due to the 
+		"all 3D sprites must be square" requirement.
+		The *mix* mechanism was used to avoid these situations, but all sprites smaller than
+		64x64 (e.g. the croc) will use a whole 64x64 texture for themselves.
+		This value is used to avoid such situations. If it is bigger than a certain threshold,
+		all sprites bigger than 32x32 will use the *mix* approach with 16x16 textures.
+		Of course, this mechanism "as is" is not perfect: it does not consider CO big sprites
+		and GLOBAL sprites (I should have a special function for returning whether a sprite
+		is global or not). Still, the only KS levels who will use this mechanism are those
+		levels with plenty of overhead, and the optimization is worth.
+   */
+	_vramSize3D = size;  
+}

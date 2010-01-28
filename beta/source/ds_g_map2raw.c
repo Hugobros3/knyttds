@@ -353,7 +353,7 @@ void ds_g_map2raw_state_err() {
    PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
 										0, 168,  // base
 										255, 191, // max
-										"Low HDD! Please delete files in your flashcart!\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
+										"No Space in HDD! Delete files in your flashcart!\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
    ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
 	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
 }
@@ -412,12 +412,15 @@ void ds_g_map2raw_paint() {
 			(256 >> 1) - (24 >> 1), (192 >> 1) - (24 >> 1));
       // Get the moving particles & other stuff
       if (_ds_map2raw_state == _DS_MAP2RAW_CHECK) {
-         ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_REDGLOW, 0);
+         ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_CYANGLOW, 0);
          sprintf(ds_global_string,"Please Wait (map)...");
-      } else {
+      } else if (_ds_map2raw_state != _DS_MAP2RAW_WAIT) {
          ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_CYANGLOW, 0);
          sprintf(ds_global_string,"Please Wait (%d to go)...",_ds_map2raw_raws);
-		}      
+		} else {
+         ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_REDGLOW, 0);
+         sprintf(ds_global_string,"Optimization failed:");
+		}        
       ds_15bpp_initRaw(&ima15bpp,ima,24,24,1);
       // Paint the moving particles
       int d = 32; // Distance from the center of Juni

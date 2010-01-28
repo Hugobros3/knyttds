@@ -575,7 +575,8 @@ dictionary * iniparser_load(const char * ininame)
         lineno++ ;
         len = (int)strlen(line)-1;
         /* Safety check against buffer overflows */
-        if (line[len]!='\n') {
+	if ((ASCIILINESZ-last == len+1) && line[len]!='\n') {
+        //if (line[len]!='\n') {
             sprintf(inierr,
                     "INI:line too long: (%d) \n",
                     lineno);
