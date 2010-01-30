@@ -474,27 +474,27 @@ void _ds_juni_manageMovement() {
 		}
 	} 
    if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_UP)) {
-      heldMov = 1;
-      // Check if we need to go climbing
-      if (_ds_juni_canClimb()) {
-         if ((ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L) || 
+		heldMov = 1;
+		// Check if we need to go climbing
+		if (_ds_juni_canClimb()) {
+			if ((ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L) || 
 			    (ds_global_juni.state == DS_C_JUNI_ST_CLIMB_R)) {
 			   // Keep on climbing
 			   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_CLIMB;
 			} else {
 			   // Climb?
-	         flag = 0;
+				flag = 0;
   				newx = ds_3dsprite_getX(ds_global_juni.sprite);
-	   		newy = ds_3dsprite_getY(ds_global_juni.sprite);
-		      if ((ds_global_juni.state == DS_C_JUNI_ST_STOP_R) ||
+				newy = ds_3dsprite_getY(ds_global_juni.sprite);
+				if ((ds_global_juni.state == DS_C_JUNI_ST_STOP_R) ||
 				    (ds_global_juni.state == DS_C_JUNI_ST_WALK_R) ||
 				    (ds_global_juni.state == DS_C_JUNI_ST_RUN_R)) {
 	   				newx = ds_3dsprite_getX(ds_global_juni.sprite) + 1;
 	   				flag = (ds_map_collMovBasic(newx,newy,17) && !_ds_juni_checkNoClimb(newx,newy,17));
 				}
-		      if ((ds_global_juni.state == DS_C_JUNI_ST_STOP_L) ||
+				if ((ds_global_juni.state == DS_C_JUNI_ST_STOP_L) ||
 					 (ds_global_juni.state == DS_C_JUNI_ST_WALK_L) || 
-		      	 (ds_global_juni.state == DS_C_JUNI_ST_RUN_L)) {
+					 (ds_global_juni.state == DS_C_JUNI_ST_RUN_L)) {
 	   				newx = ds_3dsprite_getX(ds_global_juni.sprite) - 1;
 	   				flag = (ds_map_collMovBasic(newx,newy,6) && !_ds_juni_checkNoClimb(newx,newy,6)); // Same check as collision, 2b
 				}
@@ -506,11 +506,11 @@ void _ds_juni_manageMovement() {
 				}   
 			}			
 		}		    
-      // If in certain states, "look up" (camera)
-      if ((ds_juni_isOnTheGround()) && (!ds_global_optimizationStylusCamera)) {
-         // If we are on the ground, continue with the camera!!!!
-         ds_camera_moveCoord(0,-1,4);
-      }   
+		// If in certain states, "look up" (camera)
+		if ((ds_juni_isOnTheGround()) && (!ds_global_optimizationStylusCamera)) {
+			// If we are on the ground, continue with the camera!!!!
+			ds_camera_moveCoord(0,-1,4);
+		}   
    } else  
    if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_DOWN)) {
       heldMov = 1;
@@ -1039,7 +1039,7 @@ void _ds_juni_manageMovement() {
 	// In other words... it works, but the mess is too much XD
 	diagonals = 0;
 	
-   // Clash with environment, Horizontal Speed. 17 ->, 5 <-.
+   // Clash with environment, Horizontal Speed. 16 ->, 6 <-. (old: 17 5)
 	if (ds_global_juni.velX > 0) {
 	   if (ds_map_collMovBasic(newx,newy,17)) { // <TODO> 17 [ori] vs 16
 	      // Collision! - Let's move Juni to a safe place...

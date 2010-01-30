@@ -56,7 +56,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _DS_MAP2RAW_CHECKPNG 2
 #define _DS_MAP2RAW_ENDOK 3
 #define _DS_MAP2RAW_ENDERR 4
-#define _DS_MAP2RAW_WAIT 5
+#define _DS_MAP2RAW_ENDERRB 5
+#define _DS_MAP2RAW_WAIT 6
 
 int _ds_map2raw_state;
 int _ds_map2raw_finish;
@@ -73,7 +74,7 @@ void ds_g_map2raw_paint();
 /* Checks condition to enter this state */
 int ds_g_map2raw_condition(char *level) {
    FILE *ftmp;
-
+   
    // First, if there is no optimization, do not enter
    if (!ds_global_optimizationUncompress) {
 		return 0;
@@ -90,6 +91,7 @@ int ds_g_map2raw_condition(char *level) {
       long dateMapBin = 0;
       sprintf(ds_global_string,"%s%s/%s/Map.bin",DS_DIR_MAIN,DS_DIR_WORLD,level);
       dateMapBin = ds_util_fileGetDate(ds_global_string);
+	  
       // Get Map.bin.raw date from map.bin.dat
       long dateMapRaw = 0;
       sprintf(ds_global_string,"%s%s/%s/Map.bin.dat",DS_DIR_MAIN,DS_DIR_WORLD,level);
@@ -178,6 +180,12 @@ void ds_g_map2raw_state_check() {
    FILE *f, *ftmp;
    char dummybuffer[5];
    ds_t_room roombuffer;
+   
+   // First, check that we have enough battery
+   //if (...tester for battery here...) {
+   // 	   _ds_map2raw_state = _DS_MAP2RAW_ENDERRB;
+   //	   return;
+   //}
    
    // OK, now convert from map.bin to map.bin.raw - opens begin and destination
    sprintf(ds_global_string,"%s%s/%s/Map.bin",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr());
@@ -348,12 +356,22 @@ void ds_g_map2raw_state_ok() {
 	_ds_map2raw_finish = 1;
 }
 
-/* Manages the state of the game - OK! */
+/* Manages the state of the game - HDD ERR! */
 void ds_g_map2raw_state_err() {
    PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
 										0, 168,  // base
 										255, 191, // max
 										"No Space in HDD! Delete files in your flashcart!\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
+   ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
+	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
+}
+
+/* Manages the state of the game - Battery ERR! */
+void ds_g_map2raw_state_errB() {
+   PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
+										0, 168,  // base
+										255, 191, // max
+										"LOW BATTERY! Cannot optimize map due to safety reasons\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
    ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
 	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
 }
@@ -378,6 +396,9 @@ void ds_g_map2raw_state() {
          break;
       case _DS_MAP2RAW_ENDERR:
          ds_g_map2raw_state_err();
+         break;
+      case _DS_MAP2RAW_ENDERRB:
+         ds_g_map2raw_state_errB();
          break;
       case _DS_MAP2RAW_ENDOK:
          ds_g_map2raw_state_ok();

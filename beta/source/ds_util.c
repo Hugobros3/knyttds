@@ -100,7 +100,7 @@ long ds_util_fileGetDate (char * fileName) {
    
    int i = stat ( fileName, &buf );
    // File found? 
-   if ( i == 0 )
+   if ( i == -1 )
 	   return 0;
 	   
 	// Get Date, in format similar to Epoch
