@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_ini.h"
 #include "ds_gamestatus.h"
 #include "ds_camera.h"
+#include "ds_music.h"
 
 // <TODO> - The system must be REDEFINED to fit the Box made by Juni
 // <TODO> - Also, HACKS NEED TO BE FIXED!!!!! (Diagonals hacks, and so on)
@@ -200,6 +201,14 @@ if (_ds_juni_umbrellaOn()) {
 	}	
 }      
 
+/* Checks if Juni is Wallswimming */
+int _ds_juni_isWallSwimming() {
+	// Wallswim = central pixels of Juni is blocked (2 checks for allowing change of screen)
+	int posx = ds_3dsprite_getX(ds_global_juni.sprite);
+	int posy = ds_3dsprite_getY(ds_global_juni.sprite);
+	return ((ds_map_coll(posx + 12, posy + 16)) || (ds_map_coll(posx + 12, posy + 10)));
+}
+
 //-------------------------------------------------------------------------------------------------
 // FUNCTIONS
 //-------------------------------------------------------------------------------------------------
@@ -267,6 +276,7 @@ int ds_juni_init(int x, int y, int resetmov, int resetinner) {
    ds_global_juni.x = x;
    ds_global_juni.y = y;      
    ds_global_juni.killme = 0;
+   ds_global_juni.sndchannel = -1;
    
    if (resetinner) {
       ds_global_juni.item = 0;
@@ -330,10 +340,218 @@ int ds_juni_init(int x, int y, int resetmov, int resetinner) {
 
 /* Resets the "Juni" structure */
 int ds_juni_reset() {
-   // Nothing to do here... values should be stored, and sprites will be deleted by its subsystem
-   // (besides, Juni does not "malloc" anything)
+   // Nothing to do here... except manage some values like the sound channels
+   ds_global_juni.sndchannel = -1;
    return 1;
 }   
+
+/* Emulate Juni's movement in wallswimming... Be a shadow like Juni, my friend -:) */
+void _ds_juni_manageMovementWallSwim() {
+/* 
+	- Wallswim?
+		No key = Juni goes up very slowly (0:0:1)
+		UP = Juni goes down slow (0:1)
+		LEFT-RIGHT = Juni goes the opposite direction. A bit more slow than normal walk
+		JUMP = Juni cancels the "No key" effect and goes down slow (same as UP)
+		
+*/ 
+	int direction;
+	int newstate;
+
+	// (0) Small details in every frame
+	//---------------------------------
+	// Changes the state of Juni to the limited states used in wallswim
+	if ((ds_global_juni.state != DS_C_JUNI_ST_RUN_L) &&
+	    (ds_global_juni.state != DS_C_JUNI_ST_RUN_R) &&
+		(ds_global_juni.state != DS_C_JUNI_ST_WALK_L) && 
+		(ds_global_juni.state != DS_C_JUNI_ST_WALK_R) &&
+		(ds_global_juni.state != DS_C_JUNI_ST_STOP_L) && 
+		(ds_global_juni.state != DS_C_JUNI_ST_STOP_R)) {
+			if (!_ds_juni_faceRight())
+				direction = -1; // Left
+			else direction = 1; // Right	
+			if (_ds_juni_isRunning()) {
+		      newstate = (direction == -1)?DS_C_JUNI_ST_RUN_L:DS_C_JUNI_ST_RUN_R;
+		      _ds_juni_change(newstate,1);			   
+			   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_RUN;
+			   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_STOP;
+			} else {
+		      newstate = (direction == -1)?DS_C_JUNI_ST_WALK_L:DS_C_JUNI_ST_WALK_R;
+		      _ds_juni_change(newstate,1);			   			   
+			   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_WALK;
+			   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_STOP;
+			}		
+	}
+
+	// (1) Manages Juni's movements from input
+	//----------------------------------------
+	int heldMov = 0; // To check if we held a movement key
+	if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_LEFT) || 
+		ds_util_bitOne16(ds_global_input.Held,DS_C_IN_RIGHT)) {
+		heldMov = 1;
+		// Normal Movement...
+		if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_LEFT))
+			direction = -1; // Left
+		else direction = 1; // Right	
+		// Stop: Move!
+		if ((ds_global_juni.state == DS_C_JUNI_ST_STOP_L) || 
+			(ds_global_juni.state == DS_C_JUNI_ST_STOP_R)) {
+				if (_ds_juni_isRunning()) {
+				  newstate = (direction == -1)?DS_C_JUNI_ST_RUN_L:DS_C_JUNI_ST_RUN_R;
+				  _ds_juni_change(newstate,1);			   
+				   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_RUN;
+				} else {
+				  newstate = (direction == -1)?DS_C_JUNI_ST_WALK_L:DS_C_JUNI_ST_WALK_R;
+				  _ds_juni_change(newstate,1);			   			   
+				   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_WALK;
+				}		
+		} else
+		// State "Walk" -> Walk/Run bis :-)
+		if ((ds_global_juni.state == DS_C_JUNI_ST_WALK_L) || 
+			(ds_global_juni.state == DS_C_JUNI_ST_WALK_R)) {					       
+			if (_ds_juni_isRunning()) {
+			  newstate = (direction == -1)?DS_C_JUNI_ST_RUN_L:DS_C_JUNI_ST_RUN_R;
+			  _ds_juni_change(newstate,1);			   
+			   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_RUN;
+			} else {
+			  if (((direction == 1) && (ds_global_juni.state == DS_C_JUNI_ST_WALK_L)) ||
+					((direction == -1) && (ds_global_juni.state == DS_C_JUNI_ST_WALK_R))) {
+				  newstate = (direction == -1)?DS_C_JUNI_ST_WALK_L:DS_C_JUNI_ST_WALK_R;
+				  _ds_juni_change(newstate,1);			   			   
+				   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_WALK;
+				}   
+			}      
+		} else
+		// State "Run" -> Walk/Run... NO SKID here
+		if ((ds_global_juni.state == DS_C_JUNI_ST_RUN_L) || 
+			(ds_global_juni.state == DS_C_JUNI_ST_RUN_R)) {					       
+			if (_ds_juni_isRunning()) {
+			  if (((direction == 1) && (ds_global_juni.state == DS_C_JUNI_ST_RUN_L)) ||
+					((direction == -1) && (ds_global_juni.state == DS_C_JUNI_ST_RUN_R))) {
+				  newstate = (direction == -1)?DS_C_JUNI_ST_RUN_L:DS_C_JUNI_ST_RUN_R;
+				  _ds_juni_change(newstate,1);			   			   
+				   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_RUN;
+				}   
+			} else {
+			  newstate = (direction == -1)?DS_C_JUNI_ST_WALK_L:DS_C_JUNI_ST_WALK_R;
+			  _ds_juni_change(newstate,1);			   			   
+			   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_WALK;
+			}      
+		} 
+	}
+	// Other keys (jump, up) are managed in the movement
+	if (!heldMov) {
+	
+		if (!_ds_juni_faceRight())
+			direction = -1; // Left
+		else direction = 1; // Right
+		if ((ds_global_juni.state != DS_C_JUNI_ST_STOP_L) && 
+			(ds_global_juni.state != DS_C_JUNI_ST_STOP_R)) {
+			newstate = (direction == -1)?DS_C_JUNI_ST_STOP_L:DS_C_JUNI_ST_STOP_R;
+			_ds_juni_change(newstate,1);			   
+			ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;
+		}
+	}
+	
+	// 1a) Manage Juni's camera (SAME AS NORMAL MOVEMENT)
+	//---------------------------------------------------
+	
+	// Camera-related movement
+   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_STYLUS)) {
+      // Camera!!!! We want to look to a certain direction
+      ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
+      int styX = (ds_global_input.stylusx - 128) / 22;
+      int styY = (ds_global_input.stylusy - 96) / 16;
+      ds_camera_moveCoord(styX,styY,1);
+   } else
+   if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_STYLUS)) {
+      // Camera!!!! Move!!!!
+      int styX = (ds_global_input.stylusx - 128) / 22;
+      int styY = (ds_global_input.stylusy - 96) / 16;
+      ds_camera_moveCoord(styX,styY,1);
+   } else if (!ds_global_optimizationStylusCamera) { // OK, buttons can also move the camera	  
+	   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_L)) {
+	      // Camera!!!! We want to look to a certain direction
+	      ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
+	      ds_camera_moveCoord(-1,0,4);
+	   } else
+	   if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_L)) {
+	      // Camera!!!! Move!!!!
+	      ds_camera_moveCoord(-1,0,4);      
+	   }	  
+	   if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_R)) {
+	      // Camera!!!! We want to look to a certain direction
+	      ds_camera_setType(DS_C_CAM_COORD,ds_global_juni.x,ds_global_juni.y);
+	      ds_camera_moveCoord(1,0,4);
+	   } else
+	   if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_R)) {
+	      // Camera!!!! Move!!!!
+	      ds_camera_moveCoord(1,0,4);      
+	   } 
+	}
+	
+	// 2) Set movements
+	//-----------------
+	ds_global_juni.velY = ((ds_global_juni.actualpix % 4) == 0)?-1:0; // By defect...
+	switch (ds_global_juni.movstateX) {
+		case DS_C_JUNI_MOVST_X_STOP:
+			ds_global_juni.velX = 0;
+			break;
+		case DS_C_JUNI_MOVST_X_WALK:
+		case DS_C_JUNI_MOVST_X_RUN:
+			if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_LEFT))
+				ds_global_juni.velX = ((ds_global_juni.actualpix % 2) == 0)?1:0;  // Reverse WS
+			else if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_RIGHT))
+				ds_global_juni.velX = ((ds_global_juni.actualpix % 2) == 0)?-1:0; // Reverse WS
+			break;
+	}
+	if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_UP)) {
+		ds_global_juni.velY = ((ds_global_juni.actualpix % 2) == 0)?1:0;
+	}
+	if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_TJUMP)) {
+		ds_global_juni.velY = ((ds_global_juni.actualpix % 2) == 0)?1:1;
+	}
+	
+	// 2a) Set movements
+	//------------------
+	int oldx = ds_3dsprite_getX(ds_global_juni.sprite);
+	int oldy = ds_3dsprite_getY(ds_global_juni.sprite);
+	int newx = oldx + ds_global_juni.velX;
+	int newy = oldy + ds_global_juni.velY;
+
+
+	// 2b) Clash with environment, (Inverse) Gravity... (NO)
+	//------------------------------------------------------
+
+	// 3) Manages Juni's animation
+	//-----------------------------
+   ds_global_juni.actualpix++;
+   switch (ds_global_juni.state) {
+		case DS_C_JUNI_ST_STOP_R:
+		case DS_C_JUNI_ST_STOP_L:
+		   	ds_3dsprite_setFrame(ds_global_juni.sprite,0);  // <TODO - Only once!>
+		   	ds_global_juni.framepix++;
+		   	break;
+		case DS_C_JUNI_ST_WALK_R:
+		case DS_C_JUNI_ST_WALK_L:
+			   ds_3dsprite_setFrame(ds_global_juni.sprite,
+						ds_global_juni.framepix % ds_3dsprite_getMaxFrame(ds_global_juni.sprite));
+		   	if ((ds_global_juni.actualpix % 2) == 0)
+		   		ds_global_juni.framepix++;						
+		   	break;
+		case DS_C_JUNI_ST_RUN_R:
+		case DS_C_JUNI_ST_RUN_L:
+				ds_3dsprite_setFrame(ds_global_juni.sprite,
+						ds_global_juni.framepix % ds_3dsprite_getMaxFrame(ds_global_juni.sprite));
+		   	if ((ds_global_juni.actualpix % 2) == 0)
+		   		ds_global_juni.framepix++;				
+		   	break;
+	}
+
+	// (Z) Updates Juni's position, rewrites sprite
+	//---------------------------------------------
+	ds_juni_updateSprites(newx,newy);
+}
 
 /* Manages Juni's movement... Move like Juni, my friend -:) */
 void _ds_juni_manageMovement() {
@@ -1828,9 +2046,83 @@ void _ds_juni_manageDead() {
 	}   
 }   
 
+/* Manages the sound produced by the movement of Juni... make sounds like Juni, my friend -:) */
+void _ds_juni_manageSound() {
+   switch (ds_global_juni.state) {
+		case DS_C_JUNI_ST_STOP_R:
+		case DS_C_JUNI_ST_STOP_L:
+			// IF old state = FALL/FLY -> PLAY Toc
+			// IF state change -> STOP LOOP
+			if ((ds_global_juni.old_state == DS_C_JUNI_ST_FALL_R) ||
+			    (ds_global_juni.old_state == DS_C_JUNI_ST_FALL_L) ||
+				(ds_global_juni.old_state == DS_C_JUNI_ST_FLY_R) ||
+				(ds_global_juni.old_state == DS_C_JUNI_ST_FLY_L))
+				ds_music_playSound("Land", 0, 0);
+			if (ds_global_juni.old_state != ds_global_juni.state)
+				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
+		   	break;
+		case DS_C_JUNI_ST_WALK_R:
+		case DS_C_JUNI_ST_WALK_L:
+			// IF state change (no direction change) -> LOOP Walk
+			if (ds_global_juni.old_state != ds_global_juni.state) {
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Walk", ds_global_juni.sndchannel, 1, 0);
+			}
+		   	break;
+		case DS_C_JUNI_ST_RUN_R:
+		case DS_C_JUNI_ST_RUN_L:
+			// IF state change (no direction change) -> LOOP Run
+			if (ds_global_juni.old_state != ds_global_juni.state) {
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Run", ds_global_juni.sndchannel, 1, 0);
+			}
+		   	break;
+		case DS_C_JUNI_ST_FALL_R:
+		case DS_C_JUNI_ST_FALL_L:
+			// IF state change -> STOP LOOP
+			if (ds_global_juni.old_state != ds_global_juni.state)
+				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
+		   	break;
+		case DS_C_JUNI_ST_JUMP_R:
+		case DS_C_JUNI_ST_JUMP_L:
+			// IF state change -> STOP LOOP, PLAY Jump
+			if (ds_global_juni.old_state != ds_global_juni.state) {
+				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
+				ds_music_playSound("Jump", 0, 0);
+			}
+		   	break;
+		case DS_C_JUNI_ST_CLIMB_R:
+		case DS_C_JUNI_ST_CLIMB_L:
+			// IF state change -> LOOP climb
+			// ELSEIF DS_C_JUNI_MOVST_Y_SLIDESOFT -> STOP LOOP
+			// ELSEIF DS_C_JUNI_MOVST_Y_SLIDE -> LOOP Slide
+			if (ds_global_juni.old_state != ds_global_juni.state) {
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Climb", ds_global_juni.sndchannel, 1, 0);
+			} else if (ds_global_juni.movstateY == DS_C_JUNI_MOVST_Y_SLIDESOFT) {
+				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
+			} else if (ds_global_juni.movstateY == DS_C_JUNI_MOVST_Y_SLIDE) {
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Slide", ds_global_juni.sndchannel, 1, 0);
+			} 
+		   	break;
+		case DS_C_JUNI_ST_FLY_R:
+		case DS_C_JUNI_ST_FLY_L:
+			// IF state change -> STOP LOOP
+			if (ds_global_juni.old_state != ds_global_juni.state)
+				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
+		   	break;
+		case DS_C_JUNI_ST_DEAD:
+			// IF state change -> STOP LOOP, PLAY Smoke
+			if (ds_global_juni.old_state != ds_global_juni.state) {
+				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
+				ds_music_playSound("Into Smoke", 0, 0);
+			}
+			break;
+   }   
+}
+
 /* Manages Juni... Be Juni, my friend -:) */
 void ds_juni_manage() {
    _ds_juni_varDbl = 0;
+   
+   ds_global_juni.old_state = ds_global_juni.state;
    
    // First, "dead" management
    if (ds_global_juni.state == DS_C_JUNI_ST_DEAD) {
@@ -1839,13 +2131,18 @@ void ds_juni_manage() {
    }   
    // Normal management!
    else {
-   	_ds_juni_manageMovement();
+	   if (!_ds_juni_isWallSwimming())
+			_ds_juni_manageMovement();
+	   else
+			_ds_juni_manageMovementWallSwim();
 	   _ds_juni_manageBoundaries();
 	   _ds_juni_manageObjectColl();
 	   _ds_juni_manageSpecials();
 	   _ds_juni_manageSpecialsSystem();
 	   _ds_juni_manageObjectDam();
-	} 
+	}
+	// Always - Sound management
+	_ds_juni_manageSound();
 }
 
 /* Get Juni X coordinate... including hologram coordinates :-P */

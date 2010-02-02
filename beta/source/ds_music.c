@@ -53,9 +53,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //-------------------------------------------------------------------------------------------------
 
 // Volume and others
-#define DS_C_MUSIC_MUSVOL 127
-#define DS_C_MUSIC_AMBVOL 127
-#define DS_C_MUSIC_CNTVOL -30
+#define DS_C_MUSIC_MUSVOL 112
+#define DS_C_MUSIC_AMBVOL 112
 #define DS_C_MUSIC_KNYTTCH 3
 #define DS_C_MUSIC_SOUNDCH 3
 #define DS_C_MUSIC_MP3CH 1
@@ -68,9 +67,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Music Type
 #define DS_C_MUSIC_MUS 0
 #define DS_C_MUSIC_AMB 1
-
-// Raw Channels
-#define DS_C_MUSIC_RAWCHMAX 12
 
 typedef struct ds_tt_musicSlot {
    int number;
@@ -100,9 +96,7 @@ typedef struct ds_tt_channelList {
 } ds_t_channelList;   
 
 ds_t_musicList _musicList;
-ds_t_channel _rawList[DS_C_MUSIC_RAWCHMAX];
 ds_t_channelList _channelList;
-int juniMusicLoop; // Which Juni's sfx is looping
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL FUNCTIONS - SLOT & LIST
@@ -285,7 +279,7 @@ void _ds_music_channelStop(ds_t_channel *mChannel) {
 	_ds_music_channelInit(mChannel, 1); 
 } 
 
-int _ds_music_channelPlay(ds_t_channel *mChannel) {
+int _ds_music_channelLoad(ds_t_channel *mChannel) {
    // First, Load the contents from file
 	FILE *file;
 	file = fopen(mChannel->slot.dir,"rb");
@@ -314,7 +308,11 @@ int _ds_music_channelPlay(ds_t_channel *mChannel) {
 	
 	// Closing...
 	fclose(file);   
-	   
+	
+	return 1;
+}
+
+int _ds_music_channelPlay(ds_t_channel *mChannel) {
    // Now, begins playing the music
    switch (mChannel->slot.format) {
       case DS_C_MUSIC_MP3:
@@ -379,9 +377,11 @@ void _ds_music_channelListAdd(ds_t_musicSlot *mSlot) {
 		return;
 	//PA_OutputText(1,0,17,"Getting %d-Playing-    ",mSlot->number);
 	mChannel->slot = *mSlot;
-	if (_ds_music_channelPlay(mChannel)) {
-		//	PA_OutputText(1,0,17,"Getting %d-Playing-OK. ",mSlot->number);
-	}	
+	if (_ds_music_channelLoad(mChannel)) {
+		if (_ds_music_channelPlay(mChannel)) {
+			//	PA_OutputText(1,0,17,"Getting %d-Playing-OK. ",mSlot->number);
+		}	
+	}
 }        
 
 void _ds_music_channelListPurgeInit() {
@@ -440,24 +440,191 @@ void _ds_music_channelListPurgeDo() {
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL FUNCTIONS - "RAW" CHANNELS
+// Note: The "RAW" channels use a structure that is completely different
+// 	from the normal Music/Ambiance structures. This is mainly due to a... glup... 
+//  ...design error where I didn't thought from the beginning on the coexistence
+//	between music/ambiance and raw sounds -_-.
 //-------------------------------------------------------------------------------------------------
 
-void _ds_music_rawListInit() {
-   int i;
-   for (i=0; i<DS_C_MUSIC_RAWCHMAX; i++) {
-      _ds_music_channelInit(&(_rawList[i]),0);
-   }   
+
+// Volume
+#define DS_C_MUSIC_SNDVOL 127
+
+// Raw Channels
+#define DS_C_MUSIC_RAWCHMAX 20 
+		// NOTE! The max. number of channels for the DS is 16, but I don't know where to 
+		// get the constant value ;-). Then, why 20? I am sure it is safe to put 16,
+		// but must check ASlib sources to see if there are situations when it does not returns
+		// -1..15.
+		// ... OK, I am a lazy coward :-).
+#define DS_C_MUSIC_RAWBUFFMAX 15
+
+typedef struct ds_tt_bufferRAW {
+	char name[256];
+	u8 *rawContent;
+	u32 rawSize;
+	int usedRate;       // How many times this sound was used
+	int priority;   // The priority of this sound (= do not delete!)
+} ds_t_bufferRAW;  
+
+typedef struct ds_tt_channelRAW {
+	int buffer;     // Which sound we are playing
+	int phyChannel; // The physical channel that stores this sound (-1 if not playing)
+} ds_t_channelRAW;  
+
+
+ds_t_bufferRAW _rawBuffer[DS_C_MUSIC_RAWBUFFMAX];
+ds_t_channelRAW _rawList[DS_C_MUSIC_RAWCHMAX];
+
+int _rawBufferSize;
+
+void _ds_music_rawInit() {
+	int i;
+	// Init the rawList - the list of channels and musics that are being played
+	for (i = 0; i < DS_C_MUSIC_RAWCHMAX; i++) {
+		_rawList[i].buffer = -1;
+		_rawList[i].phyChannel = -1;
+	}
+	// Init the rawBuffer - the list that contains the music that is being played
+	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
+		_rawBuffer[i].rawContent = NULL;
+	}
 }
 
-void _ds_music_rawListPut(int ch, ds_t_channel *info) {
-   _ds_music_channelStop(&(_rawList[ch]));
-   _rawList[ch] = *info;
+void _ds_music_rawReset() {
+	int i;
+	// Go channel by channel and stop every sound
+	for (i = 0; i < DS_C_MUSIC_RAWCHMAX; i++) {
+		if (_rawList[i].phyChannel != -1) {
+			AS_SoundStop(_rawList[i].phyChannel);
+		}
+	}
+	// Traverse the buffer and delete the sounds
+	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
+		if (_rawBuffer[i].rawContent != NULL) {
+			free(_rawBuffer[i].rawContent);
+		}
+	}	
+	// Re-Inits everything
+	_ds_music_rawInit();
 }
 
-// MUSIC (Temporal Sounds) -> Critters - DELETE
-// MUSIC (Temporal Sounds) -> Juni - MAINTAIN
-// MUSIC (Fixed Sounds) -> Juni - MAINTAIN
-// MUSIC (Temporal Sounds) -> System - MAINTAIN
+int _ds_music_rawBufferLoad(char *raw, ds_t_bufferRAW *ele) {
+	FILE *file;
+	
+	// Get real file
+	sprintf(ds_global_string,"%s%s/%s.raw",DS_DIR_MAIN,DS_DIR_RAWMUSIC,raw);
+	if (!ds_util_fileExists(ds_global_string)) {
+		return -1;
+	}	
+
+	// Open file
+	file = fopen(ds_global_string,"rb");
+	if (file == NULL) {
+	  // No file? Then, do not play ;-)
+	  return -1;
+	}
+	// File size...
+	fseek(file,0,SEEK_END);
+	ele->rawSize = ftell(file);
+	rewind(file);
+	
+	// Loading...
+	ele->rawContent = (u8*) malloc (sizeof(u8)*(ele->rawSize));
+	if (ele->rawContent == NULL) {
+		// No memory? Then, do not play ;-)
+		fclose(file);
+		return -1;	   	
+	}
+	fread((void *)ele->rawContent,1,ele->rawSize,file);
+	sprintf(ele->name,"%s",raw);
+	DC_FlushAll();
+
+	// Closing...
+	fclose(file);   
+	return 1;
+}
+
+int _ds_music_rawBufferReserve(char *raw) {
+	int buff;
+	ds_t_bufferRAW *ele;
+	int i;
+	
+	// First, search a buffer that contains the specific sound
+	buff = -1;
+	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
+		if (_rawBuffer[i].rawContent != NULL) {
+			if (PA_CompareText(_rawBuffer[i].name, raw)) {
+				buff = i;
+				break;
+			}
+		}
+	}	
+	if (buff != -1) {
+		// If sound is found, returns the index of the sound 
+		return buff;
+	}
+	
+	// If not, search a free buffer that will be used to store the new sound!
+	buff = -1;
+	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
+		if (_rawBuffer[i].rawContent == NULL) {
+			buff = i;
+			break;
+		}
+	}	
+	// If there is no free buffer... OK, we will have to create one :-)
+	if (buff == -1) {
+		return -1; // FIXME - create special algorithm!
+	}
+	// OK, now get the buffer and load it. If OK, return the buffer index
+	ele = &(_rawBuffer[buff]);
+	if (!_ds_music_rawBufferLoad(raw,ele)) {
+		return -1;
+	}
+	return buff;
+}
+
+int _ds_music_rawPlay(char *raw, int ch, int loop, int prio) {
+	int buff;
+	ds_t_bufferRAW *ele;
+	SoundInfo sound;
+	int realch;
+	
+	// First, check the buffer that can play this sound
+	buff = _ds_music_rawBufferReserve(raw);
+	if (buff == -1) {
+		return -1;
+	}
+	ele = &(_rawBuffer[buff]);
+	
+	// Now, play the sound...
+	sound.data = ele->rawContent;
+	sound.size = ele->rawSize;
+	sound.format = AS_PCM_8BIT;
+	sound.rate = 11025;
+	sound.volume = DS_C_MUSIC_SNDVOL;
+	sound.pan = 64; // FIXME - Change sound according to the position of the sound!
+	sound.loop = loop;
+	sound.priority = 0; // FIXME - We manage our own priority
+	sound.delay = AS_SURROUND;
+	if (ch == -1) {
+		realch = AS_SoundDefaultPlay(
+			sound.data,sound.size,sound.volume,sound.pan,sound.loop,sound.priority);
+		if (realch == -1) {
+			return -1;
+		}
+	} else {
+		realch = ch;
+		AS_SoundDirectPlay(realch,sound);
+	}
+	
+	// ...and store it on a specific channel
+	_rawList[realch].buffer = buff;
+	_rawList[realch].phyChannel = realch; // FIXME - manage real priority!!!
+	
+	return realch;
+}
   
 //-------------------------------------------------------------------------------------------------
 // FUNCTIONS
@@ -467,28 +634,24 @@ void _ds_music_rawListPut(int ch, ds_t_channel *info) {
 int ds_music_init() {
    // Starts the music engine
 	PA_VBLFunctionInit(AS_SoundVBL);
-	AS_Init(AS_MODE_MP3 | AS_MODE_SURROUND | AS_MODE_16CH);
-	AS_SetDefaultSettings(AS_PCM_8BIT, 11025, AS_SURROUND);
+	//AS_Init(AS_MODE_MP3 | AS_MODE_SURROUND | AS_MODE_16CH);
+	AS_Init(AS_MODE_MP3 | AS_MODE_16CH);
+	//AS_SetDefaultSettings(AS_PCM_8BIT, 11025, AS_SURROUND);
+	AS_SetDefaultSettings(AS_PCM_8BIT, 11025, AS_NO_DELAY);
 	
 	// Empties the music channels
 	_ds_music_channelListInit();
 	
 	// Empties the raw channels
-	_ds_music_rawListInit();
-	
-	// Reset's Juni's music
-	juniMusicLoop = -1;
-	
+	_ds_music_rawInit();
+		
 	return 1;
 }   
 
 /* Resets the music engine */
 int ds_music_reset() {
-   // Looping Juni? Stop!!!!!
-   if (juniMusicLoop != -1) {
-      AS_SoundStop(juniMusicLoop);
-      juniMusicLoop = -1;
-	}    
+	// Stop ALL RAW sounds
+	_ds_music_rawReset();
 	return 1;
 }
 
@@ -597,45 +760,42 @@ int ds_music_playMusicAndAmbiance(int m, int a1, int a2, int onlymp3) {
    return 1;
 }
 
-/* Tell the music subsystem that he must play a "Juni" Loop Sound */
-int ds_music_playJuni(int juniState, int movStateX, int movStateY) {
-   int sndLoop = -1;
-   // Convert the Juni state into the parameters for the music
-   // DS_C_JUNI_ST_STOP_
-   if ((juniState == DS_C_JUNI_ST_WALK_R) || (juniState == DS_C_JUNI_ST_WALK_L)) {
-      sprintf(ds_global_string,"Walk.raw");
-      sndLoop = 1;
-   } else   
-   if ((juniState == DS_C_JUNI_ST_RUN_R) || (juniState == DS_C_JUNI_ST_RUN_L)) {
-      sprintf(ds_global_string,"Run.raw");
-      sndLoop = 1;
-   } else   
-   //DS_C_JUNI_ST_FALL_
-   //DS_C_JUNI_ST_JUMP_
-   if ((juniState == DS_C_JUNI_ST_CLIMB_R) || (juniState == DS_C_JUNI_ST_CLIMB_L)) {
-      if (movStateY == DS_C_JUNI_MOVST_Y_CLIMB) {
-      	sprintf(ds_global_string,"Climb.raw");
-      	sndLoop = 1;
-    	} else   	
-      if (movStateY == DS_C_JUNI_MOVST_Y_SLIDE) {
-      	sprintf(ds_global_string,"Slide.raw");
-      	sndLoop = 1;
-    	}
-   } else   
-   //DS_C_JUNI_ST_FLY_
-   
-   // Stop Music if there is something playing
-   //AS_SoundVBL
-   
-   // No music, byebye
-   if (sndLoop == -1) {
-   }   
-   	return -1;
-   	
-   
+/* Tell the music subsystem that he must play a normal sound */
+int ds_music_playSound(char *raw, int loop, int prio) {
+	return _ds_music_rawPlay(raw, -1, loop, prio);
 }   
 
+/* Tell the music subsystem that he must play a normal sound in a specific channel */
+int ds_music_playSoundChannel(char *raw, int ch, int loop, int prio) {
+	// Special test: I am playing this right now? If yes, do not play -:) - FIXME loops!
+	if (ch != -1) {
+		int b = _rawList[ch].buffer;
+		if (b != -1) {
+			if (PA_CompareText(_rawBuffer[b].name, raw)) {
+				return ch;
+			} 
+		}
+	}
+	// OK, back to work
+	return _ds_music_rawPlay(raw, ch, loop, prio);
+}   
+
+/* Stops a certain channel */
+int ds_music_stopSoundChannel(int ch) {
+	if (ch != -1) {
+		if (_rawList[ch].phyChannel != -1) {
+			AS_SoundStop(_rawList[ch].phyChannel);
+			_rawList[ch].phyChannel = -1;
+		}
+	}
+}
+
 void ds_music_manage() {
+	// <DEBUG>
+	int i;
+	for (i = 0; i < DS_C_MUSIC_RAWCHMAX; i++) {
+			PA_OutputText(1,i,13,"%d",(_rawList[i].phyChannel != -1)?1:0);
+	}
 	// <DEBUG>
 	//PA_OutputText(1,0,13,"([%d]%d) F:%d       ",_channelList.cMP3[0].slot.number,_channelList.cMP3[0].slot.type,_channelList.cMP3[0].rawSize);
 	//PA_OutputText(1,0,14,"([%d]%d) F:%d       ",_channelList.cRAW[0].slot.number,_channelList.cRAW[0].slot.type,_channelList.cRAW[0].rawSize);
@@ -644,150 +804,3 @@ void ds_music_manage() {
 
 /* ScrapPad */
 
-/* OLD CODE
-
-typedef struct ds_tt_music {
-   int name; // Name of the music that is playing rigt now. 0 = nothing. -1 = special (destroy!!!!!)
-   int vol; // Volume of the music. Also used as a counter when vol<0
-} ds_t_music;
-
-typedef struct ds_tt_musicContainer {
-   ds_t_music actualMusic;
-   ds_t_music newMusic;
-} ds_t_musicContainer;    
-
-ds_t_musicContainer _ds_music_state;
-char mspath[255];
-
-
-void _ds_music_initMusic(ds_t_music *music) {
-   music->name = 0;
-   music->vol = 0;
-}
-
-void _ds_music_insertMusic(ds_t_music *music, int name) {
-   music->name = name;
-   music->vol = DS_C_MUSIC_MAXVOL;
-}   
-
-void _ds_music_volumeMusic(int vol) {
-   if ((vol >= 0) && (vol <=128))
-   	AS_SetMP3Volume(vol);
-}
-
-void _ds_music_playMusic(ds_t_music *music) {
-   // Actual mode: Streams music from "HDD"
-   sprintf(mspath,"%s%s/Song%d.mp3",ds_global_world.dir,DS_DIR_MUSIC,music->name);
-	if (!ds_util_fileExists(mspath))
-		sprintf(mspath,"%s%s/Song%d.mp3",DS_DIR_MAIN,DS_DIR_MUSIC,music->name);
-
-   AS_MP3StreamPlay(mspath);
-   _ds_music_volumeMusic(music->vol);
-}
-
-void _ds_music_stopMusic() {
-   AS_MP3Stop();
-}
-
-// Tell the system to stop playing music, fading
-int ds_music_stopMusic() {
-   // First case: (_,*) [empty music] -> (_,_)
-	if (_ds_music_state.actualMusic.name == 0) {
-		_ds_music_initMusic(&_ds_music_state.actualMusic);
-   	_ds_music_initMusic(&_ds_music_state.newMusic);
-	} else
-	// Second case: (A,*) -> (A,Del)
-	if (_ds_music_state.actualMusic.name != 0) {
-   	_ds_music_initMusic(&_ds_music_state.newMusic);
-		_ds_music_state.newMusic.name = -1;
-	} 
-}
-
-// Tell the system to stop playing music, ALTOGETHER 
-int ds_music_stopForceMusic() {
-   // Always, there will be no new music
-  	_ds_music_initMusic(&_ds_music_state.newMusic);
-	if (_ds_music_state.actualMusic.name != 0) {
-	   _ds_music_stopMusic();
-  		_ds_music_initMusic(&_ds_music_state.actualMusic);
-	}
-}
-
-// Tell the system to play a certain music 
-int ds_music_playMusic(int tune) {
-   // First case: (_,_) [empty music] -> Play(N') + (N',_)
-	if ((_ds_music_state.actualMusic.name == 0) && (_ds_music_state.newMusic.name == 0)) {
-	   _ds_music_insertMusic(&_ds_music_state.actualMusic,tune);
-	   _ds_music_playMusic(&_ds_music_state.actualMusic);
-	} else
-	// Second case: (A,_) [actual music is ON] -> (A,_) [A = N'] | (A,N') [otherw]
-	if ((_ds_music_state.actualMusic.name != 0) && (_ds_music_state.newMusic.name == 0)) {
-	   if (_ds_music_state.actualMusic.name != tune) {
-	      // New tune!!!
-	      _ds_music_insertMusic(&_ds_music_state.newMusic,tune);
-	   }   
-	} else   
-	// Third case: (A,N) [new music on queue] -> (A,N) [N = N'] | (A,_) [A = N'] | (A,N') [otherw]
-	if ((_ds_music_state.actualMusic.name != 0) && (_ds_music_state.newMusic.name != 0)) {
-	   if (_ds_music_state.newMusic.name == tune) {
-	      // Do nothing, keep (A,N)
-	   } else  
-	   if (_ds_music_state.actualMusic.name == tune) {
-	      _ds_music_initMusic(&_ds_music_state.newMusic); // No need to change!!!! (A,_)
-	   } else {
-	      _ds_music_insertMusic(&_ds_music_state.newMusic,tune); // We need to change... (A,N')
-	   }   
-	} else
-	// Fouth case: (_,N) [music wants to be played...] -> (_,N') <On this state N is not played yet>
-	if ((_ds_music_state.actualMusic.name == 0) && (_ds_music_state.newMusic.name != 0)) {
-	   _ds_music_insertMusic(&_ds_music_state.newMusic,tune); // We will play the new tune! (_,N')
-	}   
-}
-
-// Manage the music engine
-int ds_music_manage() {
-   // First case: (_,_) [empty music]
-	if ((_ds_music_state.actualMusic.name == 0) && (_ds_music_state.newMusic.name == 0)) {
-	   // Nothing to do!
-	} else
-	// Second case: (A,_) [actual music is ON] -> Fade In(A) [Vol<MAX] | ... [otherw]
-	if ((_ds_music_state.actualMusic.name != 0) && (_ds_music_state.newMusic.name == 0)) {
-	   // Fade in?
-	   if (_ds_music_state.actualMusic.vol < DS_C_MUSIC_MAXVOL) {
-	      _ds_music_state.actualMusic.vol++;
-	      _ds_music_volumeMusic(_ds_music_state.actualMusic.vol);
-	   }
-		// Nothing more...     
-	} else   
-	// Third case: (A,N) [new music on queue] -> Fade Out(A) [Vol>0] | Stop(A) + (_,N) [otherw]
-	if ((_ds_music_state.actualMusic.name != 0) && (_ds_music_state.newMusic.name != 0)) {
-	   // Fade out?
-	   if (_ds_music_state.actualMusic.vol > DS_C_MUSIC_CNTVOL) {
-	      _ds_music_state.actualMusic.vol--;
-	      if (_ds_music_state.actualMusic.vol >= 0) {
-	         _ds_music_volumeMusic(_ds_music_state.actualMusic.vol);
-	      }    
-	   } else {
-	      _ds_music_stopMusic();
-	      _ds_music_initMusic(&_ds_music_state.actualMusic); // Init A, so (A,N) -> (_,N)
-		}        
-	} else
-	// Fouth case: (_,N) [music wants to be played...] -> Play(N) + (N,_) [N != Del] | (_,_) [otherw]
-	if ((_ds_music_state.actualMusic.name == 0) && (_ds_music_state.newMusic.name != 0)) {
-	   if (_ds_music_state.newMusic.name == -1) {
-	      // Ups! Da end...
-		   _ds_music_initMusic(&_ds_music_state.actualMusic);
-   		_ds_music_initMusic(&_ds_music_state.newMusic);
-	   } else {
-	      _ds_music_state.actualMusic = _ds_music_state.newMusic; // (N,N)
-	      _ds_music_initMusic(&_ds_music_state.newMusic); // (N,_)
-	      _ds_music_playMusic(&_ds_music_state.actualMusic); 
-		}      
-	}   
-	
-	// <DEBUG>
-	PA_OutputText(1,0,13,"A (%d) V:%d",_ds_music_state.actualMusic.name,_ds_music_state.actualMusic.vol);
-	PA_OutputText(1,0,14,"A (%d) V:%d",_ds_music_state.newMusic.name,_ds_music_state.newMusic.vol);
-}
-
-*/

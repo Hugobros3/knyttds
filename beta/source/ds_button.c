@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_15bpp.h"
 #include "ds_linkedlist.h"
 #include "PA_Text16bitBuffer.h"
+#include "ds_music.h"
+
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL TYPES AND VARIABLES
@@ -80,6 +82,8 @@ typedef struct ds_tt_button {
 	// Special "onClick" image
 	u8 onClick;
 	char onClickIma[255];
+	u8 onClickS;
+	char onClickSnd[50];
 	u8 onClickTimer;
 } ds_t_button;   
 
@@ -101,6 +105,7 @@ void _ds_button_initButton(ds_t_button *btn) {
    btn->selected = 0;
    btn->inner = 0;
    btn->onClick = 0;
+   btn->onClickS = 0;
    btn->onClickTimer = 0;
    ds_15bpp_init(&(btn->image));
 }   
@@ -263,6 +268,19 @@ int ds_button_addClick(int id, int time, char *ima) {
    
    return -1;
 }   
+
+int ds_button_addSound(int id, char *snd) {
+   ds_t_button *btn;   
+   
+   btn = ds_linkedlist_get(_ds_buttons,id,NULL);
+   if (btn != NULL) {
+		btn->onClickS = 1;
+		sprintf(btn->onClickSnd,"%s",snd);
+		return btn->id;
+   }   
+   
+   return -1;
+}
    
 
 int ds_button_addImage(int id, int cx, int cy, char *ima) {
@@ -383,6 +401,8 @@ int ds_button_checkClick(int stylusx,int stylusy, int onclick) {
 	      	// Manage
 	      	btn->onManage = 0;
 	      	btn->manage((void *)btn);
+			if (btn->onClickS)
+				ds_music_playSound(btn->onClickSnd,0,0);
 	    	} else {
 	    	   btn->onClickTimer--;
 			}     	

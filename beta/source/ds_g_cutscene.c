@@ -216,12 +216,14 @@ void _ds_g_cutscene_createButtons() {
 		cutscene_btnBack = ds_button_create(10,158,48,12,0,cutscene_string);
 		ds_button_addClick(cutscene_btnBack,6,cutscene_string2);
 		ds_button_addManagement(cutscene_btnBack,_ds_cutscene_previous,0);
+		ds_button_addSound(cutscene_btnBack, "Tiny Hit");
 	}	
 	sprintf(cutscene_string,"%s%s/Gui_btn_forth.png",DS_DIR_MAIN,DS_DIR_SYS);   
 	sprintf(cutscene_string2,"%s%s/Gui_btn_forth2.png",DS_DIR_MAIN,DS_DIR_SYS);   
 	cutscene_btnNext = ds_button_create(198,158,48,12,0,cutscene_string);	
 	ds_button_addClick(cutscene_btnNext,6,cutscene_string2);
 	ds_button_addManagement(cutscene_btnNext,_ds_cutscene_next,0);
+	ds_button_addSound(cutscene_btnNext, "Tiny Hit");
 }
 
 

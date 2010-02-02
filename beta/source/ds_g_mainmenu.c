@@ -128,22 +128,27 @@ void ds_g_mainmenu_start() {
 	ds_button_addClick(btn_play, 6, filen2);
 	ds_button_addText(btn_play,4,2,"Play",PA_RGB(0,0,0),2,1);
 	ds_button_addManagement(btn_play,_ds_mainmenu_launchLevelMenu,0);
+	ds_button_addSound(btn_play, "Tiny Hit");
 	int btn_tutorial = ds_button_create(80,60,96,16,0,filen);
 	ds_button_addClick(btn_tutorial, 6, filen2);
 	ds_button_addText(btn_tutorial,4,2,"Tutorial",PA_RGB(0,0,0),2,1);
 	ds_button_addManagement(btn_tutorial,_ds_mainmenu_launchTutorial,0);
+	ds_button_addSound(btn_tutorial, "Tiny Hit");
 	int btn_getmorelevels = ds_button_create(80,88,96,16,0,filen);
 	ds_button_addClick(btn_getmorelevels, 6, filen2);
 	ds_button_addText(btn_getmorelevels,4,2,"Get More Levels",PA_RGB(0,0,0),2,1);
 	ds_button_addManagement(btn_getmorelevels,_ds_mainmenu_launchMoreLevels,0);	
+	ds_button_addSound(btn_getmorelevels, "Tiny Hit");
 	int btn_options = ds_button_create(80,116,96,16,0,filen);
 	ds_button_addClick(btn_options, 6, filen2);
 	ds_button_addText(btn_options,4,2,"Options",PA_RGB(0,0,0),2,1);	
 	ds_button_addManagement(btn_options,_ds_mainmenu_launchOptions,0);		
+	ds_button_addSound(btn_options, "Tiny Hit");
 	int btn_credits = ds_button_create(80,144,96,16,0,filen);
 	ds_button_addClick(btn_credits, 6, filen2);
 	ds_button_addText(btn_credits,4,2,"Credits",PA_RGB(0,0,0),2,1);	
 	ds_button_addManagement(btn_credits,_ds_mainmenu_launchCredits,0);		
+	ds_button_addSound(btn_credits, "Tiny Hit");
 
 	
 	// Tells itself that it needs to be drawn

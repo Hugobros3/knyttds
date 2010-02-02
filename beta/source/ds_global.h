@@ -46,6 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DS_DIR_SYS "/System"
 #define DS_DIR_SAVE "/Saves"
 #define DS_DIR_MUSIC "/Music"
+#define DS_DIR_RAWMUSIC "/Sfx"
 #define DS_DIR_AMBIANCE "/Ambiance"
 #define DS_DIR_CO "/custom objects"
 #define DS_DIR_RAW "/_Raw"
@@ -412,6 +413,7 @@ typedef struct ds_tt_juni {
    int actualpix;
    int framepix; // <-NOTE: in certain cases, this might be a negative value (longer jumps)
    // state
+   int old_state;
    int state;
    int movstateX;
 	int movstateY;
@@ -431,6 +433,7 @@ typedef struct ds_tt_juni {
    int holo_sprite;
    // Specials
    u8 killme;
+   int sndchannel;
 } ds_t_juni;   
 
 // World-Relevant Information (Mem)

@@ -190,6 +190,7 @@ void _ds_g_slideshow_createButtons() {
 		ds_button_addClick(slideshow_btnBack,6,slideshow_string);
 		ds_button_addText(slideshow_btnBack,-1,0,"Back",PA_RGB(0,0,0),1,1);
 		ds_button_addManagement(slideshow_btnBack,_ds_slideshow_previous,0);
+		ds_button_addSound(slideshow_btnBack, "Tiny Hit");
 	} else {
 	   // Normal buttons
 		sprintf(ds_global_string,"%s%s/Gui_btn_small.png",DS_DIR_MAIN,DS_DIR_SYS);   
@@ -198,11 +199,13 @@ void _ds_g_slideshow_createButtons() {
 		ds_button_addClick(slideshow_btnBack,6,slideshow_string);
 		ds_button_addText(slideshow_btnBack,-1,0,"Back",PA_RGB(0,0,0),1,1);
 		ds_button_addManagement(slideshow_btnBack,_ds_slideshow_previous,0);
+		ds_button_addSound(slideshow_btnBack, "Tiny Hit");
 		sprintf(ds_global_string,"%s%s/Gui_btn_forth.png",DS_DIR_MAIN,DS_DIR_SYS);   
 		sprintf(slideshow_string,"%s%s/Gui_btn_forth2.png",DS_DIR_MAIN,DS_DIR_SYS);   
 		slideshow_btnNext = ds_button_create(198,158,48,12,0,ds_global_string);	
 		ds_button_addClick(slideshow_btnNext,6,slideshow_string);
 		ds_button_addManagement(slideshow_btnNext,_ds_slideshow_next,0);
+		ds_button_addSound(slideshow_btnNext, "Tiny Hit");
 	}   
 }
 

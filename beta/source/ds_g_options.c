@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_input.h"
 #include "ds_linkedlist.h"
 #include "ds_15bpp.h"
+#include "ds_music.h"
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL TYPES AND VARIABLES
@@ -154,6 +155,8 @@ void _ds_g_options_createButtons() {
 	ds_button_addClick(options_btnBack,6,options_string);
 	ds_button_addText(options_btnBack,-1,0,"Back",PA_RGB(0,0,0),1,1);
 	ds_button_addManagement(options_btnBack,_ds_options_goBack,0);
+	ds_button_addSound(options_btnBack, "Tiny Hit");
+
 	
 	// Create "Optimizations" buttons
 	sprintf(ds_global_string,"%s%s/Gui_btn_medium.png",DS_DIR_MAIN,DS_DIR_SYS);   
@@ -161,10 +164,12 @@ void _ds_g_options_createButtons() {
 	options_btnOptimization7z = ds_button_create(24,32,96,16,0,ds_global_string);
 	ds_button_addText(options_btnOptimization7z,-1,0,"Uncompress maps?",PA_RGB(0,0,0),1,1);
 	ds_button_addManagement(options_btnOptimization7z,_ds_options_toggleOptimization7z,0);
+	ds_button_addSound(options_btnOptimization7z, "Menu Option");
 
 	options_btnOptimizationMus = ds_button_create(24,64,96,16,0,ds_global_string);
 	ds_button_addText(options_btnOptimizationMus,-1,0,"In-Game Music?",PA_RGB(0,0,0),1,1);
 	ds_button_addManagement(options_btnOptimizationMus,_ds_options_toggleOptimizationMus,0);
+	ds_button_addSound(options_btnOptimizationMus, "Menu Option");
 
 /*	options_btnOptimization = ds_button_create(24,96,96,16,0,ds_global_string);
 	ds_button_addText(options_btnOptimization,-1,0,"Preload maps?",PA_RGB(0,0,0),1,1);
@@ -173,16 +178,19 @@ void _ds_g_options_createButtons() {
 	options_btnOptimizationSty = ds_button_create(24,96,96,16,0,ds_global_string);
 	ds_button_addText(options_btnOptimizationSty,-1,0,"Stylus-only Camera?",PA_RGB(0,0,0),1,1);
 	ds_button_addManagement(options_btnOptimizationSty,_ds_options_toggleOptimizationSty,0);
+	ds_button_addSound(options_btnOptimizationSty, "Menu Option");
 
 	if (ds_global_optimizationUncompress) {
 		sprintf(ds_global_string,"%s%s/Gui_btn_mediumGreen.png",DS_DIR_MAIN,DS_DIR_SYS);   
 		options_btnOptimization7zYesNo = ds_button_create(136,32,96,16,0,ds_global_string);
 		ds_button_addManagement(options_btnOptimization7zYesNo,_ds_options_toggleOptimization7z,0);		
+		ds_button_addSound(options_btnOptimization7zYesNo, "Menu Option");
 		options_btnOptimization7zYesNo_Text = ds_button_addText(options_btnOptimization7zYesNo,-1,0,"ON",PA_RGB(0,0,0),1,1);
 	} else {
 		sprintf(ds_global_string,"%s%s/Gui_btn_mediumErase.png",DS_DIR_MAIN,DS_DIR_SYS);   
 		options_btnOptimization7zYesNo = ds_button_create(136,32,96,16,0,ds_global_string);
 		ds_button_addManagement(options_btnOptimization7zYesNo,_ds_options_toggleOptimization7z,0);				
+		ds_button_addSound(options_btnOptimization7zYesNo, "Menu Option");
 		options_btnOptimization7zYesNo_Text = ds_button_addText(options_btnOptimization7zYesNo,-1,0,"OFF",PA_RGB(0,0,0),1,1);	   
 	}   
 
@@ -190,11 +198,13 @@ void _ds_g_options_createButtons() {
 		sprintf(ds_global_string,"%s%s/Gui_btn_mediumGreen.png",DS_DIR_MAIN,DS_DIR_SYS);   
 		options_btnOptimizationMusYesNo = ds_button_create(136,64,96,16,0,ds_global_string);
 		ds_button_addManagement(options_btnOptimizationMusYesNo,_ds_options_toggleOptimizationMus,0);		
+		ds_button_addSound(options_btnOptimizationMusYesNo, "Menu Option");
 		options_btnOptimizationMusYesNo_Text = ds_button_addText(options_btnOptimizationMusYesNo,-1,0,"ON",PA_RGB(0,0,0),1,1);
 	} else {
 		sprintf(ds_global_string,"%s%s/Gui_btn_mediumErase.png",DS_DIR_MAIN,DS_DIR_SYS);   
 		options_btnOptimizationMusYesNo = ds_button_create(136,64,96,16,0,ds_global_string);
 		ds_button_addManagement(options_btnOptimizationMusYesNo,_ds_options_toggleOptimizationMus,0);				
+		ds_button_addSound(options_btnOptimizationMusYesNo, "Menu Option");
 		options_btnOptimizationMusYesNo_Text = ds_button_addText(options_btnOptimizationMusYesNo,-1,0,"OFF",PA_RGB(0,0,0),1,1);	   
 	}   
 
@@ -214,11 +224,13 @@ void _ds_g_options_createButtons() {
 		sprintf(ds_global_string,"%s%s/Gui_btn_mediumGreen.png",DS_DIR_MAIN,DS_DIR_SYS);   
 		options_btnOptimizationStyYesNo = ds_button_create(136,96,96,16,0,ds_global_string);
 		ds_button_addManagement(options_btnOptimizationStyYesNo,_ds_options_toggleOptimizationSty,0);		
+		ds_button_addSound(options_btnOptimizationStyYesNo, "Menu Option");
 		options_btnOptimizationStyYesNo_Text = ds_button_addText(options_btnOptimizationStyYesNo,-1,0,"ON",PA_RGB(0,0,0),1,1);
 	} else {
 		sprintf(ds_global_string,"%s%s/Gui_btn_mediumErase.png",DS_DIR_MAIN,DS_DIR_SYS);   
 		options_btnOptimizationStyYesNo = ds_button_create(136,96,96,16,0,ds_global_string);
 		ds_button_addManagement(options_btnOptimizationStyYesNo,_ds_options_toggleOptimizationSty,0);				
+		ds_button_addSound(options_btnOptimizationStyYesNo, "Menu Option");
 		options_btnOptimizationStyYesNo_Text = ds_button_addText(options_btnOptimizationStyYesNo,-1,0,"OFF",PA_RGB(0,0,0),1,1);	   
 	}   
 	

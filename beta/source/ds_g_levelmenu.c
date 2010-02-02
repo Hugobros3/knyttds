@@ -247,6 +247,7 @@ void _ds_g_levelmenu_createButtons() {
 		   levelmenu_btn[i].authorid = ds_button_addText(levelmenu_btn[i].id,35,6,level->author,PA_RGB(0,0,0),1,0);
 		   levelmenu_btn[i].descriptionid = ds_button_addText(levelmenu_btn[i].id,35,20,level->description,PA_RGB(9,9,9),1,0);	   
 		   ds_button_addManagement(levelmenu_btn[i].id,_ds_levelmenu_btnLevel,0);
+		   ds_button_addSound(levelmenu_btn[i].id, "Tiny Hit");
 		} else {
 		   ds_button_hide(levelmenu_btn[i].id,1);
 		}   
@@ -258,11 +259,13 @@ void _ds_g_levelmenu_createButtons() {
 	levelmenu_btnLvlBack = ds_button_create(50,136,48,12,0,levelmenu_string);
 	ds_button_addClick(levelmenu_btnLvlBack,6,levelmenu_string2);
 	ds_button_addManagement(levelmenu_btnLvlBack,_ds_levelmenu_btnBack,0);
+	ds_button_addSound(levelmenu_btnLvlBack, "Tiny Hit");
 	sprintf(levelmenu_string,"%s%s/Gui_btn_forth.png",DS_DIR_MAIN,DS_DIR_SYS);
 	sprintf(levelmenu_string2,"%s%s/Gui_btn_forth2.png",DS_DIR_MAIN,DS_DIR_SYS);   
 	levelmenu_btnLvlForth = ds_button_create(150,136,48,12,0,levelmenu_string);
 	ds_button_addClick(levelmenu_btnLvlForth,6,levelmenu_string2);
 	ds_button_addManagement(levelmenu_btnLvlForth,_ds_levelmenu_btnForth,0);	
+	ds_button_addSound(levelmenu_btnLvlForth, "Tiny Hit");
 	
 	levelmenu_btnLvlNum = ds_button_create(100,136,48,12,0,"");
 	sprintf(levelmenu_string,"Page %d/%d",levelmenu_actual,levelmenu_max);
@@ -277,6 +280,7 @@ void _ds_g_levelmenu_createButtons() {
 	ds_button_addClick(levelmenu_btnBack,6,levelmenu_string2);
 	ds_button_addText(levelmenu_btnBack,-1,0,"Back",PA_RGB(0,0,0),1,1);
 	ds_button_addManagement(levelmenu_btnBack,_ds_levelmenu_goBack,0);
+	ds_button_addSound(levelmenu_btnBack, "Tiny Hit");
 }
 
 void _ds_g_levelmenu_updateScreen() {

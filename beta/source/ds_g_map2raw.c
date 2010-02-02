@@ -359,9 +359,9 @@ void ds_g_map2raw_state_ok() {
 /* Manages the state of the game - HDD ERR! */
 void ds_g_map2raw_state_err() {
    PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 168,  // base
+										0, 155,  // base
 										255, 191, // max
-										"No Space in HDD! Delete files in your flashcart!\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
+										"THE FLASHCART IS FULL\n No Space in HDD! Delete files in your flashcart!\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
    ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
 	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
 }
@@ -369,9 +369,9 @@ void ds_g_map2raw_state_err() {
 /* Manages the state of the game - Battery ERR! */
 void ds_g_map2raw_state_errB() {
    PA_CenterSmartText16bBuf_DS(ds_global_getScreen(0), 
-										0, 168,  // base
+										0, 155,  // base
 										255, 191, // max
-										"LOW BATTERY! Cannot optimize map due to safety reasons\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
+										"LOW BATTERY \n Cannot optimize map if battery is low due to safety reasons\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
    ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
 	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
 }

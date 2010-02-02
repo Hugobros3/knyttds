@@ -40,6 +40,15 @@ int ds_music_playOnlyMusic(int m);
 	If onlymp3 is ON, the only music that is added is the mp3 sound. */
 int ds_music_playMusicAndAmbiance(int m, int a1, int a2, int onlymp3);
 
+/* Tell the music subsystem that he must play a normal sound */
+int ds_music_playSound(char *raw, int loop, int prio);
+
+/* Tell the music subsystem that he must play a normal sound in a specific channel */
+int ds_music_playSoundChannel(char *raw, int ch, int loop, int prio);
+
+/* Stops a certain channel */
+int ds_music_stopSoundChannel(int ch);
+
 /* Manages some aspects related to the music */
 void ds_music_manage();
 

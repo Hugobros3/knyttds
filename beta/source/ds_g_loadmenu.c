@@ -231,6 +231,7 @@ void _ds_g_loadmenu_createButtons() {
 	   ds_button_setInner(loadmenu_btn[i],i + 1); // Save slots: 1 - 2 - 3
 	   ds_button_addText(loadmenu_btn[i],0,0,ds_global_string,PA_RGB(0,0,0),2,1);	   
 	   ds_button_addManagement(loadmenu_btn[i],_ds_loadmenu_clickSlot,0);
+	   ds_button_addSound(loadmenu_btn[i], "Tiny Hit");
 	}   	 
 	
 	// Create "Image preview" button
@@ -249,11 +250,13 @@ void _ds_g_loadmenu_createButtons() {
 	ds_button_addClick(loadmenu_btnLoad,6,loadmenu_string2);
 	ds_button_addText(loadmenu_btnLoad,0,0,"Load Game",PA_RGB(0,0,0),2,1);
 	ds_button_addManagement(loadmenu_btnLoad,_ds_loadmenu_loadGame,0);
+	ds_button_addSound(loadmenu_btnLoad, "Tiny Hit");
 	ds_button_hide(loadmenu_btnLoad,1);
 	loadmenu_btnNew = ds_button_create(80,164,96,16,0,loadmenu_string);
 	ds_button_addClick(loadmenu_btnNew,6,loadmenu_string2);
 	ds_button_addText(loadmenu_btnNew,0,0,"New Game",PA_RGB(0,0,0),2,1);
 	ds_button_addManagement(loadmenu_btnNew,_ds_loadmenu_loadGameNew,0);
+	ds_button_addSound(loadmenu_btnNew, "Tiny Hit");
 	ds_button_hide(loadmenu_btnNew,1);
 	sprintf(loadmenu_string,"%s%s/Gui_btn_mediumErase.png",DS_DIR_MAIN,DS_DIR_SYS);
 	sprintf(loadmenu_string2,"%s%s/Gui_btn_mediumErase2.png",DS_DIR_MAIN,DS_DIR_SYS);
@@ -261,6 +264,7 @@ void _ds_g_loadmenu_createButtons() {
 	ds_button_addClick(loadmenu_btnErase,6,loadmenu_string2);
 	loadmenu_btnEraseText = ds_button_addText(loadmenu_btnErase,0,0,"Erase",PA_RGB(0,0,0),2,1);		
 	ds_button_addManagement(loadmenu_btnErase,_ds_loadmenu_eraseGame,0);	
+	ds_button_addSound(loadmenu_btnErase, "Tiny Hit");
 	ds_button_hide(loadmenu_btnErase,1);
 	
 				
@@ -271,6 +275,7 @@ void _ds_g_loadmenu_createButtons() {
 	ds_button_addClick(loadmenu_btnBack,6,loadmenu_string2);
 	ds_button_addText(loadmenu_btnBack,-1,0,"Back",PA_RGB(0,0,0),1,1);
 	ds_button_addManagement(loadmenu_btnBack,_ds_loadmenu_goBack,0);
+	ds_button_addSound(loadmenu_btnBack, "Tiny Hit");
 }
 
 

@@ -44,6 +44,9 @@ int ds_button_create(int x, int y, int sx, int sy, int screen, char *image);
 /* Adds an image that will be shown once a button is clicked */
 int ds_button_addClick(int id, int time, char *ima);
 
+/* Adds an image that will be shown once a button is clicked */
+int ds_button_addSound(int id, char *snd);
+
 /* Adds an image to a function */
 int ds_button_addImage(int id, int cx, int cy, char *ima); 
 
