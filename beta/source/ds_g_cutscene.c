@@ -271,18 +271,22 @@ void ds_g_cutscene_start() {
 		sprintf(ds_global_string,ds_ini_getstring(ds_global_world.worldini,cutscene_string,"-1"));
 		if (!PA_CompareText(ds_global_string,"-1")) {
 			// There is something...
-			cutscene_music = (int)strtol(ds_global_string, NULL, -1);
-			if (cutscene_music != -1) {
-				// Normal
-				ds_music_playOnlyMusic(cutscene_music);
-			} else {
-				// Maybe Ambiance...
+			char _mya = ds_global_string[strlen(ds_global_string) - 1];
+			if ((_mya == 'a') || (_mya == 'A')) {
+				// Ambiance sound!
 				ds_global_string[strlen(ds_global_string) - 1] = '\0';
-				cutscene_music = (int)strtol(ds_global_string, NULL, -1);
-				if (cutscene_music != -1) {
+				cutscene_music = (int)strtol(ds_global_string, NULL, 0);
+				if (cutscene_music != 0) {
 					// Ambiance!
 					ds_music_playOnlyAmbiance(cutscene_music);
 				}
+			} else {
+				// Normal sound!
+				cutscene_music = (int)strtol(ds_global_string, NULL, 0);
+				if (cutscene_music != 0) {
+					// Normal
+					ds_music_playOnlyMusic(cutscene_music);
+				} 
 			}
 		}
 	}   
