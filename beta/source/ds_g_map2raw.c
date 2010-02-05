@@ -61,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int _ds_map2raw_state;
 int _ds_map2raw_finish;
+int _ds_map2raw_err;
 int _ds_map2raw_tilesets[256];
 int _ds_map2raw_gradients[256];
 int _ds_map2raw_raws;
@@ -140,6 +141,7 @@ void ds_g_map2raw_start() {
    // Now... continue
    _ds_map2raw_state = _DS_MAP2RAW_CHECK;
    _ds_map2raw_finish = 0;
+	_ds_map2raw_err = 0;
    _ds_map2raw_forcePNG = 0;
    _ds_map2raw_cntPaint = 0;
    _ds_map2raw_nextVBlank = 0;
@@ -363,6 +365,7 @@ void ds_g_map2raw_state_err() {
 										255, 191, // max
 										"THE FLASHCART IS FULL\n No Space in HDD! Delete files in your flashcart!\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
    ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
+	_ds_map2raw_err = 1;
 	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
 }
 
@@ -373,6 +376,7 @@ void ds_g_map2raw_state_errB() {
 										255, 191, // max
 										"LOW BATTERY \n Cannot optimize map if battery is low due to safety reasons\n Touch - Press anything...",PA_RGB(31,0,0), 1, 1); // Features
    ds_global_paintScreen(0,ds_global_getScreen0(),0,0);
+	_ds_map2raw_err = 1;
 	_ds_map2raw_state = _DS_MAP2RAW_WAIT;
 }
 
@@ -435,12 +439,16 @@ void ds_g_map2raw_paint() {
       if (_ds_map2raw_state == _DS_MAP2RAW_CHECK) {
          ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_CYANGLOW, 0);
          sprintf(ds_global_string,"Please Wait (map)...");
-      } else if (_ds_map2raw_state != _DS_MAP2RAW_WAIT) {
+      } else if (_ds_map2raw_state == _DS_MAP2RAW_CHECKPNG) {
          ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_CYANGLOW, 0);
          sprintf(ds_global_string,"Please Wait (%d to go)...",_ds_map2raw_raws);
 		} else {
-         ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_REDGLOW, 0);
-         sprintf(ds_global_string,"Optimization failed:");
+			if (_ds_map2raw_err == 1) {
+				ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_REDGLOW, 0);
+				sprintf(ds_global_string,"Optimization unsuccessful:");
+			} else {
+				ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_CYANGLOW, 0);
+			}
 		}        
       ds_15bpp_initRaw(&ima15bpp,ima,24,24,1);
       // Paint the moving particles

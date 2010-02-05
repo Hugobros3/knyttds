@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_util.h"
 #include "ds_world.h"
 #include "ds_map.h"
+#include "ds_music.h"
+
 
 // BANK 9 [B09]
 //=================================================================================================
@@ -62,6 +64,7 @@ int _ds_objects_b09o01_manage(void *objp) {
    ds_t_object *particle;
 
 	if (ds_objects_lib_beh_flower(object,0,200,0,215,36,6)) {
+		ds_music_playSound("Tiny Shot", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 38);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, (PA_RandMinMax(0,1)==0)?-10:10, 0 - PA_RandMinMax(25,60), 
 						8, 10, 0);
@@ -99,6 +102,7 @@ int _ds_objects_b09o02_manage(void *objp) {
    ds_t_object *particle;
 
 	if (ds_objects_lib_beh_flower(object,1,160,1,160,10,6)) {
+		ds_music_playSound("Tiny Shot", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 38);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, (PA_RandMinMax(0,1)==0)?-10:10, 0 - PA_RandMinMax(25,60), 
 						8, 20, 0);
@@ -136,6 +140,7 @@ int _ds_objects_b09o03_manage(void *objp) {
    ds_t_object *particle;
 
 	if (ds_objects_lib_beh_flower(object,1,135,2,1,1,6)) {
+		ds_music_playSound("Homing Shot", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 12);
 	   ds_objects_lib_beh_particleMMF2_Init(particle,0,-10,1,0,3);
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);				
@@ -172,6 +177,7 @@ int _ds_objects_b09o04_manage(void *objp) {
    ds_t_object *particle;
 
 	if (ds_objects_lib_beh_flower(object,0,270,0,285,10,6)) {
+		ds_music_playSound("Fire Shot", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 39);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, -40 + PA_RandMinMax(0,80), 0 - PA_RandMinMax(25,70), 
 						10, 0, 3);
@@ -207,8 +213,12 @@ int _ds_objects_b09o05_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b09o05_manage(void *objp) {
    ds_t_object *object = objp;
    ds_t_object *particle;
+	int oldstate = object->inner[0];
 
 	if (ds_objects_lib_beh_flower(object,1,146,2,10,1,6)) {
+		if ((object->inner[0] == 4) && (object->inner[0] != oldstate)) {
+			ds_music_playSound("Tiny Shot", 0, 0);
+		}
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 38);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, -30 + PA_RandMinMax(0,60), 0 - PA_RandMinMax(20,60), 
 						8, 10, 0);

@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	State[0] = Type of LOADGAME, see constants @ds_global
 	State[1] = Reset (1 - load again the world information, including certain subsystems)
 	State[2] = Save Slot. -1 if no save slot
-	
+	State[3] = Sound to use
 */
 
 #include "ds_util_bit.h"
@@ -64,6 +64,7 @@ void ds_g_loadgame_input() {
 
 void _ds_g_loadgame_changeToGame() {
    int flag = 0;
+	int sound = ds_state_var_getInt(3);
       
    // Changes Juni
    ds_global_juni.flag = ds_global_world.sv_flags;
@@ -78,6 +79,7 @@ void _ds_g_loadgame_changeToGame() {
 	flag = ds_util_bitSet16(flag,1); // Only reset movement, nothing else
 	ds_state_var_setInt(4,flag);
 	ds_state_var_setInt(5,ds_global_world.sv_gui);
+	ds_state_var_setInt(6,sound);
 	// Change!
 	ds_state_assignState(DSKNYTT_GAME);
 }   
@@ -85,18 +87,21 @@ void _ds_g_loadgame_changeToGame() {
 /* Manages the state of the game */
 void ds_g_loadgame_state() {   
    // Change to the real game
+	int sound = ds_state_var_getInt(3);
    switch (ds_state_var_getInt(0)) {
       case DS_C_LOADGAME_INTRO:
          ds_state_assignState(DSKNYTT_CUTSCENE);
          ds_state_var_setStr("Intro");
          ds_state_var_setInt(0,1); // Cutscene number 1
          ds_state_var_setInt(1,DS_C_CUTSCENE_INTRO); // Type INTRO
+			ds_state_var_setInt(2,sound); // Sound to play after break
          break;      
       case DS_C_LOADGAME_CUTSCENE:
          ds_state_assignState(DSKNYTT_CUTSCENE);
          ds_state_var_setStr(ds_state_var_getStr());
          ds_state_var_setInt(0,1); // Cutscene number 1
          ds_state_var_setInt(1,DS_C_CUTSCENE_GAME); // Type GAME
+			ds_state_var_setInt(2,sound); // Sound to play after break
          break;      
       case DS_C_LOADGAME_GAME:
          _ds_g_loadgame_changeToGame();

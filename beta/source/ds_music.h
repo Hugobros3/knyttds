@@ -35,6 +35,9 @@ int ds_music_reset();
 
 /* Tell the system to play ONLY a certain music */
 int ds_music_playOnlyMusic(int m);
+
+/* Tell the system to play ONLY a certain music */
+int ds_music_playOnlyAmbiance(int a1);
  
 /* Tell the system to play a certain music and ambiance (both are usually together!) 
 	If onlymp3 is ON, the only music that is added is the mp3 sound. */
@@ -48,6 +51,9 @@ int ds_music_playSoundChannel(char *raw, int ch, int loop, int prio);
 
 /* Stops a certain channel */
 int ds_music_stopSoundChannel(int ch);
+
+/* Plays a special sound - after shift */
+void ds_music_playSpecialSound(int snd);
 
 /* Manages some aspects related to the music */
 void ds_music_manage();

@@ -463,8 +463,7 @@ typedef struct ds_tt_bufferRAW {
 	char name[256];
 	u8 *rawContent;
 	u32 rawSize;
-	int usedRate;       // How many times this sound was used
-	int priority;   // The priority of this sound (= do not delete!)
+	int priority;   // The priority of this sound, linked to the "times used" mechanism.
 } ds_t_bufferRAW;  
 
 typedef struct ds_tt_channelRAW {
@@ -488,6 +487,9 @@ void _ds_music_rawInit() {
 	// Init the rawBuffer - the list that contains the music that is being played
 	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
 		_rawBuffer[i].rawContent = NULL;
+		_rawBuffer[i].rawSize = 0;
+		_rawBuffer[i].priority = 0;
+		sprintf(_rawBuffer[i].name,"-");
 	}
 }
 
@@ -503,13 +505,14 @@ void _ds_music_rawReset() {
 	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
 		if (_rawBuffer[i].rawContent != NULL) {
 			free(_rawBuffer[i].rawContent);
+			_rawBuffer[i].rawContent = NULL;
 		}
 	}	
 	// Re-Inits everything
 	_ds_music_rawInit();
 }
 
-int _ds_music_rawBufferLoad(char *raw, ds_t_bufferRAW *ele) {
+int _ds_music_rawBufferLoad(char *raw, ds_t_bufferRAW *ele, int prio) {
 	FILE *file;
 	
 	// Get real file
@@ -537,18 +540,21 @@ int _ds_music_rawBufferLoad(char *raw, ds_t_bufferRAW *ele) {
 		return -1;	   	
 	}
 	fread((void *)ele->rawContent,1,ele->rawSize,file);
-	sprintf(ele->name,"%s",raw);
 	DC_FlushAll();
+	
+	sprintf(ele->name,"%s",raw);
 
 	// Closing...
 	fclose(file);   
 	return 1;
 }
 
-int _ds_music_rawBufferReserve(char *raw) {
+int _ds_music_rawBufferReserve(char *raw, int prio) {
 	int buff;
 	ds_t_bufferRAW *ele;
 	int i;
+	
+	// FIXME Add memory limit
 	
 	// First, search a buffer that contains the specific sound
 	buff = -1;
@@ -556,6 +562,7 @@ int _ds_music_rawBufferReserve(char *raw) {
 		if (_rawBuffer[i].rawContent != NULL) {
 			if (PA_CompareText(_rawBuffer[i].name, raw)) {
 				buff = i;
+				_rawBuffer[buff].priority += (prio + 1);
 				break;
 			}
 		}
@@ -570,16 +577,44 @@ int _ds_music_rawBufferReserve(char *raw) {
 	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
 		if (_rawBuffer[i].rawContent == NULL) {
 			buff = i;
+			_rawBuffer[buff].priority = prio * 5;
 			break;
 		}
 	}	
 	// If there is no free buffer... OK, we will have to create one :-)
 	if (buff == -1) {
-		return -1; // FIXME - create special algorithm!
+		// Select the buffer with the smaller priority
+		int minprio = 32000;
+		for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
+			if (_rawBuffer[i].rawContent != NULL) { // Always true, but better safe than sorry
+				if (_rawBuffer[i].priority < minprio) {
+					buff = i;
+					minprio = _rawBuffer[buff].priority;
+				}
+			}
+		}	
+		if (buff == -1)
+			ds_global_errorHalt("ASSERTION: \n Bad buffer mgnt.");
+		// Stop sounds that are using this buffer
+		for (i = 0; i < DS_C_MUSIC_RAWCHMAX; i++) {
+			if ((_rawList[i].phyChannel != -1) && (_rawList[i].buffer == buff)) {
+				AS_SoundStop(_rawList[i].phyChannel);
+				_rawList[i].phyChannel = -1;
+				_rawList[i].buffer = -1;
+			}
+		}
+		
+		// Clean the buffer
+		free(_rawBuffer[buff].rawContent);
+		_rawBuffer[buff].rawContent = NULL;
+		_rawBuffer[buff].priority = prio * 5;
+		_rawBuffer[buff].rawSize = 0;
+		sprintf(_rawBuffer[buff].name,"-");
+
 	}
 	// OK, now get the buffer and load it. If OK, return the buffer index
 	ele = &(_rawBuffer[buff]);
-	if (!_ds_music_rawBufferLoad(raw,ele)) {
+	if (!_ds_music_rawBufferLoad(raw,ele,prio)) {
 		return -1;
 	}
 	return buff;
@@ -592,7 +627,7 @@ int _ds_music_rawPlay(char *raw, int ch, int loop, int prio) {
 	int realch;
 	
 	// First, check the buffer that can play this sound
-	buff = _ds_music_rawBufferReserve(raw);
+	buff = _ds_music_rawBufferReserve(raw, prio);
 	if (buff == -1) {
 		return -1;
 	}
@@ -606,7 +641,7 @@ int _ds_music_rawPlay(char *raw, int ch, int loop, int prio) {
 	sound.volume = DS_C_MUSIC_SNDVOL;
 	sound.pan = 64; // FIXME - Change sound according to the position of the sound!
 	sound.loop = loop;
-	sound.priority = 0; // FIXME - We manage our own priority
+	sound.priority = prio; // priority is used for the audio system and for the buffer system
 	sound.delay = AS_SURROUND;
 	if (ch == -1) {
 		realch = AS_SoundDefaultPlay(
@@ -621,7 +656,7 @@ int _ds_music_rawPlay(char *raw, int ch, int loop, int prio) {
 	
 	// ...and store it on a specific channel
 	_rawList[realch].buffer = buff;
-	_rawList[realch].phyChannel = realch; // FIXME - manage real priority!!!
+	_rawList[realch].phyChannel = realch;
 	
 	return realch;
 }
@@ -695,6 +730,52 @@ int ds_music_playOnlyMusic(int m) {
       mSlotPnt = _ds_music_listGet(mList, i);
       _ds_music_channelListAdd(mSlotPnt);
       //PA_OutputText(1,0,18,"Added %d                      ", i);
+	}   
+	
+   // Das Ende
+   _ds_music_listEmpty(mList);
+   
+   return 1;
+}
+
+/* Tell the system to play ONLY a certain ambiance */
+int ds_music_playOnlyAmbiance(int a1) {
+   ds_t_musicSlot mSlot;
+   ds_t_musicSlot *mSlotPnt;
+   ds_t_musicList *mList;
+   int i;
+   int mListLen;
+
+   // First! "optimization"
+   if (!ds_global_optimizationMusic) {
+      a1 = 0;
+   }   
+   
+   mList = _ds_music_listInit();
+   
+   // 1st Iteration: Put mp3 on the list
+   // Also, get the data for every tune: Number + , Format (MP3/RAW), Priority
+   if (a1 != 0) {
+      if (_ds_music_getData(a1,&mSlot,DS_C_MUSIC_AMB,0)) // flag onlymp3 not needed
+      	_ds_music_listAdd(mList, &mSlot);
+   }   
+   
+   // 2nd Iteration: Delete (Delete channels (including ambiance) with old music)
+   _ds_music_channelListPurgeInit();
+   mListLen = _ds_music_listLen(mList);
+   for (i=0; i < mListLen; i++) {
+      mSlotPnt = _ds_music_listGet(mList, i);
+      if (_ds_music_channelListExistMark(mSlotPnt)) {
+         _ds_music_listDel(mList, i);
+      }      
+	}	 
+	_ds_music_channelListPurgeDo();
+   
+   // 3rd Iteration: Add (Include the new music)
+   mListLen = _ds_music_listLen(mList);
+   for (i=0; i < mListLen; i++) {
+      mSlotPnt = _ds_music_listGet(mList, i);
+      _ds_music_channelListAdd(mSlotPnt);
 	}   
 	
    // Das Ende
@@ -786,21 +867,111 @@ int ds_music_stopSoundChannel(int ch) {
 		if (_rawList[ch].phyChannel != -1) {
 			AS_SoundStop(_rawList[ch].phyChannel);
 			_rawList[ch].phyChannel = -1;
+			_rawList[ch].buffer = -1;
 		}
+	}
+	
+	return 1;
+}
+
+/* Plays a special sound - after shift */
+void ds_music_playSpecialSound(int snd) {
+	switch (snd) {
+		case 1:
+			ds_music_playSound("Teleport", 0, 0);
+			break;
+		case 2:
+			ds_music_playSound("Switch", 0, 0);
+			break;
+		case 3:
+			ds_music_playSound("Door", 0, 0);
+			break;
+		case 4:
+			ds_music_playSound("Electronic", 0, 0);
+			break;
 	}
 }
 
 void ds_music_manage() {
-	// <DEBUG>
 	int i;
+	// Priority decay
+	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
+		if ((_rawBuffer[i].rawContent != NULL) && ((ds_global_tick % 60) == 0))
+			_rawBuffer[i].priority--;
+	}
+#ifdef DEBUG_KSDS
+	// <DEBUG>
 	for (i = 0; i < DS_C_MUSIC_RAWCHMAX; i++) {
 			PA_OutputText(1,i,13,"%d",(_rawList[i].phyChannel != -1)?1:0);
 	}
-	// <DEBUG>
-	//PA_OutputText(1,0,13,"([%d]%d) F:%d       ",_channelList.cMP3[0].slot.number,_channelList.cMP3[0].slot.type,_channelList.cMP3[0].rawSize);
-	//PA_OutputText(1,0,14,"([%d]%d) F:%d       ",_channelList.cRAW[0].slot.number,_channelList.cRAW[0].slot.type,_channelList.cRAW[0].rawSize);
-	//PA_OutputText(1,0,15,"([%d]%d) F:%d       ",_channelList.cRAW[1].slot.number,_channelList.cRAW[1].slot.type,_channelList.cRAW[1].rawSize);
+	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
+			PA_OutputText(1,i,14,"%d",(_rawBuffer[i].rawContent != NULL)?1:0);
+	}
+#endif
 }   
 
 /* ScrapPad */
 
+/*
+
+Implemented
+
+<Juni's sounds>
+Bounce
+Bounce Platform
+Bounce Lite
+Bullet Split
+Cannon Shot
+Chomp
+# Dark Forest Bullet - Unknown critter
+DiscBullet
+Door
+Drop A
+Drop B
+Electronic
+Elemental A
+Elemental B
+Fire Hit Lite
+Fire Hit
+Fire Shot (39 & 45)
+Ghost Rock
+Homing Hit (12)
+Homing Shot
+Laser Machine A
+Laser Machine B
+Liquid
+Machine Turn A
+Machine Turn B
+Mega Split
+Ninja
+Powerup
+Right Comb
+Roller A
+Roller B
+Roller Hit
+Save Spot
+Selfdrop
+Spider Run
+Spike Up
+Spike Down
+Switch
+Teleport
+Tiny Shot
+Tiny Hit
+Tri Bullet Shot
+Tri Bullet Shot B
+Tri Bullet Hit
+
+ds_music_playSound("Tiny Shot", 0, 0);
+
+*/
+
+/*
+
+TO-DO
+
+B2-19 red ele *
+dbl jump stops when keypress stops! *
+16-1 sound? *
+
+*/

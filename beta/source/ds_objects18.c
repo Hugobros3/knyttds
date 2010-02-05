@@ -32,6 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_map.h"
 #include "ds_juni.h"
+#include "ds_music.h"
+
 
 // BANK 18 [B18]
 //=================================================================================================
@@ -174,6 +176,7 @@ int _ds_objects_b18o06_manage(void *objp) {
 					// Particle launch
 					if (object->inner[1] == 18) {
 					   int i;
+					   ds_music_playSound("Homing Shot", 0, 0);
 				      ds_t_object *particle;
 					   for (i = 0; i < 2; i++) {
 						   particle = ds_objects_createParticle(object->x + 8, object->y - 8, object->layer, 12);

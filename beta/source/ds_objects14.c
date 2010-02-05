@@ -33,6 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_juni.h"
 #include "ds_3dsprite.h"
+#include "ds_music.h"
+
 
 // BANK 14 [B14]
 //=================================================================================================
@@ -695,8 +697,13 @@ int _ds_objects_b14o16_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b14o16_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_appear(object,80,100,2,3,0); // Corrected   
-
+	if (ds_objects_lib_beh_appear(object,80,100,2,3,0)) { // Corrected   
+		if (object->inner[0] == 2) {
+			ds_music_playSound("Spike Up", 0, 0);
+		} else {
+			ds_music_playSound("Spike Down", 0, 0);
+		}
+	}
    return 1;
 }
 
@@ -769,8 +776,14 @@ int _ds_objects_b14o18_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b14o18_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_appear(object,120,140,2,3,0); // Corrected   
-
+	if (ds_objects_lib_beh_appear(object,120,140,2,3,0)) { // Corrected   
+		if (object->inner[0] == 2) {
+			ds_music_playSound("Spike Up", 0, 0);
+		} else {
+			ds_music_playSound("Spike Down", 0, 0);
+		}
+	}
+	
    return 1;
 }
 
@@ -864,6 +877,7 @@ int _ds_objects_b14o21_manage(void *objp) {
 	res =  ds_objects_lib_beh_plaunchStop(object,500,50,4); // 500
 	if (res) {
 	   // Particle creation!
+		ds_music_playSound("DiscBullet", 0, 0);
 	   int i,sx,sy;
 	   for (i=0; i<25; i++) {
 	      sx = -5 + PA_RandMax(10); // Speed - -5..5
@@ -889,6 +903,7 @@ int _ds_objects_b14o22_manage(void *objp) {
 	res =  ds_objects_lib_beh_plaunchStop(object,480,50,4); // 480
 	if (res) {
 	   // Particle creation!
+		ds_music_playSound("DiscBullet", 0, 0);
 	   int i,sx,sy;
 	   for (i=0; i<25; i++) {
 	      sx = -5 + PA_RandMax(10); // Speed - -5..5
@@ -914,6 +929,7 @@ int _ds_objects_b14o23_manage(void *objp) {
 	res =  ds_objects_lib_beh_plaunchStop(object,500,50,4); // 500
 	if (res) {
 	   // Particle creation!
+		ds_music_playSound("DiscBullet", 0, 0);
 	   int i,sx,sy;
 	   for (i=0; i<25; i++) {
 	      sx = PA_RandMax(5) + 5; // Speed - RAND(5)+5
@@ -939,6 +955,7 @@ int _ds_objects_b14o24_manage(void *objp) {
 	res =  ds_objects_lib_beh_plaunchStop(object,400,50,4); // 400
 	if (res) {
 	   // Particle creation!
+		ds_music_playSound("DiscBullet", 0, 0);
 	   int i,sx,sy;
 	   for (i=0; i<25; i++) {
 	      sx = -(PA_RandMax(5) + 5); // Speed - RAND(5)+5

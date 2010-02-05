@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_3dsprite.h"
 #include "ds_objects.h"
+#include "ds_music.h"
+
 
 // BANK 2 [B02]
 //=================================================================================================
@@ -579,6 +581,7 @@ int _ds_objects_b02o18_manage(void *objp) {
    ds_t_object *particle;
    
 	if (ds_objects_lib_beh_elemental(object,6,6,120 >> 1)) {
+		ds_music_playSound("Elemental A", 0, 1);
 	   // Create special particle
 	   int corr = (120 - 24) >> 1;
       particle = ds_objects_createParticle(object->x - corr, object->y - corr, 
@@ -621,6 +624,7 @@ int _ds_objects_b02o19_manage(void *objp) {
    ds_t_object *particle;
    
 	if (ds_objects_lib_beh_elemental(object,6,6,96 >> 1)) {
+		ds_music_playSound("Elemental B", 0, 1);
 	   // Create special particle
 	   int corr = (96 - 24) >> 1;
       particle = ds_objects_createParticle(object->x - corr, object->y - corr, 

@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_map.h"
 #include "ds_juni.h"
+#include "ds_music.h"
 #include <math.h>
 
 // BANK 11 [B11]
@@ -105,6 +106,7 @@ int _ds_objects_b11o02_manage(void *objp) {
 									 3, 4, 4);
 	if (res) {
 	   // Particle creation!
+	   ds_music_playSound("DiscBullet", 0, 0);
 	   int i,s,sx,sy;
 	   for (i=0; i<17; i++) {
 	      s = 30; // Speed - 30
@@ -287,6 +289,7 @@ int _ds_objects_b11o06_manage(void *objp) {
 
 	if (res) {
 	   // Particle creation!
+	   ds_music_playSound("DiscBullet", 0, 0);
 	   int i,s,sx,sy;
 	   for (i=0; i<17; i++) {
 	      s = PA_RandMax(35) + 20; // Speed - RAND(35)+20
@@ -428,6 +431,7 @@ int _ds_objects_b11o09_manage(void *objp) {
 									 3, 4, 4);
 	if (res) {
 	   // Particle creation!
+	   ds_music_playSound("DiscBullet", 0, 0);
 	   int i,s,sx,sy;
 	   for (i=0; i<17; i++) {
 	      s = 43; // Speed - 40... (more speed to be close to original KS)

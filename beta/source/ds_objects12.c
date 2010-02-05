@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_3dsprite.h"
 #include "ds_map.h"
 #include "ds_objects.h"
+#include "ds_music.h"
 
 
 // BANK 12 [B12]
@@ -428,6 +429,7 @@ int _ds_objects_b12o10_manage(void *objp) {
 	      if (ds_objects_lib_stepObject(object)) {
 	      	object->inner[10] = 1;
 	      	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
+			ds_music_playSound("Chomp", 0, 0);
 	    	}  	
 	      break;
 	   case 1:
@@ -655,8 +657,8 @@ int _ds_objects_b12o14_create(u8 bank, u8 obj, void *objp) {
    object->type = DS_C_OBJ_OBJECT;
    object->managed = 1;
 
-	// Ghost operations
-	ds_objects_lib_beh_ghostIni(object,1,180,200,5);
+	// Ghost operations - just test
+  	object->_deleteme = !(ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_EYE));
    
    // Return 1 if I'm an event/item
    return ds_objects_lib_iseventitem(object->type);
@@ -665,13 +667,13 @@ int _ds_objects_b12o14_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b12o14_manage(void *objp) {
    ds_t_object *object = objp;
    
-   // Changes the alpha value of the sprite, ghost style :-)
-   ds_objects_lib_beh_ghost(object,180,200,5);
+   // No Changes in alpha value for this trap :-)
    
    // Appear?
-   ds_objects_lib_beh_appear(object, 60, 0, 1, 3, 1);
+   if (ds_objects_lib_beh_appear(object, 60, 0, 1, 3, 1)) {
+		ds_music_playSound("Ghost Rock", 0, 0);
+   }
 
-      											    
    // Everything went OK...
    return 1;
 }

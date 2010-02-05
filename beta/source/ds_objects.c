@@ -287,9 +287,9 @@ void _ds_objects_initManaged() {
    for (i = 0; i < DS_C_MAX_OBJ_CO; i++) {
       coManaged[i] = 0;
 	}   	      
-  	
-  	// Reset special subsytems
-  	ds_global_map.pass = 0; // Resets the password system
+	
+	// Other subsystems
+	ds_global_map.pass = 0; // Resets password subsystem
 }
 
 void _ds_objects_oneCycle_add(ds_t_object *object) {   
@@ -777,11 +777,11 @@ void ds_objects_manage() {
 	      		// This instance will execute an instance-specific manager...
 	      		object->finstance((void *)object);
 	      			// No need to postmanage, since it was executed before 
-	    		}  	
+	    		}
 	   	}   
    	}   
    } 
-   
+	   
    // And now, post-management
    myiterator = ds_linkedlist_startIterator(&objectManageAfter);
    while ((postFunction = ds_linkedlist_getIterator(&objectManageAfter,&myiterator)) != NULL) {
@@ -843,6 +843,30 @@ void ds_objects_instancephore(ds_t_object *object) {
    
    // OK, signal this event
    OC->instancephore++;
+}
+
+/* Checks if there is an object with the semaphore */
+int ds_objects_existphore(ds_t_object *object) {
+   _ds_t_objectOC *OC;
+   void *myiterator;
+   
+   // First, find the OC where the objects are stored
+   myiterator = ds_linkedlist_startIterator(&objectOneCycle);
+   while ((OC = ds_linkedlist_getIterator(&objectOneCycle,&myiterator)) != NULL) {
+      if ((object->bank == OC->bank) && (object->obj == OC->obj)) {
+         break;
+		}
+   }
+	
+   if (OC == NULL)
+   	return 0;
+   
+   // OK, check if someone has the semaphore
+   if (OC->semaphore != -1) {
+      return 1; 
+	} else {
+		return 0;
+	}
 }
 
 

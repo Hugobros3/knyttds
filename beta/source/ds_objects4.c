@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_util.h"
 #include "ds_world.h"
 #include "ds_3dsprite.h"
+#include "ds_music.h"
+
 
 // BANK 4 [B04]
 //=================================================================================================
@@ -319,6 +321,7 @@ int _ds_objects_b04o06_manage(void *objp) {
 									
 	if ((ds_global_tick % 113) == 0) {
 	   if (ds_objects_lib_distanceJuniX(object,1,1) < 200) {
+			ds_music_playSound("Fire Shot", 0, 0);
 	      // Launch particles!
 	      switch (res) {
 	         case 0: // Normal
@@ -400,6 +403,7 @@ int _ds_objects_b04o07_manage(void *objp) {
 
 	if ((ds_global_tick % 96) == 0) { // Countdown of 80 in 50 fps
 	   if (ds_objects_lib_distanceJuniX(object,1,1) < 100) {
+		  ds_music_playSound("Fire Shot", 0, 0);
 	      // Launch particles!
 	      switch (res) {
 	         case 0: // Normal
@@ -506,13 +510,17 @@ int _ds_objects_b04o09_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b04o09_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_hunter(object, 
+	int res = ds_objects_lib_beh_hunter(object, 
 									 -8, 8, 0, 0, // -8...8 - Corrected
 									 40, // Speed
 									 0, 1, // NOT follow Juni, continue
 									 3,
 									 0,12,0,12,
 									 0,12,12,24);   
+									 
+	if (res)
+		ds_music_playSound("Spider Run", 0, 0);
+	
    // Everything went OK...
    return 1;
 }
@@ -553,6 +561,7 @@ int _ds_objects_b04o10_manage(void *objp) {
 									 6, 8);
 									 
 	if (res == 1) {
+		ds_music_playSound("Tri Bullet Shot B", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y, object->layer, 44);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, 
 					20, 
@@ -619,6 +628,7 @@ int _ds_objects_b04o11_manage(void *objp) {
 									 6, 8);
 
 	if (res == 1) {
+		ds_music_playSound("Tri Bullet Shot B", 0, 0);
 	   particle = ds_objects_createParticle(object->x, object->y, object->layer, 44);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, 
 					-20, 
@@ -693,6 +703,7 @@ int _ds_objects_b04o12_manage(void *objp) {
 									 3);									 
 	
    if (res) {
+	   ds_music_playSound("Fire Shot", 0, 0);
       // Launch particles!
       switch (object->inner[2]) { // Direction
          case -1: // Left
@@ -796,13 +807,17 @@ int _ds_objects_b04o14_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b04o14_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_hunter(object, 
+	int res = ds_objects_lib_beh_hunter(object, 
 									 0, 0, 45, 33, // Time 0.75, chance 33%
 									 30, // Speed
 									 0, 0, // NOT follow Juni, NOT continue
 									 3,
 									 0,0,0,0,
 									 0,11,11,22);   
+									 
+	if (res)
+		ds_music_playSound("Spider Run", 0, 0);
+
    // Everything went OK...
    return 1;
 }
@@ -852,6 +867,7 @@ int _ds_objects_b04o15_manage(void *objp) {
 									 3);
 
    if (res) {
+		ds_music_playSound("Fire Shot", 0, 0);
       // Launch particles!
       switch (object->inner[2]) { // Direction
          case -1: // Left
@@ -920,6 +936,7 @@ int _ds_objects_b04o16_manage(void *objp) {
 									 3);
 
 	if (res) {
+		ds_music_playSound("Homing Shot", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 6, object->y - 12, object->layer, 12);
 	   ds_objects_lib_beh_particleMMF2_Init(particle,0,-20,2,0,3);
 	   ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
@@ -1052,6 +1069,7 @@ int _ds_objects_b04o19_manage(void *objp) {
 									 3);
 
 	if (res) {
+	   ds_music_playSound("Fire Shot", 0, 0);
 	   for (i = 0; i < 3; i++) {
 	      if (i==0)
 	      	actualB = 45;
@@ -1115,6 +1133,7 @@ int _ds_objects_b04o20_manage(void *objp) {
 									 3);
 
 	if (res) {
+	   ds_music_playSound("Fire Shot", 0, 0);
 	   for (i = 0; i < 5; i++) {
 	      if (i==0)
 	      	actualB = 45;
@@ -1177,6 +1196,7 @@ int _ds_objects_b04o21_manage(void *objp) {
 									 6, 8);
 
 	if (res == 1) {
+		ds_music_playSound("Tri Bullet Shot B", 0, 0);
 	   particle = ds_objects_createParticle(object->x, object->y, object->layer, 44);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, 
 					-20, 
@@ -1243,6 +1263,7 @@ int _ds_objects_b04o22_manage(void *objp) {
 									 6, 8);
 									 
 	if (res == 1) {
+		ds_music_playSound("Tri Bullet Shot B", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y, object->layer, 44);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, 
 					20, 

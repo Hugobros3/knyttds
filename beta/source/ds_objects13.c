@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_3dsprite.h"
 #include "ds_map.h"
-
+#include "ds_music.h"
 
 // BANK 13 [B03]
 //=================================================================================================
@@ -146,6 +146,12 @@ int _ds_objects_b13o01_manage(void *objp) {
 			 		gravity, 0, 3); 
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	}   	
+	if (object->inner[10] == 10) {
+		object->inner[11] = ds_music_playSound("Liquid", 0, 0);
+	}
+	if (object->inner[10] == 90) {
+		ds_music_stopSoundChannel(object->inner[11]);
+	}
    return 1;
 }
 
@@ -198,6 +204,12 @@ int _ds_objects_b13o02_manage(void *objp) {
 		} 		
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	}   	
+	if (object->inner[10] == 10) {
+		object->inner[11] = ds_music_playSound("Liquid", 0, 0);
+	}
+	if (object->inner[10] == 40) {
+		ds_music_stopSoundChannel(object->inner[11]);
+	}
    return 1;
 }
 
@@ -253,6 +265,7 @@ int _ds_objects_b13o03_manage(void *objp) {
 			   ds_3dsprite_setX(object->sprite,object->x);
       	} else {
       	   // Change state
+				ds_music_playSound("Laser Machine A", 0, 0);
       	   object->inner[0] = 1;
       	   object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
       	   ds_3dsprite_setFrame(object->sprite,1);
@@ -282,6 +295,7 @@ int _ds_objects_b13o03_manage(void *objp) {
 			   ds_3dsprite_setX(object->sprite,object->x);
       	} else {
       	   // Change state
+		   ds_music_playSound("Laser Machine B", 0, 0);
       	   object->inner[0] = 0;
       	   object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_HARMFUL);
       	   ds_3dsprite_setFrame(object->sprite,0);
@@ -369,6 +383,7 @@ int _ds_objects_b13o04_manage(void *objp) {
 						speedx, 
 						-speedy, 
 			 			20, 0, 3);
+			ds_music_playSound("Cannon Shot", 0, 0);
 			ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	      // Finish...
 	      object->inner[0] = 0; // Next State
@@ -424,6 +439,14 @@ int _ds_objects_b13o05_manage(void *objp) {
 					speed, 
 		 			gravity, 0, 3); 
 	}   
+	if (object->inner[11] == 5) {
+		object->inner[6] = ds_music_playSound("Liquid", 0, 0);
+	}
+	if (object->inner[11] == 68) {
+		ds_music_stopSoundChannel(object->inner[6]);
+		object->inner[6] = 0; // HACK - 6 is not used in squirrel movement O_o
+	}
+
 
    return 1;
 }      
@@ -457,7 +480,12 @@ int _ds_objects_b13o06_manage(void *objp) {
 
 	ds_objects_lib_beh_cycle(object,5);
 
+	if ((ds_global_tick % 120) == 90) {
+		ds_music_playSound("Roller A", 0, 0);
+	}   									 
+
 	if ((ds_global_tick % 120) == 0) {
+		ds_music_playSound("Roller B", 0, 0);
 	   ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	   particle = ds_objects_createParticle(object->x + 18, object->y, object->layer, 53);
 		ds_objects_lib_beh_particleMMF2_Init(particle, 
@@ -515,7 +543,7 @@ int _ds_objects_b13Laser1_create(u8 bank, u8 obj, void *objp) {
 
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA);
-	//object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -532,7 +560,16 @@ int _ds_objects_b13Laser1_create(u8 bank, u8 obj, void *objp) {
 
 int _ds_objects_b13Laser1_manage(void *objp) {
    ds_t_object *object = objp;
-
+	
+	// Try to make a reservation
+	if (!object->inner[11]) {
+		object->inner[11] = 1; // Enter only once
+		if (!ds_objects_existphore(object)) {
+			ds_objects_semaphoreON(object); // Become the sound manager
+		}
+	}
+	// Continue
+	object->inner[10] = object->inner[0];
 	_ds_objects_Laser_exe(object,2,120);
    return 1;
 }
@@ -549,7 +586,7 @@ int _ds_objects_b13Laser0_create(u8 bank, u8 obj, void *objp) {
 
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA);
-	//object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE);
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -566,7 +603,16 @@ int _ds_objects_b13Laser0_create(u8 bank, u8 obj, void *objp) {
 
 int _ds_objects_b13Laser0_manage(void *objp) {
    ds_t_object *object = objp;
-
+	
+	// Try to make a reservation
+	if (!object->inner[11]) {
+		object->inner[11] = 1; // Enter only once
+		if (!ds_objects_existphore(object)) {
+			ds_objects_semaphoreON(object); // Become the sound manager
+		}
+	}
+	// Continue
+	object->inner[10] = object->inner[0];
 	_ds_objects_Laser_exe(object,2,120);
    return 1;
 }
@@ -583,7 +629,7 @@ int _ds_objects_b13LaserC_create(u8 bank, u8 obj, void *objp) {
 
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA);
-	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE);
+	//object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE);
 		
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
@@ -601,9 +647,28 @@ int _ds_objects_b13LaserC_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b13LaserC_manage(void *objp) {
    ds_t_object *object = objp;
 
+	// Never changes...
 	_ds_objects_Laser_exe(object,2,120);
    return 1;
 }
+
+//.................................................
+
+int _ds_objects_b13laser_instance(void *objp) {
+   ds_t_object *object = objp;
+
+	// If state changed, make sound!
+	if (object->inner[10] != object->inner[0]) {
+		if (object->inner[0] == 2)  { // OFF!
+			ds_music_playSound("Laser Machine B", 0, 0);
+		} else { // ON!
+			ds_music_playSound("Laser Machine A", 0, 0);
+		}
+	}
+	
+   return 1;
+}
+
 
 // DARK CANNON [B13_O14]
 //..........................................................................................
@@ -640,8 +705,6 @@ int _ds_objects_b13o14_manage(void *objp) {
 	
 	// Throw particles, too!!!! Every .68'' aim to juni!
 	object->inner[10]++;
-	if (object->inner[10] == 43)  // 0.68 / 1.6
-		object->inner[10] = 0;
 	if ((object->inner[10] >= 40) && (object->inner[10] <= 42)) {
 	   particle = ds_objects_createParticle(object->x + 2, object->y - 12, object->layer, 42);
 	   gravity = 20 + PA_RandMinMax(0,2);
@@ -654,6 +717,13 @@ int _ds_objects_b13o14_manage(void *objp) {
 		} 		
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	}   	
+	if (object->inner[10] == 38) {
+		object->inner[11] = ds_music_playSound("Liquid", 0, 0);
+	}
+	if (object->inner[10] == 43) {  // 0.68 / 1.6
+		ds_music_stopSoundChannel(object->inner[11]);
+		object->inner[10] = 0;
+	}
 	
    return 1;
 }
@@ -705,12 +775,14 @@ int ds_objects13_assign(u8 obj, ds_t_object *object) {
          // Laser 0
          object->fcreate = _ds_objects_b13Laser0_create;
          object->fmanage = _ds_objects_b13Laser0_manage;
+			object->finstance = _ds_objects_b13laser_instance;
          return 1;
          break; // not really necessary...
       case 8:
          // Laser 1
          object->fcreate = _ds_objects_b13Laser1_create;
          object->fmanage = _ds_objects_b13Laser1_manage;
+			object->finstance = _ds_objects_b13laser_instance;
          return 1;
          break; // not really necessary...
       case 9:
@@ -723,12 +795,14 @@ int ds_objects13_assign(u8 obj, ds_t_object *object) {
          // Laser 0
          object->fcreate = _ds_objects_b13Laser0_create;
          object->fmanage = _ds_objects_b13Laser0_manage;
+			object->finstance = _ds_objects_b13laser_instance;
          return 1;
          break; // not really necessary...
       case 11:
          // Laser 1
          object->fcreate = _ds_objects_b13Laser1_create;
          object->fmanage = _ds_objects_b13Laser1_manage;
+			object->finstance = _ds_objects_b13laser_instance;
          return 1;
          break; // not really necessary...
       case 12:

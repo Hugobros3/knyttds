@@ -513,6 +513,9 @@ void ds_map_reset(int totalReset) {
    	
    // Resets the tilemap
    	// -> No need, too! Tilemap is also a static structure
+		
+	// Reset other map structures
+	ds_global_map.passMax = 0; // Resets the password system
 }   
 
 /* Manages the map  */

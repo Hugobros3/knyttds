@@ -32,6 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_map.h"
 #include "ds_juni.h"
+#include "ds_music.h"
+
 
 // BANK 6 [B06]
 //=================================================================================================
@@ -72,13 +74,17 @@ int _ds_objects_b06o01_manage(void *objp) {
 	if (wasCero) {
 	   object->inner[2] = -1;
 	} else {
-	   if (direction != object->inner[2]) {
-	      if (object->inner[2] == -1) 
-	      	object->inner[3] = 8;
-	      else 
-	      	object->inner[3] = 16;
-	   }   
-	}     
+		if (direction != object->inner[2]) {
+			if (object->inner[2] == -1) {
+				ds_music_playSound("Machine Turn A", 0, 0);
+				object->inner[3] = 8;
+			} else { 
+				ds_music_playSound("Machine Turn B", 0, 0);
+				object->inner[3] = 16;
+			}
+		}
+	}   
+
    
    return 1;
 }
@@ -157,6 +163,7 @@ int _ds_objects_b06o05_manage(void *objp) {
 	switch (object->inner[10]) {
 	   case 0:
 	      if (ds_objects_lib_stepObject(object)) {
+		    ds_music_playSound("Chomp", 0, 0);
 	      	object->inner[10] = 1;
 	      	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
 	    	}  	
@@ -216,6 +223,7 @@ int _ds_objects_b06oFire_manage(void *objp) {
 	   object->inner[10] = 0;
 	   
 	   // Particle creation! Attack!	   
+	   ds_music_playSound("Fire Shot", 0, 0);
 		int dJX = ds_objects_lib_distanceJuniX(object, 1, 0); 
 		int dJY = ds_objects_lib_distanceJuniY(object, 1, 0); 
 		int dJ = ds_objects_lib_distancePhyJuniCorrected(object, 1);
@@ -260,6 +268,7 @@ int _ds_objects_b06shooter_manageDROP(void *objp) {
    ds_t_object *object = objp;
    ds_t_object *particle;
 	if (ds_objects_lib_beh_trapShoot(object, 5, 200, 2)) {
+		ds_music_playSound("Mega Split", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 49);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, 
 						0, 
@@ -275,10 +284,11 @@ int _ds_objects_b06shooter_manageSHOOT(void *objp) {
    ds_t_object *object = objp;
    ds_t_object *particle;
 	if (ds_objects_lib_beh_trapShoot(object, 72, 200, 2)) {
+		ds_music_playSound("Mega Split", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 4, object->layer, 49);
 	   ds_objects_lib_beh_particleMMF2_Init(particle, 
 						0, 
-						-20, 
+						-30, 
 				 		0, 0, 3);
 		particle->inner[11] = 1;
 	   ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);	   
@@ -328,6 +338,7 @@ int _ds_objects_b06o08_manage(void *objp) {
 	      if (ds_objects_lib_beh_particleMMF2(object,6)) {
 	         // It collided! - do not destroy it, just continue!
 	         object->_deleteme = 0;
+			 ds_music_playSound("Selfdrop", 0, 0);
 	         // Also, put the critter in its place
 	         int i;
 		      for (i = 1; i <= (object->inner[0] / 100); i++) {
@@ -390,11 +401,13 @@ int _ds_objects_b06spike_manage(void *objp) {
 
 	if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_INVISIBLE)) && 
 	    (ds_objects_lib_distanceJuni(object,1) < 60)) {
+		ds_music_playSound("Spike Up", 0, 0);
 		object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_INVISIBLE);
 		ds_3dsprite_markInvisible(object->sprite,0);
 	}		
 	else if ((!ds_util_bitOne16(object->flags,DS_C_OBJ_F_INVISIBLE)) && 
 	         (ds_objects_lib_distanceJuni(object,1) > 100)) {
+			 ds_music_playSound("Spike Down", 0, 0);
    	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_INVISIBLE);
    	ds_3dsprite_markInvisible(object->sprite,1);
  	}  	

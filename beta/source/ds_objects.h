@@ -54,6 +54,9 @@ void ds_objects_manage();
 /* Tells the system that a certain instance wants to be executed */
 void ds_objects_instancephore(ds_t_object *object);
 
+/* Checks if there is an object with the semaphore */
+int ds_objects_existphore(ds_t_object *object);
+
 /* Changes the semaphore of a certain OC - ON */
 void ds_objects_semaphoreON(ds_t_object *object);
 

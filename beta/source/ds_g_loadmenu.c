@@ -82,6 +82,7 @@ int _ds_loadmenu_loadGame(void *btn) {
 	ds_state_var_setInt(0,DS_C_LOADGAME_GAME); // Da game!
 	ds_state_var_setInt(1,1); // Reset everything
 	ds_state_var_setInt(2,loadmenu_actualSlot); // Specific save state
+	ds_state_var_setInt(3,0); // No sound
    return 1;
 }   
 
@@ -91,6 +92,7 @@ int _ds_loadmenu_loadGameNew(void *btn) {
 	ds_state_var_setInt(0,DS_C_LOADGAME_INTRO); // Da intro!
 	ds_state_var_setInt(1,1); // Reset everything
 	ds_state_var_setInt(2,loadmenu_actualSlot); // Specific save state... NEW!
+	ds_state_var_setInt(3,0); // No sound
    return 1;
 }   
 
@@ -250,13 +252,13 @@ void _ds_g_loadmenu_createButtons() {
 	ds_button_addClick(loadmenu_btnLoad,6,loadmenu_string2);
 	ds_button_addText(loadmenu_btnLoad,0,0,"Load Game",PA_RGB(0,0,0),2,1);
 	ds_button_addManagement(loadmenu_btnLoad,_ds_loadmenu_loadGame,0);
-	ds_button_addSound(loadmenu_btnLoad, "Tiny Hit");
+	ds_button_addSound(loadmenu_btnLoad, "Menu Option");
 	ds_button_hide(loadmenu_btnLoad,1);
 	loadmenu_btnNew = ds_button_create(80,164,96,16,0,loadmenu_string);
 	ds_button_addClick(loadmenu_btnNew,6,loadmenu_string2);
 	ds_button_addText(loadmenu_btnNew,0,0,"New Game",PA_RGB(0,0,0),2,1);
 	ds_button_addManagement(loadmenu_btnNew,_ds_loadmenu_loadGameNew,0);
-	ds_button_addSound(loadmenu_btnNew, "Tiny Hit");
+	ds_button_addSound(loadmenu_btnNew, "Menu Option");
 	ds_button_hide(loadmenu_btnNew,1);
 	sprintf(loadmenu_string,"%s%s/Gui_btn_mediumErase.png",DS_DIR_MAIN,DS_DIR_SYS);
 	sprintf(loadmenu_string2,"%s%s/Gui_btn_mediumErase2.png",DS_DIR_MAIN,DS_DIR_SYS);

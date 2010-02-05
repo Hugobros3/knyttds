@@ -37,8 +37,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_customobj.h"
 #include "ds_gamestatus.h"
+#include "ds_music.h"
 #include <stdlib.h>
 #include <math.h>
+
 
 /* Starts Object - Init variables. */
 int ds_objects_lib_initObject(u8 bank, u8 obj, ds_t_object *object) {
@@ -251,6 +253,7 @@ void ds_objects_lib_beh_shift(ds_t_object *object, int type) {
    int flag = 0;
    int absolute;
    int checktmp, checktmp2;
+	int shiftsound;
    char _shift_string[255];
    int shiftToOtherMap = 0;
    
@@ -365,7 +368,22 @@ void ds_objects_lib_beh_shift(ds_t_object *object, int type) {
 		      }   
 			}      
 		}   
-
+		// Load the sound for this particular teleport
+		shiftsound = 1; // Default
+   	sprintf(_shift_string,"%s",
+					ds_ini_getstring(ds_global_world.worldini,
+								ds_ini_keyDictionary(ds_global_map.x,ds_global_map.y,DS_C_DICT_SHIFT_SOUND,type,0,0,0),
+								"")
+				);
+		if (PA_CompareText(_shift_string,"None")) {
+			shiftsound = 0; // None
+		} else if (PA_CompareText(_shift_string,"Switch")) {
+			shiftsound = 2; // Switch
+		} else if (PA_CompareText(_shift_string,"Door")) {
+			shiftsound = 3; // Door
+		} else if (PA_CompareText(_shift_string,"Electronic")) {
+			shiftsound = 4; // Electronic
+		}
 		// Finally..Teleport!!!!
    	sprintf(_shift_string,"%s",
 					ds_ini_getstring(ds_global_world.worldini,
@@ -391,6 +409,7 @@ void ds_objects_lib_beh_shift(ds_t_object *object, int type) {
 		      // Also, tell the system that any shift "on arrival" WON'T work
 		      ds_global_world.shiftNoX = posx / 24; // Need Tile Pos!
 			   ds_global_world.shiftNoY = posy / 24;
+				ds_music_playSpecialSound(shiftsound);
 		   } else {   
 				// Teleport Case 1: Normal Teleport
 				shiftToOtherMap = 1;
@@ -401,6 +420,7 @@ void ds_objects_lib_beh_shift(ds_t_object *object, int type) {
 				ds_state_var_setInt(3,posy); // This is in absolute position
 				flag = 0;
 				ds_state_var_setInt(4,flag);
+				ds_state_var_setInt(6,shiftsound); // Sound
 			}			
 		} else {
 		   // Teleport Case 2: Cutscene Teleport
@@ -410,6 +430,7 @@ void ds_objects_lib_beh_shift(ds_t_object *object, int type) {
 			ds_state_var_setInt(0,DS_C_LOADGAME_CUTSCENE); // Da game!
 			ds_state_var_setInt(1,0); // NO Reset
 			ds_state_var_setInt(2,ds_global_world.saveslot); // Specific save state
+			ds_state_var_setInt(3,shiftsound); // Sound to use
 		}      
       // Tells external systems that I am going to shift...
       ds_global_world.shift = 1;
@@ -555,6 +576,7 @@ int ds_objects_lib_par_make4Following(ds_t_object *object, int sec, int waitTime
 	ds_t_object *particle;
 	
 	if ((ds_global_tick % (60 * sec)) == 0) {
+			ds_music_playSound("Homing Shot", 0, 0);
 	      x = ds_3dsprite_getX(object->sprite) - 2;
 	      y = ds_3dsprite_getY(object->sprite) - 16;
 		   particle = ds_objects_createParticle(x + 7, y + 5, object->layer, 12);  // UL
@@ -814,6 +836,7 @@ int ds_objects_lib_par_make4FlyingBullets(ds_t_object *object, int sec, int spee
 	ds_t_object *particle;
 	
 	if ((ds_global_tick % (sec * 60)) == 0) {
+			ds_music_playSound("Tiny Shot", 0, 0);
 	      x = ds_3dsprite_getX(object->sprite) - 2;
 	      y = ds_3dsprite_getY(object->sprite) - 16;
 		   particle = ds_objects_createParticle(x + 16, y + 5, object->layer, 4 + 1); 
@@ -837,6 +860,7 @@ int ds_objects_lib_par_make6FlyingBullets(ds_t_object *object, int sec, int spee
 	ds_t_object *particle;
 	
 	if ((ds_global_tick % (sec * 60)) == 0) {
+			ds_music_playSound("Tiny Shot", 0, 0);
 	      x = ds_3dsprite_getX(object->sprite) - 2;
 	      y = ds_3dsprite_getY(object->sprite) - 16;
 		   particle = ds_objects_createParticle(x + 11, y + 5, object->layer, 4 + 0); 
@@ -864,6 +888,7 @@ int ds_objects_lib_par_make8FlyingBullets(ds_t_object *object, int sec, int spee
 	ds_t_object *particle;
 	
 	if ((ds_global_tick % (sec * 60)) == 0) {
+			ds_music_playSound("Tiny Shot", 0, 0);
 	      x = ds_3dsprite_getX(object->sprite) - 2;
 	      y = ds_3dsprite_getY(object->sprite) - 16;
 		   particle = ds_objects_createParticle(x + 11, y + 5, object->layer, 4 + 0); 
@@ -993,6 +1018,7 @@ int ds_objects_lib_beh_beeBullet(ds_t_object *object, int indexBullet, int sec, 
          // Sublaunch
          if (object->innerpar[2] == 0) {
             // Launch bee bullet
+				ds_music_playSound("Tiny Shot", 0, 0);
             int beeRight = ds_3dsprite_lookRight_LR(object->sprite);
 			   particle = ds_objects_createParticle((beeRight)?object->x+12:object->x+5, object->y, object->layer, (beeRight)?indexBullet:indexBullet+1); 
 			   ds_objects_lib_beh_particleFlyingBullet_Init(particle,1,(beeRight)?3:5,3);		         
@@ -1038,6 +1064,7 @@ int ds_objects_lib_par_make4ParticleFalling(ds_t_object *object, int sec, int ma
 	if ((ds_global_tick % (sec * 60)) == 0) {
 	   object->innerpar[0] = PA_RandMinMax(1,maxSpeedX);
 	   object->innerpar[1] = PA_RandMinMax(0,maxSpeedY);	   
+		object->innerpar[2] = ds_music_playSound("Liquid", 0, 0);
 	   object->inner_tick = ds_global_tick;
 	}   
 	if (object->inner_tick != 0) {
@@ -1071,8 +1098,10 @@ int ds_objects_lib_par_make4ParticleFalling(ds_t_object *object, int sec, int ma
 		   
 		   ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	   }   
-	   if ((ds_global_tick - object->inner_tick) > (particles << 1))
+	   if ((ds_global_tick - object->inner_tick) > (particles << 1)) {
 	   	object->inner_tick = 0;
+			ds_music_stopSoundChannel(object->innerpar[2]);
+		}
 	}   
 	return 1;
 }   
@@ -1089,6 +1118,7 @@ int ds_objects_lib_par_make2ParticleFalling(ds_t_object *object, int sec, int ma
 	if ((ds_global_tick % (sec * 60)) == 0) {
 	   object->innerpar[0] = PA_RandMinMax(1,maxSpeedX);
 	   object->innerpar[1] = PA_RandMinMax(0,maxSpeedY);	   
+		object->innerpar[2] = ds_music_playSound("Liquid", 0, 0);
 	   object->inner_tick = ds_global_tick;
 	}   
 	if (object->inner_tick != 0) {
@@ -1110,8 +1140,10 @@ int ds_objects_lib_par_make2ParticleFalling(ds_t_object *object, int sec, int ma
 		   
 		   ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
 	   }   
-	   if ((ds_global_tick - object->inner_tick) > (particles << 1))
+	   if ((ds_global_tick - object->inner_tick) > (particles << 1)) {
 	   	object->inner_tick = 0;
+			ds_music_stopSoundChannel(object->innerpar[2]);
+		}
 	}   
 	return 1;
 }   
@@ -2465,10 +2497,12 @@ void ds_objects_lib_beh_jumpJuniJump(ds_t_object *object, int distJuni, int spee
 //				ds_3dsprite_updateSprite(object->sprite);	                        
             object->inner[1]++;
 				if (object->inner[1] == ds_3dsprite_getMaxFrame(object->sprite)) {
+					// Change and sound
 				   object->inner[0] = 3;
 				   object->inner[3] = speedJump;
 				   object->inner[7] = distJump / speedJump;
 				   object->inner[8] = waitingMovementJump;
+				   ds_music_playSound("Bounce Lite", 0, 0);
 				} else {
 				   object->inner[8] = waitingMovementSurface;
 				}			   
@@ -2500,9 +2534,11 @@ void ds_objects_lib_beh_jumpJuniJump(ds_t_object *object, int distJuni, int spee
 			   ds_3dsprite_setY(object->sprite,object->y);            
 			   object->inner[7]--;
 			   if (object->inner[7] <= 0) {
+				   // Cange state and sound
 				   object->inner[0] = 0;
 				   object->inner[7] = distJump;
 				   object->inner[8] = waitingMovementJump;
+				   ds_music_playSound("Bounce", 0, 0);
 			   } else {   
 					object->inner[8] = waitingMovementJump;			   
 				}			
@@ -2575,9 +2611,10 @@ void ds_objects_lib_beh_jumpSequence(ds_t_object *object,
 						} else {
 						   object->inner[2] = (object->inner[2] + 1) % 5;
 						}   
-						// Advance!
+						// Advance and make sound!
 						object->inner[0] = 1;   
 						object->inner[8] = waitingTime;
+						ds_music_playSound("Bounce", 0, 0);
 					}			
             } else {
                object->inner[8] = waitingTime;
@@ -3974,6 +4011,7 @@ int ds_objects_lib_beh_diskMovementLR_Spike(ds_t_object *object,
 			break;
 		case 2:
 		   // BEGIN - SPIKES
+		   ds_music_playSound("Spike Up", 0, 0);
 		   object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
 		   object->inner[0] = 3;
 		   object->inner[1] = ((object->inner[2] == 1)?endL:endRS);
@@ -4007,6 +4045,7 @@ int ds_objects_lib_beh_diskMovementLR_Spike(ds_t_object *object,
 		   break;
 		case 4:
 		   // END - SPIKES
+		   ds_music_playSound("Spike Down", 0, 0);
 		   object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_HARMFUL);
 		   object->inner[0] = 1;
 		   object->inner[1] = ((object->inner[2] == 1)?0:endR);
@@ -4261,6 +4300,7 @@ int ds_objects_lib_beh_diskMovementB_Spike(ds_t_object *object,
 			break;
 		case 2:
 		   // BEGIN - SPIKES
+		   ds_music_playSound("Spike Up", 0, 0);
 		   object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_HARMFUL);
 		   object->inner[0] = 3;
 		   object->inner[1] = end;
@@ -4294,6 +4334,7 @@ int ds_objects_lib_beh_diskMovementB_Spike(ds_t_object *object,
 		   break;
 		case 4:
 		   // END - SPIKES
+		   ds_music_playSound("Spike Down", 0, 0);
 		   object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_HARMFUL);
 		   object->inner[0] = 1;
 		   object->inner[1] = 0;
@@ -4676,7 +4717,7 @@ int ds_objects_lib_beh_hunter(ds_t_object *object,
 	[9] - WaitSprite
 */
 
-	int res = 0;
+	int res = 0; // Returns 1 if hunt starts!
 	int newx;
 	int collided = 0;
 	int movPixX;
@@ -4722,6 +4763,7 @@ int ds_objects_lib_beh_hunter(ds_t_object *object,
 			   // New variables & state
 			   object->inner[1] = (object->inner[2] == 1)?iniR:iniL;
 			   object->inner[0] = 2;
+			   res = 1;
 			}   
 	      break;
 	   case 2:

@@ -32,6 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_map.h"
 #include "ds_juni.h"
+#include "ds_music.h"
+
 
 // BANK 17 [B17]
 //=================================================================================================
@@ -89,7 +91,10 @@ int _ds_objects_b17o01_instance(void *objp) {
 	int gravity;
 
 	// If 23..32 when stopped, launch particle!	
-	if ((object->inner[3] == 0) && (ds_global_tick % 60 >=23) && (ds_global_tick % 60 <= 32)) {
+	if ((object->inner[3] == 0) && ((ds_global_tick % 60) >=23) && ((ds_global_tick % 60) <= 32)) {
+		if ((ds_global_tick % 60) == 23) {
+			ds_music_playSound("Homing Shot", 0, 0);
+		}
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 8, object->layer, 42);
 	   gravity = 8; // Small correction from 12 
 	   speedY = 20 + PA_RandMinMax(0,39); // 20...59
@@ -204,6 +209,7 @@ int _ds_objects_b17o03_manage(void *objp) {
 	            object->inner[9] = 3;
 					// Particle launch
 					if (object->inner[1] == 18) {
+						ds_music_playSound("Homing Shot", 0, 0);
 					   int i;
 				      ds_t_object *particle;
 					   int speedX;
@@ -280,6 +286,7 @@ int _ds_objects_b17o04_instance(void *objp) {
 	int gravity;
       
    if (object->innerpar[0] == 1) {
+		ds_music_playSound("Homing Hit", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y - 8, object->layer, 42);
 	   gravity = 8; // Small correction from 12 
 	   speedY = 30 + PA_RandMinMax(0,29); // 30...59
@@ -343,6 +350,7 @@ int _ds_objects_b17o05_instance(void *objp) {
 	int gravity;
 
    if (object->innerpar[0] == 1) {
+		ds_music_playSound("Homing Hit", 0, 0);
 	   particle = ds_objects_createParticle(object->x + 8, object->y, object->layer, 42);
 	   gravity = 8; // Small correction from 12 
 	   speedY = PA_RandMinMax(0,19); // 0...19
@@ -431,6 +439,7 @@ int _ds_objects_b17o07_manage(void *objp) {
 									 3);									 
 	
    if (res) {
+		ds_music_playSound("Ninja", 0, 0);
 		int s = 40;
 		double angle;
 		if (object->inner[2] == 1) {
@@ -504,6 +513,7 @@ int _ds_objects_b17o08_manage(void *objp) {
 	}      
 									 	
    if (res) {
+		ds_music_playSound("Ninja", 0, 0);
 		int s = 40;
 		double angle;
 	   // Right!
@@ -572,6 +582,7 @@ int _ds_objects_b17o09_manage(void *objp) {
 	}      
 									 	
    if (res) {
+		ds_music_playSound("Ninja", 0, 0);
 		int s = 40;
 		double angle;
 	   // Left!
@@ -625,7 +636,13 @@ int _ds_objects_b17o10_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b17o10_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_appear(object,80,100,2,3,0); // Corrected   
+	if (ds_objects_lib_beh_appear(object,80,100,2,3,0)) { // Corrected   
+		if (object->inner[0] == 2) {
+			ds_music_playSound("Spike Up", 0, 0);
+		} else {
+			ds_music_playSound("Spike Down", 0, 0);
+		}
+	}
 
    return 1;
 }
@@ -662,7 +679,13 @@ int _ds_objects_b17o11_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b17o11_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_appear(object,80,100,2,3,0); // Corrected   
+	if (ds_objects_lib_beh_appear(object,80,100,2,3,0)) { // Corrected   
+		if (object->inner[0] == 2) {
+			ds_music_playSound("Spike Up", 0, 0);
+		} else {
+			ds_music_playSound("Spike Down", 0, 0);
+		}
+	}
 
    return 1;
 }
@@ -699,7 +722,13 @@ int _ds_objects_b17o12_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b17o12_manage(void *objp) {
    ds_t_object *object = objp;
    
-	ds_objects_lib_beh_appear(object,80,100,2,3,0); // Corrected   
+	if (ds_objects_lib_beh_appear(object,80,100,2,3,0)) { // Corrected   
+		if (object->inner[0] == 2) {
+			ds_music_playSound("Spike Up", 0, 0);
+		} else {
+			ds_music_playSound("Spike Down", 0, 0);
+		}
+	}
 
    return 1;
 }

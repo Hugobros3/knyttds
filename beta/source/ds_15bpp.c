@@ -117,6 +117,11 @@ int _ds_15bpp_loadpng(char *file, ds_t_pngds *info) {
 	 info->info_ptr->row_pointers = malloc(info->height * sizeof(png_bytep));
 	 if (info->info_ptr->row_pointers == NULL)
 	 {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"_ds_15bpp_loadpng 1 \n M:%ld",info->height * sizeof(png_bytep));
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
 		 fclose(fpng); 
 		 png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),(png_infopp)NULL);
 		 ds_global_errorAssign(DS_C_ERR_NOMEMORY);
@@ -127,6 +132,11 @@ int _ds_15bpp_loadpng(char *file, ds_t_pngds *info) {
 		 info->info_ptr->row_pointers[row] = malloc(png_get_rowbytes(info->png_ptr,info->info_ptr));
 		 if (info->info_ptr->row_pointers[row] == NULL)
 		 {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"_ds_15bpp_loadpng 2 \n M:%ld",png_get_rowbytes(info->png_ptr,info->info_ptr));
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
 			 fclose(fpng); 
 			 png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),&(info->end_info));
 			 ds_global_errorAssign(DS_C_ERR_NOMEMORY);
@@ -327,11 +337,21 @@ int _ds_15bpp_load15bpp(ds_t_pngds *info, ds_t_15bpp *ima) {
    /*--------------------------*/
    ima->png_screen = malloc((info->width * info->height) * 2); // Stores words (u16), not bytes (u8)
    if (ima->png_screen == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"_ds_15bpp_load15bpp 1 \n M:%d",(info->width * info->height) * 2);
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
       return 0;
    }   
    ima->png_alpha = malloc(info->width * info->height); // Stores bytes (u8)
    if (ima->png_alpha == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"_ds_15bpp_load15bpp 2 \n M:%d",(info->width * info->height));
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       free(ima->png_screen);
       ima->png_screen = NULL;
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
@@ -383,6 +403,196 @@ int _ds_15bpp_load15bpp(ds_t_pngds *info, ds_t_15bpp *ima) {
 	return 1;
 }
 
+int _ds_15bpp_load15bppCombined(char *file, ds_t_pngds *info, ds_t_15bpp *ima) {   
+   FILE *fpng;
+   
+   // "" CHECK!!!!
+   if (file[0] == '\0') {
+      return 0;
+   }   
+	   
+	/* Opens PNG */
+	/*-----------*/		
+	fpng = fopen(file,"rb");
+	if (fpng == NULL) {
+	   ds_global_errorAssign(DS_C_ERR_NOFOUND);
+	   return 0;
+	}
+	
+	/* Creates Structures */
+	/*--------------------*/		
+	// <TODO> Manage lngjmp, delete memory, close file, check if it is png
+	info->png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, png_voidp_NULL,
+	   png_voidp_NULL, png_voidp_NULL);
+	if (info->png_ptr == NULL) {
+	   fclose(fpng);
+	   ds_global_errorAssign(DS_C_ERR_NOTILESET);
+	   return 0;
+	}   
+	info->info_ptr = png_create_info_struct(info->png_ptr);
+	if (info->info_ptr == NULL)
+	{
+		fclose(fpng);
+		png_destroy_read_struct(&(info->png_ptr),(png_infopp)NULL,(png_infopp)NULL);
+		ds_global_errorAssign(DS_C_ERR_NOTILESET);
+		return 0;
+	}
+	png_set_error_fn(info->png_ptr, (png_voidp)file, _png_error, _png_warning);
+	
+	/* Start Read PNG - Progressive + Checks */
+	/*---------------------------------------*/
+	// Load First Header information
+	png_init_io(info->png_ptr, fpng);
+	png_read_info(info->png_ptr, info->info_ptr);
+	info->width = png_get_image_width(info->png_ptr, info->info_ptr);
+	info->height = png_get_image_height(info->png_ptr, info->info_ptr);	
+	// Try to create end_info.
+	info->end_info = png_create_info_struct(info->png_ptr);
+	if (info->end_info == NULL)
+	{
+		fclose(fpng); 
+		png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),(png_infopp)NULL);
+		ds_global_errorAssign(DS_C_ERR_NOTILESET);
+		return 0;
+	}    
+
+	// Continues loading
+	// Perform some transformations
+	if (info->info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
+	{
+		png_set_palette_to_rgb(info->png_ptr);
+		png_read_update_info(info->png_ptr, info->info_ptr);
+	}	
+	
+	/* 15BPP - start preparing things */
+	/*--------------------------------*/
+   int i,j,val;
+   png_bytep row_png;
+   png_bytep row_ptr;
+   unsigned char r=0, g=0, b=0, a=0;
+
+	// Secondary information
+   ima->is_alpha = (info->info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA);
+	ima->width = info->width;
+	ima->height = info->height;
+
+	// Create memory for arrays
+   ima->png_screen = malloc((info->width * info->height) * 2); // Stores words (u16), not bytes (u8)
+   if (ima->png_screen == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"_ds_15bpp_load15bpp 1 \n M:%d",(info->width * info->height) * 2);
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
+		png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),&(info->end_info));
+      ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+      return 0;
+   }   
+   ima->png_alpha = malloc(info->width * info->height); // Stores bytes (u8)
+   if (ima->png_alpha == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"_ds_15bpp_load15bpp 2 \n M:%d",(info->width * info->height));
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
+		png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),&(info->end_info));
+      free(ima->png_screen);
+      ima->png_screen = NULL;
+      ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+      return 0;
+   }   
+	
+	/* Start Reading the PNG - Real read & Transformations */
+	/*-----------------------------------------------------*/
+   // Load the row_pointers
+   for (j = 0; j < info->height; j++) {
+      // Load the whole row
+		//--------------------
+   	row_png = malloc(png_get_rowbytes(info->png_ptr,info->info_ptr));
+		if (row_png == NULL)
+		{
+			fclose(fpng); 
+			png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),&(info->end_info));
+			ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+			return 0;
+		}
+   	png_read_row(info->png_ptr, row_png, NULL); 
+		
+      // Transform the row for 15bpp
+		//----------------------------
+		row_ptr = row_png;
+		for (i= 0; i < info->width; i++) {
+		   switch(info->info_ptr->color_type) {
+					case PNG_COLOR_TYPE_RGB:
+						r = *row_ptr++;
+						g = *row_ptr++;
+						b = *row_ptr++;
+						break;
+					case PNG_COLOR_TYPE_RGB_ALPHA:
+						r = *row_ptr++;
+						g = *row_ptr++;
+						b = *row_ptr++;
+						a = *row_ptr++;
+						break;		      
+			}	
+			// Stores normal information
+			val = i + (j * info->width);
+			ima->png_screen[val] = PA_RGB(r >> 3, g >> 3, b >> 3);
+			// Stores transparent/alpha information
+			if (ima->is_alpha)
+				ima->png_alpha[val] = a;
+			else {
+			   ima->png_alpha[val] =
+			    ((r == 0xff) && (g == 0x00) && (b == 0xff))?0x00:0xff; // Magenta == Transparency
+			}   
+			// <TODO> De-magentize an image
+			if (ima->png_alpha[val] == 0x00)
+				ima->png_screen[val] = 0;
+		}
+		
+      // Delete the png row
+		//-------------------
+		free(row_png);
+
+	}   
+
+	/* Finishes loading things */
+	/*-------------------------*/	
+   // We finish loading things :-)
+	png_read_end(info->png_ptr, info->end_info);
+	// But... also, some "HACK" section here...
+	info->info_ptr->valid |= PNG_INFO_IDAT;
+		// Why? We tell the library that the image is valid -:)
+		// NOTE that this trick is tested only with libpng 1.2.8 (the one we have used).
+		
+	// Also, alpha details for final image
+	if (!ima->is_alpha) {
+		if (ima->png_alpha != NULL)
+			free(ima->png_alpha);
+		ima->png_alpha = NULL;
+	}			
+
+	   	
+	/* Everything OK... or NOT */
+	/*-------------------------*/
+	fclose(fpng);
+		
+	if (_ds_pngerror) {
+		png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),&(info->end_info));
+		if (ima->png_screen != NULL) {
+			free(ima->png_screen);
+			ima->png_screen = NULL;
+		}
+		if (ima->png_alpha != NULL) {
+			free(ima->png_alpha);
+			ima->png_alpha = NULL;
+		}
+		return 0;
+	} else {   
+		return 1;
+	}	 
+}
+
 int _ds_15bpp_load15bppLimited(ds_t_pngds *info, ds_t_15bpp *ima, int sx, int sy) {   
    int i,j,val;
    png_bytepp row_pointers;
@@ -408,11 +618,21 @@ int _ds_15bpp_load15bppLimited(ds_t_pngds *info, ds_t_15bpp *ima, int sx, int sy
    /*--------------------------*/
    ima->png_screen = malloc((sx * sy * maxFrames) * 2); // Stores words (u16), not bytes (u8)
    if (ima->png_screen == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"_ds_15bpp_load15bppLimited 1 \n M:%d",(sx * sy * maxFrames) * 2);
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
       return 0;
    }   
    ima->png_alpha = malloc(sx * sy * maxFrames); // Stores bytes (u8)
    if (ima->png_alpha == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"_ds_15bpp_load15bppLimited 2 \n M:%d",(sx * sy * maxFrames));
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       free(ima->png_screen);
       ima->png_screen = NULL;
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
@@ -706,6 +926,11 @@ int ds_15bpp_loadRawFile(char *file, ds_t_15bpp *ima) {
 	// Loads the image itself
    ima->png_screen = malloc((ima->width * ima->height) * 2); // Stores words (u16), not bytes (u8)
    if (ima->png_screen == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"ds_15bpp_loadRawFile 1 \n M:%d",(ima->width * ima->height) * 2);
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       fclose(f);
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
       return 0;
@@ -728,6 +953,11 @@ int ds_15bpp_loadRawFile(char *file, ds_t_15bpp *ima) {
 	}   
    ima->png_alpha = malloc(ima->width * ima->height); // Stores bytes (u8)
    if (ima->png_alpha == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"ds_15bpp_loadRawFile 2 \n M:%d",(ima->width * ima->height));
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       free(ima->png_screen);
       fclose(f);
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
@@ -797,6 +1027,11 @@ int ds_15bpp_loadRawFilePartial(char *file, ds_t_15bpp *ima, int tilesize) {
 	// "Loads" the image itself
    ima->png_screen = malloc((ima->width * ima->height) * 2); // Stores words (u16), not bytes (u8)
    if (ima->png_screen == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"ds_15bpp_loadRawFilePartial 1 \n M:%d",(ima->width * ima->height) * 2);
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       fclose(ima->f);
       ima->f = NULL;
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
@@ -822,6 +1057,11 @@ int ds_15bpp_loadRawFilePartial(char *file, ds_t_15bpp *ima, int tilesize) {
 	}   
    ima->png_alpha = malloc(ima->width * ima->height); // Stores bytes (u8)
    if (ima->png_alpha == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"ds_15bpp_loadRawFilePartial 2 \n M:%d",(ima->width * ima->height));
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       free(ima->png_screen);
       fclose(ima->f);
       ima->f = NULL;
@@ -944,7 +1184,13 @@ int ds_15bpp_load(char *file, ds_t_15bpp *ima, int ispng, int ispartial) {
 	_ds_pngerror = 0;
 	
    if (ispng) {
-      if (!_ds_15bpp_loadpng(file,&png)) {
+		if (!_ds_15bpp_load15bppCombined(file, &png, ima)) {
+   	   return 0;
+	   }   
+      png_destroy_read_struct(&png.png_ptr,&png.info_ptr,&png.end_info);
+      ima->loaded = 1;
+		
+      /*if (!_ds_15bpp_loadpng(file,&png)) {
          // png_destroy_read_struct -> Done inside
    	   return 0;
 	   }   
@@ -953,7 +1199,7 @@ int ds_15bpp_load(char *file, ds_t_15bpp *ima, int ispng, int ispartial) {
    	   return 0;
 	   }   
       png_destroy_read_struct(&png.png_ptr,&png.info_ptr,&png.end_info);
-      ima->loaded = 1;
+      ima->loaded = 1;*/		
    } 
 	else {
 	   if (ispartial) {
@@ -1017,6 +1263,11 @@ int ds_15bpp_resize(ds_t_15bpp *dest,ds_t_15bpp *ori,int newx, int newy) {
    dest->height = newy;
    dest->png_screen = malloc((dest->width * dest->height) * 2); // Stores words (u16), not bytes (u8);
    if (dest->png_screen == NULL) {
+#ifdef DEBUG_KSDS
+		sprintf(ds_global_string,"ds_15bpp_resize 1 \n M:%d",(dest->width * dest->height) * 2);
+		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
+		ds_global_errorHalt(ds_global_string);
+#endif
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
    	return 0;
  	}  	

@@ -247,7 +247,7 @@ void _ds_g_levelmenu_createButtons() {
 		   levelmenu_btn[i].authorid = ds_button_addText(levelmenu_btn[i].id,35,6,level->author,PA_RGB(0,0,0),1,0);
 		   levelmenu_btn[i].descriptionid = ds_button_addText(levelmenu_btn[i].id,35,20,level->description,PA_RGB(9,9,9),1,0);	   
 		   ds_button_addManagement(levelmenu_btn[i].id,_ds_levelmenu_btnLevel,0);
-		   ds_button_addSound(levelmenu_btn[i].id, "Tiny Hit");
+		   ds_button_addSound(levelmenu_btn[i].id, "Menu Option");
 		} else {
 		   ds_button_hide(levelmenu_btn[i].id,1);
 		}   
@@ -312,6 +312,9 @@ void _ds_g_levelmenu_updateScreen() {
 
 /* Starts this subScreen */
 void ds_g_levelmenu_start() {
+	// -1! DEBUG!
+	ds_global_debug = 1;
+
    // Zero! Init variables :-)
    _ds_levels = ds_linkedlist_init();
    levelmenu_drawBtn = 0;

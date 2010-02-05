@@ -37,6 +37,7 @@ DEBUG: 1001-1000, 24*4,24 ... tutorial
 					[1]-RESETM: 1, resets Juni's movements
 					[2]-RESETI: 1, resets Juni's internal info (e.g. items, flags)
 	State[5] = GUI
+	State[6] = Sound
 */
 
 #include "ds_util_bit.h"
@@ -94,14 +95,7 @@ int _ds_g_game_checkflags(int type) {
 void ds_g_game_start() {   
    char tempstr[255];
    char tempstr_1[255];
-   
-   // DEBUG!
-  	if (ds_state_var_getInt(0) == 1003) {
-  	   if (ds_state_var_getInt(1) == 1007) {
-   		ds_global_debug++;
-  		}
-	}   		
-   
+      
    /* BEFORE ANYTHING... I have to check the Flags of this room, and modify state[0][1] accordingly */
    if (!_ds_g_game_checkflags(DS_C_ELETYPE_A))
    	if (!_ds_g_game_checkflags(DS_C_ELETYPE_B))
@@ -169,13 +163,7 @@ void ds_g_game_start() {
    } 
 	sprintf(tempstr_1,"IniGUI: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
-            
-   /* And... if I came from a shift, do special things */
-   if (ds_global_world.shift_cameFrom) {
-      // TODO: Do special things from Shift (Sounds, ...)
-   }   
-   ds_global_world.shift_cameFrom = 0;
-   
+               
    /* Launch some music! (or not ^_-) 
 		Why it is here? - if no memory, then is OK :-P */
    ds_music_playMusicAndAmbiance(ds_global_map.room.music,
@@ -183,7 +171,14 @@ void ds_g_game_start() {
 				0); // Both mp3 and raw can be played here
 	sprintf(tempstr_1,"final: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
-
+	
+   /* And... if I came from a shift, do special things */
+   if (ds_global_world.shift_cameFrom) {
+		/* Play some sounds ;-) */
+		ds_music_playSpecialSound(ds_state_var_getInt(6));
+   }   
+   ds_global_world.shift_cameFrom = 0;
+	
 	//ds_global_errorHalt(tempstr);
 	   
    // Pops if fade to white!
@@ -278,12 +273,12 @@ void ds_g_game_state() {
    ds_map_manage();
 	sprintf(ds_global_string,"ST<Map>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,2,ds_global_string,DS_C_STA_DEBUG2);
-		   
+			   
    /* Manage all the objects and entities that have an specific handler */
    ds_objects_manage();
 	sprintf(ds_global_string,"ST<Obj>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,3,ds_global_string,DS_C_STA_DEBUG2);
-	
+		
    /* Manages Juni */   
    ds_juni_manage();
 	sprintf(ds_global_string,"ST<Juni>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());

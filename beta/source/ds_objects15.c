@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_juni.h"
 #include "ds_3dsprite.h"
 #include "ds_world.h"
+#include "ds_music.h"
 
 // BANK 15 [B15]
 //=================================================================================================
@@ -61,6 +62,8 @@ void _ds_objects_b15_keys(ds_t_object *object, int item) {
             object->inner[0] = 1;
             object->inner[1] = 0;            
             object->inner[8] = 2;
+				// Make sound
+				ds_music_playSound("Right Comb", 0, 1);
          }   
          break;
       case 1:
@@ -70,7 +73,6 @@ void _ds_objects_b15_keys(ds_t_object *object, int item) {
             object->inner[1]++;
             if (object->inner[1] < ds_3dsprite_getMaxFrame(object->sprite)) {
             	ds_3dsprite_setFrame(object->sprite,object->inner[1]);
-//					ds_3dsprite_updateSprite(object->sprite);
 					object->inner[8] = 2;               
             } else {
                object->inner[0] = 2;
@@ -142,6 +144,7 @@ void _ds_objects_b15_PasswordTriggered() {
    ds_t_object *object;
    
    myiterator = ds_linkedlist_startIterator(&ds_global_objects);
+	ds_music_playSound("Right Comb", 0, 1);
    while ((object = ds_linkedlist_getIterator(&ds_global_objects,&myiterator)) != NULL) {
       if ((object->bank == 15) &&  // Our bank
 			 ((object->obj == 12) || ((object->obj >= 23) && (object->obj <= 24))) && // Our object

@@ -49,6 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //-------------------------------------------------------------------------------------------------
 
 u8 _ds_juni_varDbl = 0;
+u8 _ds_juni_afterInit = 0;
 
 #define _DS_JUNI_GPCLIMB 24
 #define _DS_JUNI_GPCLIMB_BASIC 16
@@ -272,6 +273,8 @@ int ds_juni_isOnTheGroundMoving() {
 
 /* Initializes the "Juni" structure. Flag is active if movement information / internal information should be reset */
 int ds_juni_init(int x, int y, int resetmov, int resetinner) {
+	// First, signals that I started Juni - and certain things (e.g. music) must be done
+	_ds_juni_afterInit = 1;
    // Basic initialization
    ds_global_juni.x = x;
    ds_global_juni.y = y;      
@@ -946,8 +949,9 @@ void _ds_juni_manageMovement() {
 				ds_global_juni.movstateY = (ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_JUMP))?
 														DS_C_JUNI_MOVST_Y_JUMP:DS_C_JUNI_MOVST_Y_JUMPSOFT;
 				_ds_juni_correctJumpUmbrella(); // If Umbrella, jump is a bit slower
-				if (wasDblJump)
+				if (wasDblJump) {
 					_ds_juni_varDbl = 1;
+				}
 		   }   
 		}		
    } else if (!ds_util_bitOne16(ds_global_input.Held,DS_C_IN_TJUMP)) {   
@@ -976,12 +980,14 @@ void _ds_juni_manageMovement() {
             // Close...
             ds_global_juni.umb_state--; // Correct the actual sprite
             ds_global_juni.umbrellaOn = 0;
+			ds_music_playSound("Umbrella B", 0, 1);
          } else {
             // Open
             ds_3dsprite_markInvisible(ds_global_juni.umb_sprite,0);
             ds_global_juni.umbrellaOn = 1;
             ds_global_juni.umb_state = ds_3dsprite_getIniFrame_LR(ds_global_juni.umb_sprite,_ds_juni_faceRight(),1);
             ds_global_juni.umb_dir = _ds_juni_faceRight(); // Should remember this :-)
+			ds_music_playSound("Umbrella A", 0, 1);
 			}      
    	}   
 	}	
@@ -1005,10 +1011,12 @@ void _ds_juni_manageMovement() {
 						ds_3dsprite_setAlpha(ds_global_juni.sprite,128);
 		 		      ds_global_juni.hologramOn = 1;
 				}     
+				ds_music_playSound("Hologram A", 0, 1);
 			} else {
 			   ds_3dsprite_markInvisible(ds_global_juni.holo_sprite,1);
 			   ds_3dsprite_setAlpha(ds_global_juni.sprite,255);
 			   ds_global_juni.hologramOn = 0;
+			   ds_music_playSound("Hologram B", 0, 1);
 			}   	
 		}			
 	}	
@@ -1498,6 +1506,7 @@ void _ds_juni_manageMovement() {
 				ds_t_object *particle;
 				particle = ds_objects_createParticle(((newx + 12) / 24) * 24, 
 									((newy + (24)) / 24) * 24, 4, 58);
+				ds_music_playSound("Bounce Platform", 0, 1);
 				newstate = (ds_global_juni.state == DS_C_JUNI_ST_FALL_L)?DS_C_JUNI_ST_JUMP_L:DS_C_JUNI_ST_JUMP_R;
 				_ds_juni_change(newstate,1);
 				ds_global_juni.inDblJump = 1; // After state change. This means: I "may" DblJump later
@@ -1881,7 +1890,7 @@ void _ds_juni_manageObjectDam() {
 	   // New Juni_is_dead state
 	   ds_global_juni.state = DS_C_JUNI_ST_DEAD;
 	   // Countdown!
-	   ds_global_juni.actualpix = 60 * 3; // 3 seconds
+	   ds_global_juni.actualpix = (60 * 3) + 30; // 3'30 seconds
 	}
 }
 
@@ -2048,6 +2057,15 @@ void _ds_juni_manageDead() {
 
 /* Manages the sound produced by the movement of Juni... make sounds like Juni, my friend -:) */
 void _ds_juni_manageSound() {
+	if (_ds_juni_afterInit) {
+		// Forces Juni to play a sound
+		ds_global_juni.old_state = DS_C_JUNI_ST_MAX_;
+		_ds_juni_afterInit = 0;
+	}
+	
+	if (_ds_juni_varDbl)
+		ds_music_playSound("Double Jump", 0, 1); // Plays the "DblJump" sound		
+		
    switch (ds_global_juni.state) {
 		case DS_C_JUNI_ST_STOP_R:
 		case DS_C_JUNI_ST_STOP_L:
@@ -2057,22 +2075,34 @@ void _ds_juni_manageSound() {
 			    (ds_global_juni.old_state == DS_C_JUNI_ST_FALL_L) ||
 				(ds_global_juni.old_state == DS_C_JUNI_ST_FLY_R) ||
 				(ds_global_juni.old_state == DS_C_JUNI_ST_FLY_L))
-				ds_music_playSound("Land", 0, 0);
+				ds_music_playSound("Land", 0, 1);
 			if (ds_global_juni.old_state != ds_global_juni.state)
 				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
 		   	break;
 		case DS_C_JUNI_ST_WALK_R:
 		case DS_C_JUNI_ST_WALK_L:
+			// IF old state = FALL/FLY -> PLAY Toc
+			if ((ds_global_juni.old_state == DS_C_JUNI_ST_FALL_R) ||
+			    (ds_global_juni.old_state == DS_C_JUNI_ST_FALL_L) ||
+				(ds_global_juni.old_state == DS_C_JUNI_ST_FLY_R) ||
+				(ds_global_juni.old_state == DS_C_JUNI_ST_FLY_L))
+				ds_music_playSound("Land", 0, 1);
 			// IF state change (no direction change) -> LOOP Walk
 			if (ds_global_juni.old_state != ds_global_juni.state) {
-				ds_global_juni.sndchannel = ds_music_playSoundChannel("Walk", ds_global_juni.sndchannel, 1, 0);
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Walk", ds_global_juni.sndchannel, 1, 1);
 			}
 		   	break;
 		case DS_C_JUNI_ST_RUN_R:
 		case DS_C_JUNI_ST_RUN_L:
+			// IF old state = FALL/FLY -> PLAY Toc
+			if ((ds_global_juni.old_state == DS_C_JUNI_ST_FALL_R) ||
+			    (ds_global_juni.old_state == DS_C_JUNI_ST_FALL_L) ||
+				(ds_global_juni.old_state == DS_C_JUNI_ST_FLY_R) ||
+				(ds_global_juni.old_state == DS_C_JUNI_ST_FLY_L))
+				ds_music_playSound("Land", 0, 1);
 			// IF state change (no direction change) -> LOOP Run
 			if (ds_global_juni.old_state != ds_global_juni.state) {
-				ds_global_juni.sndchannel = ds_music_playSoundChannel("Run", ds_global_juni.sndchannel, 1, 0);
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Run", ds_global_juni.sndchannel, 1, 1);
 			}
 		   	break;
 		case DS_C_JUNI_ST_FALL_R:
@@ -2083,10 +2113,13 @@ void _ds_juni_manageSound() {
 		   	break;
 		case DS_C_JUNI_ST_JUMP_R:
 		case DS_C_JUNI_ST_JUMP_L:
-			// IF state change -> STOP LOOP, PLAY Jump
-			if (ds_global_juni.old_state != ds_global_juni.state) {
-				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
-				ds_music_playSound("Jump", 0, 0);
+			// IF no DblJump || no "flower"
+			// 	IF state change -> STOP LOOP, PLAY Jump
+			if ((!_ds_juni_varDbl) && (!ds_global_juni.inNoBtnJump)) {
+				if (ds_global_juni.old_state != ds_global_juni.state) {
+					ds_music_stopSoundChannel(ds_global_juni.sndchannel);
+					ds_music_playSound("Jump", 0, 1);
+				}
 			}
 		   	break;
 		case DS_C_JUNI_ST_CLIMB_R:
@@ -2095,12 +2128,14 @@ void _ds_juni_manageSound() {
 			// ELSEIF DS_C_JUNI_MOVST_Y_SLIDESOFT -> STOP LOOP
 			// ELSEIF DS_C_JUNI_MOVST_Y_SLIDE -> LOOP Slide
 			if (ds_global_juni.old_state != ds_global_juni.state) {
-				ds_global_juni.sndchannel = ds_music_playSoundChannel("Climb", ds_global_juni.sndchannel, 1, 0);
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Climb", ds_global_juni.sndchannel, 1, 1);
 			} else if (ds_global_juni.movstateY == DS_C_JUNI_MOVST_Y_SLIDESOFT) {
 				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
 			} else if (ds_global_juni.movstateY == DS_C_JUNI_MOVST_Y_SLIDE) {
-				ds_global_juni.sndchannel = ds_music_playSoundChannel("Slide", ds_global_juni.sndchannel, 1, 0);
-			} 
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Slide", ds_global_juni.sndchannel, 1, 1);
+			} else if (ds_global_juni.movstateY == DS_C_JUNI_MOVST_Y_CLIMB) {
+				ds_global_juni.sndchannel = ds_music_playSoundChannel("Climb", ds_global_juni.sndchannel, 1, 1);
+			}
 		   	break;
 		case DS_C_JUNI_ST_FLY_R:
 		case DS_C_JUNI_ST_FLY_L:
@@ -2112,7 +2147,7 @@ void _ds_juni_manageSound() {
 			// IF state change -> STOP LOOP, PLAY Smoke
 			if (ds_global_juni.old_state != ds_global_juni.state) {
 				ds_music_stopSoundChannel(ds_global_juni.sndchannel);
-				ds_music_playSound("Into Smoke", 0, 0);
+				ds_music_playSound("Into Smoke", 0, 2);
 			}
 			break;
    }   

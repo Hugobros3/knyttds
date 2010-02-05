@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_map.h"
 #include "ds_3dsprite.h"
+#include "ds_music.h"
 #include <math.h>
 
 // PARTICLE "CHILDREN" BANK  [PART]
@@ -359,6 +360,10 @@ int _ds_objects_p_oflying_manage(void *objp) {
    
    // Flying Bullet (Direction)
 	ds_objects_lib_beh_particleFlyingBullet(object);   
+	
+   if (object->_deleteme) {
+		ds_music_playSound("Tiny Hit", 0, 0);
+   }
    
    // Everything went OK...
    return 1;
@@ -395,6 +400,10 @@ int _ds_objects_p_o12_manage(void *objp) {
    // Follow Juni at all costs!!!!
    ds_objects_lib_beh_particleMMF2Follow(object,6);
 	//ds_objects_lib_beh_particleFollowing(object);   
+	
+   if (object->_deleteme) {
+		ds_music_playSound("Homing Hit", 0, 0);
+   }
    
    // Everything went OK...
    return 1;
@@ -836,6 +845,10 @@ int _ds_objects_p_o38_manage(void *objp) {
    
    // MMF2-style particle
 	ds_objects_lib_beh_particleMMF2(object,3); // Slow particle
+	
+   if (object->_deleteme) {
+		ds_music_playSound("Tiny Hit", 0, 0);
+   }
    
    // Everything went OK...
    return 1;
@@ -846,10 +859,25 @@ int _ds_objects_p_o39_manage(void *objp) {
    
    // MMF2-style particle
 	ds_objects_lib_beh_particleMMF2(object,4); // This one is slower
+	
+   if (object->_deleteme) {
+		ds_music_playSound("Fire Hit", 0, 0);
+   }
+
    
    // Everything went OK...
    return 1;
 }
+
+int _ds_objects_p_o41_manage(void *objp) {
+   ds_t_object *object = objp;
+   
+   // MMF2-style particle
+	ds_objects_lib_beh_particleMMF2(object,3); // Slow particle
+	   
+   // Everything went OK...
+   return 1;
+}            
 
 // GLOW "DIE ON END" [O40]
 //..........................................................................................
@@ -1003,6 +1031,10 @@ int _ds_objects_p_o44_manage(void *objp) {
 		else 
 			object->inner[1]+=fY;
 	}	
+	
+	if (object->_deleteme) {
+		ds_music_playSound("Tri Bullet Hit", 0, 0);
+	}
    
    // Everything went OK...
    return 1;
@@ -1104,6 +1136,7 @@ int _ds_objects_p_o49_manage(void *objp) {
 	ds_objects_lib_beh_particleMMF2(object,6);
 	
 	if (object->_deleteme) {
+		ds_music_playSound("Mega Split", 0, 0);
 	   int i,s,sx,sy;
 	   for (i = 0; i < 17; i++) {
 	      s = 12;
@@ -1255,6 +1288,7 @@ int _ds_objects_p_o52_manage(void *objp) {
 						sy, 
 				 		0, 15, 3);				 		
 	   }		 
+	   ds_music_playSound("Bullet Split", 0, 0);
 	}	
     
    // Everything went OK...
@@ -1289,6 +1323,11 @@ int _ds_objects_p_o53_manage(void *objp) {
    
    // MMF2-style particle
 	ds_objects_lib_beh_particleMMF2(object,6);
+
+   // If dead, play sound!
+   if (object->_deleteme) {
+		ds_music_playSound("Roller Hit", 0, 0);
+   }
    
    // Everything went OK...
    return 1;
@@ -1408,6 +1447,14 @@ int _ds_objects_p_o56_manage(void *objp) {
 	
 	// Ghost!   
    ds_objects_lib_beh_ghost(object,30,120,30);
+   
+   // If dead, play sound!
+   if (object->_deleteme) {
+	  if (PA_RandMax(99) < 50)
+		ds_music_playSound("Drop A", 0, 0);
+	  else 
+		ds_music_playSound("Drop B", 0, 0);
+   }
 	
    // Everything went OK...
    return 1;
@@ -1664,7 +1711,7 @@ int ds_particles0_assign(u8 obj, ds_t_object *object) {
       case 41:
          // Green "basic" particle
          object->fcreate = _ds_objects_p_o38_create;
-         object->fmanage = _ds_objects_p_o38_manage;
+         object->fmanage = _ds_objects_p_o41_manage;
          return 1;
          break; // not really necessary...                           
       case 42:

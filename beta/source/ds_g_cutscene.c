@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	State_Str = Cutscene name.
 	State[0] = Cutscene number. Non-existing number will advance to the next state. Starts @ 1
 	State[1] = Cutscene type. See constants @ ds_global
+	State[2] = Sound to play when going back to the game, if applicable
 */
 
 #include "ds_util_bit.h"
@@ -117,6 +118,7 @@ int _ds_cutscene_showBigMap(void *btn) { // Remember... 600x240-256x102 (256x192
 
 void _ds_g_cutscene_changeToGame() {
    int flag = 0;
+	int sound = ds_state_var_getInt(2);
 
 	// Stops all music
 	ds_music_playOnlyMusic(0);
@@ -133,6 +135,7 @@ void _ds_g_cutscene_changeToGame() {
 	flag = ds_util_bitSet16(flag,1); // Only reset movement, nothing else
 	ds_state_var_setInt(4,flag);
 	ds_state_var_setInt(5,ds_global_world.sv_gui);
+	ds_state_var_setInt(6,sound);
 	// Change!
 	ds_state_assignState(DSKNYTT_GAME);
 }   
@@ -179,7 +182,7 @@ void _ds_g_cutscene_loadImages() {
 	   // Aiyaaaaa.... we need to keep the 600x240 screen
 	   sprintf(cutscene_string,"%s/%s/%s%d%s",ds_global_world.dir,ds_state_var_getStr(),
 					"Scene",ds_state_var_getInt(0),".png");
-	   ds_15bpp_load(cutscene_string,&cutscene_600x240_bigImage,1,0);	   
+		ds_15bpp_load(cutscene_string,&cutscene_600x240_bigImage,1,0);
 	   ds_15bpp_resize(&cutscene_600x240_smallImageNOFREEME,&cutscene_600x240_bigImage,256,102);
 	}     
 }   
@@ -265,9 +268,23 @@ void ds_g_cutscene_start() {
 		
 		// Music! Cutscenes have their own music ;-)
 		sprintf(cutscene_string,"Cutscene Music:%s",ds_state_var_getStr());
-		cutscene_music = ds_ini_getint(ds_global_world.worldini,cutscene_string,0);
-		ds_music_playOnlyMusic(cutscene_music);
-		//PA_OutputText(1,0,16,"%s - %d",cutscene_string,cutscene_music);
+		sprintf(ds_global_string,ds_ini_getstring(ds_global_world.worldini,cutscene_string,"-1"));
+		if (!PA_CompareText(ds_global_string,"-1")) {
+			// There is something...
+			cutscene_music = (int)strtol(ds_global_string, NULL, -1);
+			if (cutscene_music != -1) {
+				// Normal
+				ds_music_playOnlyMusic(cutscene_music);
+			} else {
+				// Maybe Ambiance...
+				ds_global_string[strlen(ds_global_string) - 1] = '\0';
+				cutscene_music = (int)strtol(ds_global_string, NULL, -1);
+				if (cutscene_music != -1) {
+					// Ambiance!
+					ds_music_playOnlyAmbiance(cutscene_music);
+				}
+			}
+		}
 	}   
 	
 	// Final touch... eliminates fade to white
@@ -329,5 +346,5 @@ void ds_g_cutscene_paint() {
       
       cutscene_drawDown = 0;
       cutscene_drawUp = 0;
-   }   
+   }
 }

@@ -141,6 +141,9 @@ char *ds_ini_keyDictionary(int x, int y, int type, int paramA, int paramB, int p
       case DS_C_DICT_SHIFT_VISIBLE:
          sprintf(retstr,"x%dy%d:ShiftVisible(%c)",x,y,_ds_ini_returnABC(paramA));
          break;           		                                  
+		case DS_C_DICT_SHIFT_SOUND: 
+         sprintf(retstr,"x%dy%d:ShiftSound(%c)",x,y,_ds_ini_returnABC(paramA));
+         break;           		                         
       case DS_C_DICT_FLAG:
          sprintf(retstr,"x%dy%d:Flag(%c)",x,y,_ds_ini_returnABC(paramA));
          break;                                             

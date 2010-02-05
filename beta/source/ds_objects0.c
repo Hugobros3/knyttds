@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_state.h"
 #include "ds_gamestatus.h"
 #include "ds_3dsprite.h"
+#include "ds_music.h"
 
 
 // BANK 0 [B00]
@@ -141,6 +142,7 @@ int _ds_objects_b00o01_execute(void *objp) {
    if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_DOWN)) {
       // <TODO> Only in special states
    	ds_world_updateSavegameBasic(object->x,object->y);
+	ds_music_playSound("Save Spot", 0, 0);
    	object->inner[0] = 2; // Change state	
 	}   
    
@@ -220,6 +222,8 @@ int _ds_objects_b00o03_execute(void *objp) {
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_RUN);
    object->_deleteme = 1;
    
+   ds_music_playSound("Powerup", 0, 0);
+   
    // Everything went OK...
    return 1;
 }
@@ -256,6 +260,8 @@ int _ds_objects_b00o04_execute(void *objp) {
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_CLIMB);
    object->_deleteme = 1;
    
+   ds_music_playSound("Powerup", 0, 0);
+   
    // Everything went OK...
    return 1;
 }
@@ -291,6 +297,8 @@ int _ds_objects_b00o05_execute(void *objp) {
    // Get the item! - and delete it -:)
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_DBLJUMP);
 	object->_deleteme = 1;
+	
+	ds_music_playSound("Powerup", 0, 0);
    
    // Everything went OK...
    return 1;
@@ -328,6 +336,8 @@ int _ds_objects_b00o06_execute(void *objp) {
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_JUMP);
    object->_deleteme = 1;
    
+   ds_music_playSound("Powerup", 0, 0);
+   
    // Everything went OK...
    return 1;
 }
@@ -363,6 +373,8 @@ int _ds_objects_b00o07_execute(void *objp) {
    // Get the item! - and delete it -:)
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_EYE);
    object->_deleteme = 1;
+   
+   ds_music_playSound("Powerup", 0, 0);
    
    // Everything went OK...
    return 1;
@@ -400,6 +412,8 @@ int _ds_objects_b00o08_execute(void *objp) {
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_ENEMY);
    object->_deleteme = 1;
    
+   ds_music_playSound("Powerup", 0, 0);
+   
    // Everything went OK...
    return 1;
 }
@@ -436,6 +450,8 @@ int _ds_objects_b00o09_execute(void *objp) {
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_UMBRELLA);
    object->_deleteme = 1;
    
+   ds_music_playSound("Powerup", 0, 0);
+   
    // Everything went OK...
    return 1;
 }
@@ -471,6 +487,8 @@ int _ds_objects_b00o10_execute(void *objp) {
    // Get the item! - and delete it -:)
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_HOLOGRAM);
    object->_deleteme = 1;
+   
+   ds_music_playSound("Powerup", 0, 0);
    
    // Everything went OK...
    return 1;
@@ -847,6 +865,8 @@ int _ds_objects_b00o21_execute(void *objp) {
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_REDKEY);
    object->_deleteme = 1;
    
+   ds_music_playSound("Powerup", 0, 0);
+   
    // Everything went OK...
    return 1;
 }
@@ -882,6 +902,8 @@ int _ds_objects_b00o22_execute(void *objp) {
    // Get the item! - and delete it -:)
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_YELLOWKEY);
    object->_deleteme = 1;
+   
+   ds_music_playSound("Powerup", 0, 0);
    
    // Everything went OK...
    return 1;
@@ -919,6 +941,8 @@ int _ds_objects_b00o23_execute(void *objp) {
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_BLUEKEY);
    object->_deleteme = 1;
    
+   ds_music_playSound("Powerup", 0, 0);
+   
    // Everything went OK...
    return 1;
 }
@@ -954,6 +978,8 @@ int _ds_objects_b00o24_execute(void *objp) {
    // Get the item! - and delete it -:)
    ds_global_juni.item = ds_util_bitSet16(ds_global_juni.item,DS_C_JUNI_IT_VIOLETKEY);
    object->_deleteme = 1;
+   
+   ds_music_playSound("Powerup", 0, 0);
    
    // Everything went OK...
    return 1;
