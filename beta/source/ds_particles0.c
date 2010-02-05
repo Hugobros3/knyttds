@@ -424,7 +424,7 @@ int _ds_objects_p_o17_create(u8 bank, u8 obj, void *objp) {
 		return 0;
 
 	// Initialize & Choose the smoke
-	_ds_objects_p_manageSmokeInit(object,256,512,128,256,5,5);
+	_ds_objects_p_manageSmokeInit(object,256,512,64,128,5,3);
 
 	// Specific Operations
    object->type = DS_C_OBJ_PARTICLE;
@@ -1324,9 +1324,10 @@ int _ds_objects_p_o53_manage(void *objp) {
    // MMF2-style particle
 	ds_objects_lib_beh_particleMMF2(object,6);
 
-   // If dead, play sound!
+   // If dead, play sound and create effect!
    if (object->_deleteme) {
 		ds_music_playSound("Roller Hit", 0, 0);
+		ds_objects_createParticle(object->x, object->y, object->layer, 59);
    }
    
    // Everything went OK...
@@ -1532,9 +1533,77 @@ int _ds_objects_p_o58_manage(void *objp) {
    
    // Everything went OK...
    return 1;
+}
+
+// ELECTRIC PARTICLE BANG [O59]
+//..........................................................................................
+int _ds_objects_p_o59_create(u8 bank, u8 obj, void *objp) {
+   ds_t_object *object = objp;
+   
+   // Initialize
+	if (ds_objects_lib_initObject(bank, obj, object) == 0)
+		return 0;
+		
+	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
+		return 0;
+
+	// Specific Operations
+   object->type = DS_C_OBJ_PARTICLE;
+   object->managed = 1;
+   
+   // Return 1 if I'm an event/item
+   return ds_objects_lib_iseventitem(object->type);
+}   
+
+int _ds_objects_p_o59_manage(void *objp) {
+   ds_t_object *object = objp;
+   
+ 	ds_objects_lib_beh_cycleDie(object, 3);
+    
+   // Everything went OK...
+   return 1;
+}
+
+// FADE-FOUND PARTICLE [O60]
+//..........................................................................................
+int _ds_objects_p_o60_create(u8 bank, u8 obj, void *objp) {
+   ds_t_object *object = objp;
+   
+   // Initialize
+	if (ds_objects_lib_initObject(bank, obj, object) == 0)
+		return 0;
+		
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA); // <TODO> All are the same!!!
+		
+	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
+		return 0;
+		
+	object->inner[11] = 180;
+	ds_3dsprite_setAlpha(object->sprite,object->inner[11]);
+
+	// Specific Operations
+   object->type = DS_C_OBJ_PARTICLE;
+   object->managed = 1;
+   
+   // Return 1 if I'm an event/item
+   return ds_objects_lib_iseventitem(object->type);
+}   
+
+int _ds_objects_p_o60_manage(void *objp) {
+   ds_t_object *object = objp;
+   
+   // Fade away...
+	object->inner[11] -= 3;
+	if (object->inner[11] <= 0) {
+		object->_deleteme = 1;
+	} else {
+	   ds_3dsprite_setAlpha(object->sprite,object->inner[11]);
+	}
+   
+   // Everything went OK...
+   return 1;
 }                                                                        
 
-                                                 
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
@@ -1814,6 +1883,18 @@ int ds_particles0_assign(u8 obj, ds_t_object *object) {
          // Spring Fade
          object->fcreate = _ds_objects_p_o58_create;
          object->fmanage = _ds_objects_p_o58_manage;
+         return 1;
+         break; // not really necessary...                           
+      case 59:
+         // Electric particle BANG
+         object->fcreate = _ds_objects_p_o59_create;
+         object->fmanage = _ds_objects_p_o59_manage;
+         return 1;
+         break; // not really necessary...                           
+      case 60:
+         // Fade-Found particle
+         object->fcreate = _ds_objects_p_o60_create;
+         object->fmanage = _ds_objects_p_o60_manage;
          return 1;
          break; // not really necessary...                           
    }   

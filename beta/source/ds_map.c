@@ -449,7 +449,72 @@ int ds_map_collideFlag(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* f
 	 	}
 	}	 	
  	return 0;
+}
+
+/* Check if a sprite collides with a flag subsystem in Cross mode (just check a internal cross) */
+int ds_map_collideFlagCross(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* flag) {
+   int i,j,xi,yj,xx,yy,xs,ys;
+   int pos;
+
+	ys = (ysize >> 1);
+	xs = (xsize >> 1);
+	yy = y + ys;
+	xx = x + xs;
+	
+	if ((y >= 0) && ((y+ysize)<240) && (x >= 0) && ((x+xsize)<600)) {
+	   // -------------"No boundary" analysis----------
+		// U-D Cross
+		for (j = 0; j < ysize; j++) {
+			if (ima[xs + (j * xsize)] != 0) { 
+				pos = (xx) + ((y + j) * 600);
+				if (((*flag)[pos >> 3] >> (pos & 0x07)) & 1)
+					//if (ds_util_bitOne8((*flag)[pos >> 3],pos & 0x07))
+						return 1;
+			}
+		}
+		// L-R Cross
+	   for (i = 0; i < xsize; i++) {
+			if (ima[i + (ys * xsize)] != 0) { // "Pixel inside"
+				pos = (x + i) + ((yy) * 600);
+				if (((*flag)[pos >> 3] >> (pos & 0x07)) & 1)
+				//if (ds_util_bitOne8((*flag)[pos >> 3],pos & 0x07))
+					return 1;
+			} 
+		}
+	} else {	   
+	   // ---------------"Boundary" analysis----------- 
+		// U-D Cross
+		if ((xx >= 0) && (xx < 600)) { // Inside screen (X)
+			for (j = 0; j < ysize; j++) {
+				yj = (y+j);
+				if ((yj >= 0) && (yj < 240)) { // Inside screen (Y)
+					if (ima[xs + (j * xsize)] != 0) { 
+						pos = (xx) + (yj * 600);
+						if (((*flag)[pos >> 3] >> (pos & 0x07)) & 1)
+							//if (ds_util_bitOne8((*flag)[pos >> 3],pos & 0x07))
+								return 1;
+					}
+				}
+			}
+		}
+		// L-R Cross
+		if ((yy >= 0) && (yy < 240)) { // Inside screen (Y)
+			for (i = 0; i < xsize; i++) {
+				xi = (x+i);
+				if ((xi >= 0) && (xi < 600)) { // Inside screen (X)
+					if (ima[i + (ys * xsize)] != 0) { // "Pixel inside"
+						pos = xi + ((yy) * 600);
+						if (((*flag)[pos >> 3] >> (pos & 0x07)) & 1)
+						//if (ds_util_bitOne8((*flag)[pos >> 3],pos & 0x07))
+							return 1;
+					} 
+				}
+			}
+		}
+	}	 	
+ 	return 0;
 }  
+  
 
 /* Checks if a pixel is out of the map */
 int _ds_map_outOfMapPix(int x, int y) {

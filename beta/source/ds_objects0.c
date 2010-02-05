@@ -223,6 +223,8 @@ int _ds_objects_b00o03_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -261,6 +263,8 @@ int _ds_objects_b00o04_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -299,6 +303,8 @@ int _ds_objects_b00o05_execute(void *objp) {
 	object->_deleteme = 1;
 	
 	ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -337,6 +343,8 @@ int _ds_objects_b00o06_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -375,6 +383,8 @@ int _ds_objects_b00o07_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -413,6 +423,8 @@ int _ds_objects_b00o08_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -451,6 +463,8 @@ int _ds_objects_b00o09_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -489,6 +503,8 @@ int _ds_objects_b00o10_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -866,6 +882,8 @@ int _ds_objects_b00o21_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -904,6 +922,8 @@ int _ds_objects_b00o22_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -942,6 +962,8 @@ int _ds_objects_b00o23_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;
@@ -980,6 +1002,8 @@ int _ds_objects_b00o24_execute(void *objp) {
    object->_deleteme = 1;
    
    ds_music_playSound("Powerup", 0, 0);
+	ds_t_object *particle = ds_objects_createParticle(object->x, object->y, object->layer, 60);
+	ds_3dsprite_setPrio(particle->sprite, (DS_C_PRIO * DS_C_PRIOLJUNISP) + 12);
    
    // Everything went OK...
    return 1;

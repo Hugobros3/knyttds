@@ -53,6 +53,9 @@ void ds_map_copyFlagValue(u8 val,int xsize,int ysize,int x,int y, ds_t_mapFlag* 
 /* Check if a sprite collides with a flag subsystem */
 int ds_map_collideFlag(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* flag);
 
+/* Check if a sprite collides with a flag subsystem in Cross mode (just check a internal cross) */
+int ds_map_collideFlagCross(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* flag);
+
 /* Check if a sprite collides with a flag subsystem - ONLY THE CENTER PIXEL */
 int ds_map_collideFlagCenter(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* flag);
 

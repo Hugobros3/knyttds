@@ -1283,7 +1283,8 @@ int ds_objects_lib_beh_particleMMF2_Move(ds_t_object *object, int speedX, int sp
    
    // Check "hitting the ground" (if applicable) AND "going outside the map"
    if (coll) {
-   	collided = ds_map_collideFlag(ds_3dsprite_getSpriteFrame(object->sprite, ds_3dsprite_getFrame(object->sprite)),
+		// Use a special collision test for particles
+   	collided = ds_map_collideFlagCross(ds_3dsprite_getSpriteFrame(object->sprite, ds_3dsprite_getFrame(object->sprite)),
 									 ds_3dsprite_getXSize(object->sprite),
 									 ds_3dsprite_getYSize(object->sprite),
 									 ds_3dsprite_getX(object->sprite),
