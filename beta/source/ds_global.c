@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // INTERNAL TYPES AND VARIABLES
 //-------------------------------------------------------------------------------------------------
 
-ds_t_mapIma _ds_global_UpperScreen;
+ds_t_mapIma *_ds_global_UpperScreen; // Pointer? Allows deletion to take advantage of memory!
 int _ds_global_fadeWhite;
 
 //-------------------------------------------------------------------------------------------------
@@ -122,6 +122,10 @@ static inline void toncset16(void *dst, u16 src, uint size)
 //-------------------------------------------------------------------------------------------------
 
 void ds_global_initVariables() {
+
+	// Internal
+	//---------
+	_ds_global_UpperScreen = malloc(sizeof(ds_t_mapIma)); // Never delete... only on exceptional cases
    
    // ds_lid
    //-------
@@ -160,8 +164,17 @@ void ds_global_initVariables() {
 	ds_global_debug = 0;
 }   
 
+void ds_global_screen1OFF() {
+	free(_ds_global_UpperScreen);
+	_ds_global_UpperScreen = NULL;
+}
+
+void ds_global_screen1ON() {
+	_ds_global_UpperScreen = malloc(sizeof(ds_t_mapIma));
+}
+
 u16 *ds_global_getScreen1() {
-   return _ds_global_UpperScreen;
+   return *_ds_global_UpperScreen;
 }   
 
 u16 *ds_global_getScreen0() {

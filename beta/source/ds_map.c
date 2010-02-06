@@ -190,6 +190,9 @@ int ds_map_loadHDD(int x, int y) {
 
 /* Use the already loaded data to paint the base map */
 int ds_map_loadHDDPaint(int x, int y) {
+	/* Alpha> Get extra memory disabling Screen 1 */
+	ds_global_screen1OFF();
+	
    /* Load the images from the tileset and panorama subsystem... but do not load those tilesets I already have!!!!! */
    if (ds_global_map.room.tilesetA != ds_global_map.tilesetA.actualIndex) {
       //PA_OutputText(1,1,1,"(1) Loading Tileset A...          ");
@@ -269,6 +272,10 @@ int ds_map_loadHDDPaint(int x, int y) {
    
    /* Finishes... */
    //PA_OutputText(1,1,1,"(5) Done...                         ");   
+	
+	/* Gamma> Recovers Screen 1 */
+	ds_global_screen1ON();
+
    return 1;
 }
 

@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_linkedlist.h"
 
 /* Debug Flag */
-#define DEBUG_KSDS
+// #define DEBUG_KSDS
 
 //--------------------------------------
 // CONSTANTS
@@ -284,13 +284,13 @@ typedef struct ds_tt_15bpp {
    FILE *f;
    u8 *tile;
    // Normal 15bpp information
+	u8 *png_alpha;
+	u16 *png_screen;
    int is_alpha;
    int actualIndex;
-   u16 *png_screen;
-   u8 *png_alpha;
    int width, height;
    int loaded;
-   u8 deleteme;
+	u8 deleteme;
 } ds_t_15bpp;
 
 // Map-Relevant Information (HDD)
@@ -332,6 +332,9 @@ typedef u8 ds_t_mapFlag[(600 * 240) >> 3];
 typedef struct ds_tt_map {
    int x;           // Actual X (Map)
    int y;           // Actual Y (Map)
+   u16 flag;        // Special flag, stores special data (e.g. Warp)
+   u16 pass;			// Special value, for passwords
+   u16 passMax;		// Special value, for passwords
    ds_t_room room;  // Actual Room (NOTE: non-event objects are deleted)
    ds_t_roomobj roomObj[4]; // REAL objects original from the room
    ds_t_mapFlag tileMapCol; // Collision Flag
@@ -342,9 +345,6 @@ typedef struct ds_tt_map {
    ds_t_15bpp tilesetB; // Actual Image tilesetB (15bpp)
    ds_t_15bpp panorama; // Actual Image panorama (15bpp)
    ds_t_mapIma tileMap; // Image of the Actual map
-   u16 flag;        // Special flag, stores special data (e.g. Warp)
-   u16 pass;			// Special value, for passwords
-   u16 passMax;		// Special value, for passwords
 } ds_t_map;   
 
 // Game Input
@@ -384,7 +384,6 @@ typedef struct ds_tt_object {
 	ds_t_fmanage *fexecute;
 	ds_t_fmanage *finstance;
 	ds_t_fmanage *fcondition;
-	u8 managed;
 	// Logical information
 	u16 flags;
 	// Special
@@ -395,6 +394,8 @@ typedef struct ds_tt_object {
 	u32 inner_tick; // Inner tick for special (e.g. particle) management. 0 is considered inactive (due to design).
 	// Internal 
 	int id; // ID inside object list
+	// Object Management (2)
+	u8 managed;
 } ds_t_object;   
 
 // Juni-Related Information
@@ -548,6 +549,10 @@ int ds_global_optimizationStylusCamera;
 //--------------------------------------
 
 void ds_global_initVariables(); 
+
+void ds_global_screen1OFF();
+
+void ds_global_screen1ON();
 
 u16 *ds_global_getScreen1();
 

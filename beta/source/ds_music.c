@@ -961,17 +961,4 @@ Tiny Hit
 Tri Bullet Shot
 Tri Bullet Shot B
 Tri Bullet Hit
-
-ds_music_playSound("Tiny Shot", 0, 0);
-
-*/
-
-/*
-
-TO-DO
-
-B2-19 red ele *
-dbl jump stops when keypress stops! *
-16-1 sound? *
-
 */

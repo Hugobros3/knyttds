@@ -502,11 +502,12 @@ int main(int argc, char ** argv)
 		ds_global_tick++;
 		
 		// <DEBUG>
-		#ifdef DEBUG_KSDS
+		//#ifdef DEBUG_KSDS
 		sprintf(ds_global_string,"U: %d / F: %d   ", getMemUsed(), getMemFree());       		
-		ds_gamestatus_debugOutput(1,0,11,ds_global_string,DS_C_STA_DEBUG);
-		ds_gamestatus_debugOutput(1,0,11,ds_global_string,DS_C_STA_DEBUG2);		
-		#endif
+		PA_OutputSimpleText(1,0,15,ds_global_string);
+		//ds_gamestatus_debugOutput(1,0,11,ds_global_string,DS_C_STA_DEBUG);
+		//ds_gamestatus_debugOutput(1,0,11,ds_global_string,DS_C_STA_DEBUG2);
+		//#endif
 	}
 	
 	return 0;	

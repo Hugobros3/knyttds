@@ -484,6 +484,7 @@ int _ds_15bpp_load15bppCombined(char *file, ds_t_pngds *info, ds_t_15bpp *ima) {
 		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
 		ds_global_errorHalt(ds_global_string);
 #endif
+		fclose(fpng);
 		png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),&(info->end_info));
       ds_global_errorAssign(DS_C_ERR_NOMEMORY);
       return 0;
@@ -495,6 +496,7 @@ int _ds_15bpp_load15bppCombined(char *file, ds_t_pngds *info, ds_t_15bpp *ima) {
 		ds_global_errorAssign(DS_C_ERR_NOMEMORY);
 		ds_global_errorHalt(ds_global_string);
 #endif
+		fclose(fpng);
 		png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),&(info->end_info));
       free(ima->png_screen);
       ima->png_screen = NULL;
@@ -513,6 +515,8 @@ int _ds_15bpp_load15bppCombined(char *file, ds_t_pngds *info, ds_t_15bpp *ima) {
 		{
 			fclose(fpng); 
 			png_destroy_read_struct(&(info->png_ptr),&(info->info_ptr),&(info->end_info));
+			free(ima->png_screen);
+			free(ima->png_alpha);
 			ds_global_errorAssign(DS_C_ERR_NOMEMORY);
 			return 0;
 		}
