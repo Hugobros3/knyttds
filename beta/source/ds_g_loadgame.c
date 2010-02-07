@@ -45,8 +45,8 @@ void ds_g_loadgame_start() {
 	ds_global_fadeWhitePush(5);
 
 	// Now, loads the world and initializes the game status
+	ds_gamestatus_initLoad(); // Always resets upper screen ;-)
    if (ds_state_var_getInt(1)) {
-      ds_gamestatus_initLoad();
 	   if (!ds_world_load(ds_state_var_getStr(),ds_state_var_getInt(2)))
 	   	ds_global_errorHalt("ds_world_load");
 	}   

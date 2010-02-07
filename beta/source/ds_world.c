@@ -224,6 +224,14 @@ int ds_world_load(const char *world, int saveslot) {
 
    strncpy(ds_global_world.author,ds_ini_getstring(ds_global_world.worldini,"World:Author",""),250);
    strncpy(ds_global_world.name,ds_ini_getstring(ds_global_world.worldini,"World:Name",""),250);
+	strncpy(string,ds_ini_getstring(ds_global_world.worldini,"World:Size",""),250);
+	if (PA_CompareText(string,"Large")) {
+		ds_global_world.size = 2;
+	} else if (PA_CompareText(string,"Medium")) {
+		ds_global_world.size = 1;
+	} else {
+		ds_global_world.size = 0;
+	}
    
    ds_customobj_load();
 
@@ -239,7 +247,7 @@ int ds_world_load(const char *world, int saveslot) {
    ds_global_world.sv_ymap = ds_ini_getint(savegame,"Positions:Y Map",1000);
    ds_global_world.sv_xjuni = ds_ini_getint(savegame,"Positions:X Pos",12);
    ds_global_world.sv_yjuni = ds_ini_getint(savegame,"Positions:Y Pos",5);
-   ds_global_world.sv_gui = ds_ini_getint(savegame,"Positions:Gui",ds_gamestatus_getActualStatusScreen());
+   ds_global_world.sv_gui = ds_ini_getint(savegame,"Positions:Gui",-2);
    ds_global_world.sv_items = 0;
    for (i = 0; i < DS_C_JUNI_IT_MAX_; i++) {
       sprintf(string,"Powers:Power%d",i);
@@ -377,7 +385,7 @@ int ds_world_getVisitedRoom(int x, int y) {
    int cx = x - 800;
    if ((cy < 0) || (cy > 400) || (cx < 0) || (cx > 400)) {
 		   ds_global_errorAssign(DS_C_ERR_NOMAPBIN);
-		   sprintf(ds_global_string,"Map.bin too big. Sorry!");
+		   sprintf(ds_global_string,"Map.bin out of bounds. Sorry!");
 		   ds_global_errorHalt(ds_global_string);
 		   //--HALT--//   	   	   	      
    }   

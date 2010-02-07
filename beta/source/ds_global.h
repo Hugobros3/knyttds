@@ -456,6 +456,7 @@ typedef struct ds_tt_world {
    char name[255];
    char dir[255];
    char basicdir[255];
+	u16 size;
    // .INI information
    void *worldini;
    // Savegame information (stored **in memory** for easy access)

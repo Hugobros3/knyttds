@@ -80,15 +80,15 @@ int ds_map_collDown(int x, int y, int xsize, int ysize, int clash);
 
 /* Checks if this sprite has something solid in his feet (23) or below its feet (24).
 		It's "Basic" because manages 24y sprites, and it is not pixel-perfect, just checks below the sprite */
-int ds_map_collDownBasic(int x, int y, int clash);
+int ds_map_collDownBasic(int x, int y, int clash, int speedY);
 
 /* Checks for "hitting the ceiling".
 		It's "Basic" because manages 24y sprites, and it is not pixel-perfect, just checks over the sprite */
-int ds_map_collUpBasic(int x, int y, int clash);
+int ds_map_collUpBasic(int x, int y, int clash, int speedY);
 
 /* Checks if the Sprite clashes in a x-based movement.
 	It's "basic" because the caller decides where to check */
-int ds_map_collMovBasic(int x, int y, int clash);
+int ds_map_collMovBasic(int x, int y, int clash, int speedX);
 
 /* Checks if the Sprite is still allowed to climb.
 	It's "basic" because the caller decides where to check */

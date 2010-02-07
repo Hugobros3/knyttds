@@ -532,6 +532,7 @@ int ds_objects_loadHDD() {
    int nobj = 0;
    int totalsize = 0;
    int safety = 0;
+	int safetyrnd = 0;
 
    // For every object in the world... Count and check things like size!
    for (zz = 0; zz < 4; zz++) {
@@ -539,10 +540,9 @@ int ds_objects_loadHDD() {
 		   for (xx = 0; xx < 25; xx++) {
 		      obj = ds_global_map.room.objlayer[zz].obj[yy][xx];
 		      if (obj != 0) {
-		         // First, count objects
-					nobj++;
 					// Consider the size of the objects in the screen
 					// Only for certain banks
+					// Also, count objects
 					bank = ds_global_map.room.objlayer[zz].bank[yy][xx];
 					int xo,yo;
 					if ((bank != 16) || (bank != 15) || 
@@ -550,6 +550,7 @@ int ds_objects_loadHDD() {
 						 (bank != 0)) {	      
 						ds_3dspritehdd_getXY(bank, obj, &xo, &yo);
 						totalsize += (ds_util_convertPow2(xo) * ds_util_convertPow2(yo));
+						nobj++;
 					}			
 				}			
 			}
@@ -558,11 +559,13 @@ int ds_objects_loadHDD() {
 	
 	// Execute safety checks, related to aspects such as the size of the objects
 	ds_3dsprite_setObjVRAM(totalsize);	
-	// FIXME: SAFETY CHECK!! (Special Anti-Mushroom for Beta ;-) )
-	/*if (nobj > (250 + 125)) {
-	   // WTF!!!!!!!!!!!!!! Sorry, only bank 0 allowed on this screen :-O 
-	   safety = 1;
-	} */  	
+	
+	// Another safety check... a WTF???? many objects!!!! - limit the loaded objects :-)
+	// This is all your fault, unclesporky -:)
+  if (nobj > 250) {
+	  // Allow only a 10% of the critters to exist wihtin this screen ;-)
+	  safetyrnd = 1;
+  }
    
    // For every object in the world...
    for (zz = 0; zz < 4; zz++) {
@@ -572,9 +575,14 @@ int ds_objects_loadHDD() {
 		      bank = ds_global_map.room.objlayer[zz].bank[yy][xx];
 		      // Safety check
 		      if (safety) {
-		         if ((obj != 0) && (bank != 0))
+		         if ((obj != 0) && ((bank != 0) && (bank != 1) && (bank != 15) && (bank != 16)))
 		         	continue;
 		      }   
+				// Safety check ++
+				if (safetyrnd) {
+					if (PA_RandMax(99) > 10)
+						continue; // Only 10% allowed!!!!!
+				}
 		      // First... something here?
 		      if (obj != 0) {
 		         // No? Creates an object
@@ -586,6 +594,13 @@ int ds_objects_loadHDD() {
 					   //--HALT--//
 		       	}  	
 		      }   
+				// Enable "safety" flag for problematic stories with too many objects! 
+				//   -> This is a MUST to allow certain levels to be "a bit" playable on the DS -:)
+				if (!safety) {
+					if (getMemFree() < (DS_C_CO_MAXAREA * 2)) {
+						safety = 1; // OMG!!!! WARNING!!!!! LOAD ONLY BANK 0/1/15/16 OBJECTS!!!!!
+					}
+				}
    		}   	      
    	}   
    }   

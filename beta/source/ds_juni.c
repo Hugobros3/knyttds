@@ -550,7 +550,7 @@ void _ds_juni_manageMovementWallSwim() {
 		   		ds_global_juni.framepix++;				
 		   	break;
 	}
-
+	
 	// (Z) Updates Juni's position, rewrites sprite
 	//---------------------------------------------
 	ds_juni_updateSprites(newx,newy);
@@ -711,13 +711,13 @@ void _ds_juni_manageMovement() {
 				    (ds_global_juni.state == DS_C_JUNI_ST_WALK_R) ||
 				    (ds_global_juni.state == DS_C_JUNI_ST_RUN_R)) {
 	   				newx = ds_3dsprite_getX(ds_global_juni.sprite) + 1;
-	   				flag = (ds_map_collMovBasic(newx,newy,17) && !_ds_juni_checkNoClimb(newx,newy,17));
+	   				flag = (ds_map_collMovBasic(newx,newy,17,0) && !_ds_juni_checkNoClimb(newx,newy,17));
 				}
 				if ((ds_global_juni.state == DS_C_JUNI_ST_STOP_L) ||
 					 (ds_global_juni.state == DS_C_JUNI_ST_WALK_L) || 
 					 (ds_global_juni.state == DS_C_JUNI_ST_RUN_L)) {
 	   				newx = ds_3dsprite_getX(ds_global_juni.sprite) - 1;
-	   				flag = (ds_map_collMovBasic(newx,newy,6) && !_ds_juni_checkNoClimb(newx,newy,6)); // Same check as collision, 2b
+	   				flag = (ds_map_collMovBasic(newx,newy,6,0) && !_ds_juni_checkNoClimb(newx,newy,6)); // Same check as collision, 2b
 				}
 				if (flag) {
 					newstate = (newx < ds_3dsprite_getX(ds_global_juni.sprite))?DS_C_JUNI_ST_CLIMB_L:DS_C_JUNI_ST_CLIMB_R;
@@ -1267,11 +1267,11 @@ void _ds_juni_manageMovement() {
 	
    // Clash with environment, Horizontal Speed. 16 ->, 6 <-. (old: 17 5)
 	if (ds_global_juni.velX > 0) {
-	   if (ds_map_collMovBasic(newx,newy,17)) { // <TODO> 17 [ori] vs 16
+	   if (ds_map_collMovBasic(newx,newy,17,ds_global_juni.velX)) { // <TODO> 17 [ori] vs 16
 	      // Collision! - Let's move Juni to a safe place...
 	      ok = 0;
 	      for (i = 1; i <= ds_global_juni.velX; i++) {
-	         if (!ds_map_collMovBasic(newx,oldy,17 - i)) {
+	         if (!ds_map_collMovBasic(newx,oldy,17 - i,ds_global_juni.velX)) {
 	            ok = 1;
 	            newx = newx - i;
 	            break;
@@ -1318,11 +1318,11 @@ void _ds_juni_manageMovement() {
 	   }   
 	} else 
 	if (ds_global_juni.velX < 0) {
-	   if (ds_map_collMovBasic(newx,newy,6)) { 
+	   if (ds_map_collMovBasic(newx,newy,6,ds_global_juni.velX)) { 
 	      // Collision! - Let's move Juni to a safe place...
 	      ok = 0;
 	      for (i = 1; i <= abs(ds_global_juni.velX); i++) {
-	         if (!ds_map_collMovBasic(newx,oldy,6 + i)) {
+	         if (!ds_map_collMovBasic(newx,oldy,6 + i,ds_global_juni.velX)) {
 	            ok = 1;
 	            newx = newx + i;
 	            break;
@@ -1375,11 +1375,11 @@ void _ds_juni_manageMovement() {
 	
    // Clash with environment, Vertical Speed. V 23. Also, no place to climb
 	if (ds_global_juni.velY > 0) {
-	   if (ds_map_collDownBasic(newx,newy,23)) {
+	   if (ds_map_collDownBasic(newx,newy,23,ds_global_juni.velY)) {
 	      // Collision! - Let's move Juni to a safe place...
 	      ok = 0;
 	      for (i = 1; i <= ds_global_juni.velY; i++) {
-	         if (!ds_map_collDownBasic(newx,newy,23 - i)) {
+	         if (!ds_map_collDownBasic(newx,newy,23 - i,ds_global_juni.velY)) {
 	            ok = 1;
 	            newy = newy - i;
 	            break;
@@ -1414,11 +1414,11 @@ void _ds_juni_manageMovement() {
       if ((ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L) || 
 		    (ds_global_juni.state == DS_C_JUNI_ST_CLIMB_R)) {
 		   // Climbing! Special Collision state and effects (stay climbing)
-		   if (ds_map_collUpBasic(newx,newy,5)) {
+		   if (ds_map_collUpBasic(newx,newy,5,ds_global_juni.velY)) {
 		      // Collision! - Let's move Juni to a safe place...
 		      ok = 0;
 		      for (i = 1; i <= abs(ds_global_juni.velY); i++) {
-		         if (!ds_map_collUpBasic(newx,newy,5 + i)) {
+		         if (!ds_map_collUpBasic(newx,newy,5 + i,ds_global_juni.velY)) {
 		            ok = 1;
 		            newy = newy + i;
 		            break;
@@ -1431,11 +1431,11 @@ void _ds_juni_manageMovement() {
 			}				   
 		} else {
 		   // Normal! (Jumping/Flying) Special collision state and effects (fall)
-		   if (ds_map_collUpBasic(newx,newy,7)) {
+		   if (ds_map_collUpBasic(newx,newy,7,ds_global_juni.velY)) {
 		      // Collision! - Let's move Juni to a safe place...
 		      ok = 0;
 		      for (i = 1; i <= abs(ds_global_juni.velY); i++) {
-		         if (!ds_map_collUpBasic(newx,newy,7 + i)) {
+		         if (!ds_map_collUpBasic(newx,newy,7 + i,ds_global_juni.velY)) {
 		            ok = 1;
 		            newy = newy + i;
 		            break;
@@ -1536,7 +1536,7 @@ void _ds_juni_manageMovement() {
 	//------------
 	
    // Normal Gravity
-   if (!ds_map_collDownBasic(newx,newy,24)) {
+   if (!ds_map_collDownBasic(newx,newy,24,ds_global_juni.velY)) {
       // I am falling!!!... let's see what this means...
 
       // State "Normal" -> Falling time!!!!
@@ -1575,17 +1575,17 @@ void _ds_juni_manageMovement() {
 	   
    // Inverse Gravity - Let Juni jump stairs (or layer-3 grass :-P)
 	if (ds_global_juni.velX != 0) {
-	   if (ds_map_collDownBasic(newx,newy,23)) {
+	   if (ds_map_collDownBasic(newx,newy,23,ds_global_juni.velY)) {
 	      ok = 0;
 	      for (i = 1; i <= 3; i++) {
-	         if (!ds_map_collDownBasic(newx,newy,23 - i)) {
+	         if (!ds_map_collDownBasic(newx,newy,23 - i,ds_global_juni.velY)) {
 	            ok = 1;
 	            newy = newy - i;
 	            break;
 	         }   
 	      }   
 	      if (!ok) {
-	         // Wallswim! :-) - Go up
+	         // "Wallswim"! :-) - Go up
 	         newy = oldy - 1;
 	      }   
 	   }
@@ -1658,7 +1658,7 @@ void _ds_juni_manageMovement() {
 		   	ds_global_juni.actualpix++;
 		   	ds_global_juni.framepix++;
 		   	break;
-   }   
+   }
 
    // (Z) Updates Juni's position, rewrites sprite
    //---------------------------------------------
@@ -1715,6 +1715,7 @@ void _ds_juni_manageBoundaries() {
 	 ds_state_var_setInt(2,junix);
 	 ds_state_var_setInt(3,juniy);
 	 ds_state_var_setInt(4,0);
+	 ds_state_var_setInt(5,ds_gamestatus_getActualStatusScreen());
 }   
 
 /* Checks if a Juni-rectangle hits with a certain object. Check is per-pixel */

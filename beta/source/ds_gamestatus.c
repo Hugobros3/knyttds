@@ -68,6 +68,12 @@ ds_t_15bpp minimap_8x8_juniIcon;
 ds_t_15bpp minimap_8x8_mapIn;
 ds_t_15bpp minimap_8x8_mapIn2;
 ds_t_15bpp minimap_8x8_mapOut;
+ds_t_15bpp minimap_8x8_mapIn_m;
+ds_t_15bpp minimap_8x8_mapIn2_m;
+ds_t_15bpp minimap_8x8_mapOut_m;
+ds_t_15bpp minimap_8x8_mapIn_l;
+ds_t_15bpp minimap_8x8_mapIn2_l;
+ds_t_15bpp minimap_8x8_mapOut_l;
 
 ds_t_15bpp minimap_24x24_run;
 ds_t_15bpp minimap_24x24_runOK;
@@ -465,6 +471,12 @@ void ds_gamestatus_initOnce() {
 	ds_15bpp_init(&minimap_8x8_mapIn);
 	ds_15bpp_init(&minimap_8x8_mapIn2);
 	ds_15bpp_init(&minimap_8x8_mapOut);
+	ds_15bpp_init(&minimap_8x8_mapIn_m);
+	ds_15bpp_init(&minimap_8x8_mapIn2_m);
+	ds_15bpp_init(&minimap_8x8_mapOut_m);
+	ds_15bpp_init(&minimap_8x8_mapIn_l);
+	ds_15bpp_init(&minimap_8x8_mapIn2_l);
+	ds_15bpp_init(&minimap_8x8_mapOut_l);
 
    // Load icons used in the status screen :-)
 	// First, load the icons
@@ -541,6 +553,60 @@ void ds_gamestatus_initOnce() {
 			//--HALT--//
 		}		
 	}
+	if (!minimap_8x8_mapIn_m.loaded) {
+	   sprintf(filen,"%s%s/Gui_ico_mapIn_m.png",DS_DIR_MAIN,DS_DIR_SYS);
+	   if (!ds_15bpp_load(filen, &minimap_8x8_mapIn_m, 1, 0)) {
+	      ds_global_errorAssign(DS_C_ERR_NOFOUND);
+			sprintf(ds_global_string,"MapIn_m");
+			ds_global_errorHalt(ds_global_string);
+			//--HALT--//
+		}		
+	}	
+	if (!minimap_8x8_mapIn2_m.loaded) {
+	   sprintf(filen,"%s%s/Gui_ico_mapIn2_m.png",DS_DIR_MAIN,DS_DIR_SYS);
+	   if (!ds_15bpp_load(filen, &minimap_8x8_mapIn2_m, 1, 0)) {
+	      ds_global_errorAssign(DS_C_ERR_NOFOUND);
+			sprintf(ds_global_string,"MapIn2_m");
+			ds_global_errorHalt(ds_global_string);
+			//--HALT--//
+		}		
+	}	
+	if (!minimap_8x8_mapOut_m.loaded) {
+	   sprintf(filen,"%s%s/Gui_ico_mapOut_m.png",DS_DIR_MAIN,DS_DIR_SYS);
+	   if (!ds_15bpp_load(filen, &minimap_8x8_mapOut_m, 1, 0)) {
+	      ds_global_errorAssign(DS_C_ERR_NOFOUND);
+			sprintf(ds_global_string,"MapOut_m");
+			ds_global_errorHalt(ds_global_string);
+			//--HALT--//
+		}		
+	}
+	if (!minimap_8x8_mapIn_l.loaded) {
+	   sprintf(filen,"%s%s/Gui_ico_mapIn_l.png",DS_DIR_MAIN,DS_DIR_SYS);
+	   if (!ds_15bpp_load(filen, &minimap_8x8_mapIn_l, 1, 0)) {
+	      ds_global_errorAssign(DS_C_ERR_NOFOUND);
+			sprintf(ds_global_string,"MapIn_l");
+			ds_global_errorHalt(ds_global_string);
+			//--HALT--//
+		}		
+	}	
+	if (!minimap_8x8_mapIn2_l.loaded) {
+	   sprintf(filen,"%s%s/Gui_ico_mapIn2_l.png",DS_DIR_MAIN,DS_DIR_SYS);
+	   if (!ds_15bpp_load(filen, &minimap_8x8_mapIn2_l, 1, 0)) {
+	      ds_global_errorAssign(DS_C_ERR_NOFOUND);
+			sprintf(ds_global_string,"MapIn2_l");
+			ds_global_errorHalt(ds_global_string);
+			//--HALT--//
+		}		
+	}	
+	if (!minimap_8x8_mapOut_l.loaded) {
+	   sprintf(filen,"%s%s/Gui_ico_mapOut_l.png",DS_DIR_MAIN,DS_DIR_SYS);
+	   if (!ds_15bpp_load(filen, &minimap_8x8_mapOut_l, 1, 0)) {
+	      ds_global_errorAssign(DS_C_ERR_NOFOUND);
+			sprintf(ds_global_string,"MapOut_l");
+			ds_global_errorHalt(ds_global_string);
+			//--HALT--//
+		}		
+	}
 	
 	// Init/Load item icons of the game screen	
 	_ds_gamestatus_loadItem(&minimap_24x24_run,DS_C_JUNI_IT_RUN,0);
@@ -601,12 +667,9 @@ int ds_gamestatus_getStatus() {
 
 /* Gets the status Screen */
 int ds_gamestatus_getActualStatusScreen() {
-   if (_ds_actualStatusScreen == -1)
-   	return -2;
-   else 
-   	return _ds_actualStatusScreen;
-   	
+  	return _ds_actualStatusScreen;   	
 }
+
 
 /* Sets the status Screen */
 void ds_gamestatus_setActualStatusScreen(int stat) {
@@ -765,6 +828,9 @@ int _ds_gamestatus_updateScreen(int stascr, int global, int change, int item) {
    // First, if this is a global update, puts the new upper screen in the Screen-1 buffer. 
    //-------------------------------------------------------------------------------------
    if ((global) && (!change)) {
+		// First, small fix for unknown GUIs
+		if (stascr == -2)
+			stascr = -1;
       if ((_ds_actualStatusScreen == -2) || (_ds_actualStatusScreen != stascr)) {
          // Delete the actual GUI screen, if already exists
    		if (minimap_256x192_menu.loaded)
@@ -781,7 +847,7 @@ int _ds_gamestatus_updateScreen(int stascr, int global, int change, int item) {
 				}			
 			}   
 		   if (!ds_15bpp_load(filen, &minimap_256x192_menu, 1,0)) {
-				sprintf(ds_global_string,"Upper Screen Gui (%d)",stascr);
+				sprintf(ds_global_string,"Upper Screen Gui (%d/%d)",_ds_actualStatusScreen,stascr);
 				ds_global_errorHalt(ds_global_string);
 				//--HALT--//
 			}
@@ -1016,25 +1082,88 @@ int _ds_gamestatus_updateScreen(int stascr, int global, int change, int item) {
 	else if (_ds_statusType == DS_C_STA_MAP) {
 	   // MAP
 	   //--------------------------------------------------------
+		// Variables
+		ds_t_15bpp *mapIn = NULL;
+		ds_t_15bpp *mapIn2 = NULL;
+		ds_t_15bpp *mapOut = NULL;
+		int yini = 0;
+		int xini = 0;
+		int xsize = 0;
+		int ysize = 0;
+		int xxi = 0;
+		int xxe = 0;
+		int yyi = 0;
+		int yye = 0;
+		int xcorr = 0;
+		switch (ds_global_world.size) {
+			case 0: // SMALL
+				mapIn = &minimap_8x8_mapIn;
+				mapIn2 = &minimap_8x8_mapIn2;
+				mapOut = &minimap_8x8_mapOut;
+				yini = -12;
+				xini = -12;
+				xsize = 14;
+				ysize = 14;
+				xxi = -10;
+				xxe = 9;
+				yyi = -4;
+				yye = 4;
+				break;
+			case 1: // MEDIUM
+				mapIn = &minimap_8x8_mapIn_m;
+				mapIn2 = &minimap_8x8_mapIn2_m;
+				mapOut = &minimap_8x8_mapOut_m;
+				yini = -1;
+				xini = -3;
+				xsize = 10;
+				ysize = 10;
+				xxi = -13;
+				xxe = 13;
+				yyi = -5;
+				yye = 6;
+				xcorr = 1;
+				break;
+			case 2: // LARGE
+				mapIn = &minimap_8x8_mapIn_l;
+				mapIn2 = &minimap_8x8_mapIn2_l;
+				mapOut = &minimap_8x8_mapOut_l;
+				yini = -5;
+				xini = -5;
+				xsize = 7;
+				ysize = 7;
+				xxi = -20;
+				xxe = 18;
+				yyi = -8;
+				yye = 8;
+				xcorr = 1;
+				break;
+		}
+		if (mapIn == NULL) {
+			ds_global_errorHalt("ASS: Paint Radar");
+			// ----- HALT -----
+		}
+		// Minimap!
 	   if ((global) || (change)) {
-	      y = -12;
-	      for (j = -4; j <= 4; j++) {
-	      	x = -12;
-	         for (i = -10; i <= 9; i++) {
+	      y = yini;
+	      for (j = yyi; j <= yye; j++) {
+	      	x = xini;
+	         for (i = xxi; i <= xxe; i++) {
 	            if (ds_world_getVisitedRoom(ds_global_map.x + i,ds_global_map.y + j)) {
-	               ds_15bpp_putScreenCropped(ds_global_getScreen1(),&minimap_8x8_mapIn,x,32 + y,0,0,32,256,32 + 102);
+	               ds_15bpp_putScreenCropped(ds_global_getScreen1(),mapIn,x,32 + y,0,0,32,256,32 + 102);
 	            } else {
-	               ds_15bpp_putScreenCropped(ds_global_getScreen1(),&minimap_8x8_mapOut,x,32 + y,0,0,32,256,32 + 102);
+	               ds_15bpp_putScreenCropped(ds_global_getScreen1(),mapOut,x,32 + y,0,0,32,256,32 + 102);
 					}      
-					x += 14;
+					x += xsize;
 	         }
-	         y += 14;
+	         y += ysize;
 			}			   
 	   } else {
 	      if ((ds_global_tick % 60) == 0) {
-	         ds_15bpp_paintScreen(1,&minimap_8x8_mapIn,-12 + (14 * 10),32 + -12 + (14 * 4),0);
+	         ds_15bpp_paintScreen(1,mapIn,xini + (xsize * abs(xxi)) + xcorr,
+					32 + yini + (ysize * abs(yyi)),0);
 	      } else if ((ds_global_tick % 60) == 30) {
-	         ds_15bpp_paintScreen(1,&minimap_8x8_mapIn2,-12 + (14 * 10),32 + -12 + (14 * 4),0);
+	         ds_15bpp_paintScreen(1,mapIn2,xini + (xsize * abs(xxi)) + xcorr,
+					32 + yini + (ysize * abs(yyi)),0);
 			}     
 		}     
 	}  // END MAP 

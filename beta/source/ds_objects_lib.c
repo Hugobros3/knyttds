@@ -276,9 +276,9 @@ void ds_objects_lib_beh_shift(ds_t_object *object, int type) {
 		   		ds_ini_keyDictionary(ds_global_map.x,ds_global_map.y,DS_C_DICT_SHIFT_ONTOUCH,type,0,0,0),
    				0);
    if (!doshift) {
-      // Not by contact... OK, check if I'm pressing "down" and I am walking/running/stopped
+      // Not by contact... OK, check if I'm pressing "down" *ONLY*
       // <TODO> Check contact of the sprite of Juni
-      if (ds_juni_isOnTheGround() && ds_util_bitOne16(ds_global_input.Held,DS_C_IN_DOWN)) {
+      if (ds_util_bitOne16(ds_global_input.Held,DS_C_IN_DOWN)) {
          doshift = 1;
       }   
    }   
@@ -404,12 +404,18 @@ void ds_objects_lib_beh_shift(ds_t_object *object, int type) {
 		if (PA_CompareText("",_shift_string)) {
 		   // LAST DETAIL!!!!!! If the map is the same, just move Juni to a new place!!!!
 		   if ((newx == ds_global_map.x) && (newy == ds_global_map.y)) {
-		      // Teleport!
-		      ds_juni_updateSprites(posx, posy); // <TODO> : call to ds_juni_init with flags
-		      // Also, tell the system that any shift "on arrival" WON'T work
-		      ds_global_world.shiftNoX = posx / 24; // Need Tile Pos!
-			   ds_global_world.shiftNoY = posy / 24;
-				ds_music_playSpecialSound(shiftsound);
+				// LAST LAST!!!!!!! If I teleport *to the same tile I am*, do nothing!!!!!
+				if ((posx == oldposx) && (posy == oldposy)) {
+					ds_music_playSpecialSound(shiftsound); // Just play sound!
+					return; // AND THAT's IT!!! (ds_global_world.shift = 0)
+				} else {
+					// Teleport!
+					ds_juni_updateSprites(posx, posy); // <TODO> : call to ds_juni_init with flags
+					// Also, tell the system that any shift "on arrival" WON'T work
+					ds_global_world.shiftNoX = posx / 24; // Need Tile Pos!
+					ds_global_world.shiftNoY = posy / 24;
+					ds_music_playSpecialSound(shiftsound);
+				}
 		   } else {   
 				// Teleport Case 1: Normal Teleport
 				shiftToOtherMap = 1;
@@ -420,6 +426,7 @@ void ds_objects_lib_beh_shift(ds_t_object *object, int type) {
 				ds_state_var_setInt(3,posy); // This is in absolute position
 				flag = 0;
 				ds_state_var_setInt(4,flag);
+				ds_state_var_setInt(5,ds_gamestatus_getActualStatusScreen());
 				ds_state_var_setInt(6,shiftsound); // Sound
 			}			
 		} else {
@@ -2393,12 +2400,13 @@ void ds_objects_lib_beh_floatLeftRight(ds_t_object *object, int minSpeed, int ma
 					}   
 					// Movement!!				
 					collided = 0;
-				   newx = object->x + ( ((object->inner[5] > 0)?1:object->inner[3]) * object->inner[2]);
+					int velx = ( ((object->inner[5] > 0)?1:object->inner[3]) * object->inner[2]);
+				   newx = object->x + velx;
 				   if ((newx < 0) || (newx >= (600 - object->xs))) {
 				      collided = 1;
 				   } else if (collideWall) {
 				   	/* OPT - Create a standard function */
-						collided = ds_map_collMovBasic(newx,ds_3dsprite_getY(object->sprite),(object->inner[2] == 1)?object->xs:0);
+						collided = ds_map_collMovBasic(newx,ds_3dsprite_getY(object->sprite),(object->inner[2] == 1)?object->xs:0,velx);
 				   }   
 					if (collided) {
 					   // Fix collision position
@@ -2407,7 +2415,7 @@ void ds_objects_lib_beh_floatLeftRight(ds_t_object *object, int minSpeed, int ma
 					   int corrB;
 					   for (i = 0; i < imax; i++) {
 					      corrB = (object->inner[2] == 1)?(24 - i):i;
-	         			if (!ds_map_collMovBasic(newx,ds_3dsprite_getY(object->sprite),corrB)) {
+	         			if (!ds_map_collMovBasic(newx,ds_3dsprite_getY(object->sprite),corrB,0)) {
 	         			   int corr = (object->inner[2] == 1)?-1:1;
 							   object->x = newx + (i * corr);
 							   ds_3dsprite_setX(object->sprite,object->x);
@@ -2652,7 +2660,7 @@ void ds_objects_lib_beh_jumpSequence(ds_t_object *object,
 				      for (i = 0; i < (object->inner[3] >> 10); i++) {
 				         object->y -= 1;
 				         ds_3dsprite_setY(object->sprite,object->y);
-				         collided = ds_map_collDownBasic(ds_3dsprite_getX(object->sprite),ds_3dsprite_getY(object->sprite),24);
+				         collided = ds_map_collDownBasic(ds_3dsprite_getX(object->sprite),ds_3dsprite_getY(object->sprite),24,0);
 				         if (collided)
 				         	break; // breaks the FOR
 				      }   
@@ -3877,7 +3885,7 @@ int ds_objects_lib_beh_diskMovementLR(ds_t_object *object, int useX,
 			 	}  	
 			   for (i = 0; i < 24; i++) {
 			      corrB = (object->inner[2] == 1)?(24 - i):i;
-      			if (!ds_map_collMovBasic(ix,iy,corrB)) {
+      			if (!ds_map_collMovBasic(ix,iy,corrB,0)) {
       			   int corr = (object->inner[2] == 1)?-1:1;
       			   if (useX) {
 						   object->x += (i * corr);

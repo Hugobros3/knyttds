@@ -658,61 +658,81 @@ int ds_map_collDown(int x, int y, int xsize, int ysize, int clash) {
 
 /* Checks if this sprite has something solid in his feet (23) or below its feet (24).
 		It's "Basic" because manages 24y sprites, and it is not pixel-perfect, just checks below the sprite */
-int ds_map_collDownBasic(int x, int y, int clash) {
+int ds_map_collDownBasic(int x, int y, int clash, int speedY) {
    int res = 0;
-   int i;
+   int i,j;
    int xcheck, ycheck;
 
-   ycheck = y+clash; // (23 for ey-I-am-inside-the-ground, 24 for gravity)
-   for (i = 6; i < 18; i++) { // 7-15?
-      xcheck = x + i;    
-      //PA_Put16bitPixel(0,xcheck,ycheck,PA_RGB(0,0,31));
-	   if (ds_map_coll(xcheck,ycheck)) {
-	   	res = 1;
-	   	break;
-	 	}  	
-	}	
+	for (j = clash; j >= (clash - abs(speedY)); j--) {
+		ycheck = y+j; // (23 for ey-I-am-inside-the-ground, 24 for gravity)
+		for (i = 6; i < 18; i++) { // 7-15?
+			xcheck = x + i;    
+			//PA_Put16bitPixel(0,xcheck,ycheck,PA_RGB(0,0,31));
+			if (ds_map_coll(xcheck,ycheck)) {
+				res = 1;
+				break;
+			}  	
+		}	
+	}
 	
 	return res;
 }  
 
 /* Checks for "hitting the ceiling".
 		It's "Basic" because manages 24y sprites, and it is not pixel-perfect, just checks over the sprite */
-int ds_map_collUpBasic(int x, int y, int clash) {
+int ds_map_collUpBasic(int x, int y, int clash, int speedY) {
    int res = 0;
-   int i;
+   int i,j;
    int xcheck, ycheck;
 
-   ycheck = y+clash;
-   for (i = 6; i < 18; i++) { // -> These are the X-coord collisions!!!!!! - 
-      xcheck = x + i;    
-      //PA_Put16bitPixel(0,xcheck,ycheck,PA_RGB(0,0,31));
-	   if (ds_map_coll(xcheck,ycheck)) {
-	   	res = 1;
-	   	break;
-	 	}  	
-	}	
-	
+	for (j = clash; j <= (clash + abs(speedY)); j++) {
+		ycheck = y+j;
+		for (i = 6; i < 18; i++) { // -> These are the X-coord collisions!!!!!! - 
+			xcheck = x + i;    
+			//PA_Put16bitPixel(0,xcheck,ycheck,PA_RGB(0,0,31));
+			if (ds_map_coll(xcheck,ycheck)) {
+				res = 1;
+				break;
+			}  	
+		}	
+	}
 	return res;
 }  
 
 
 /* Checks if the Sprite clashes in a x-based movement.
 	It's "basic" because the caller decides where to check */
-int ds_map_collMovBasic(int x, int y, int clash) {
+int ds_map_collMovBasic(int x, int y, int clash, int speedX) {
    int res = 0;
-   int j;
+   int i,j;
    int xcheck, ycheck;
 
-   xcheck = x + clash;
-   for (j = 7; j < 24 - 4; j++) {  // <TODO> "Ad-Teoriam", this is -3 Also, it is 4
-      ycheck = y + j;    // e.g. y+4..x+20 
-      //PA_Put16bitPixel(0,xcheck,ycheck,PA_RGB(0,0,31));
-	   if (ds_map_coll(xcheck,ycheck)) {
-	   	res = 1;
-	   	break;
-	 	}  	
-	}	
+	i = clash;
+	while (1) {	
+		if (speedX > 0) {
+			if (!(i >= clash - abs(speedX)))
+				break;
+		} else {
+			if (!(i <= clash + abs(speedX)))
+				break;
+		}
+		xcheck = x + i;
+		for (j = 7; j < 24 - 4; j++) {  // <TODO> "Ad-Teoriam", this is -3 Also, it is 4
+			ycheck = y + j;    // e.g. y+4..x+20 
+			//PA_Put16bitPixel(0,xcheck,ycheck,PA_RGB(0,0,31));
+			if (ds_map_coll(xcheck,ycheck)) {
+				res = 1;
+				break;
+			}  	
+		}	
+		if (speedX > 0) {
+			i--;
+		} else if (speedX < 0) {
+			i++;
+		} else {
+			break; // :-)
+		}
+	}
 	
 	return res;
 } 

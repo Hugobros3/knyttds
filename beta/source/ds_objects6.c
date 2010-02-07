@@ -342,7 +342,7 @@ int _ds_objects_b06o08_manage(void *objp) {
 	         // Also, put the critter in its place
 	         int i;
 		      for (i = 1; i <= (object->inner[0] / 100); i++) {
-		         if (!ds_map_collDownBasic(object->x,object->y,23 - i)) {
+		         if (!ds_map_collDownBasic(object->x,object->y,23 - i,0)) {
 		            object->y -= i;
 		            ds_3dsprite_setY(object->sprite,object->y);
 		            break;

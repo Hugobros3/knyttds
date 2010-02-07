@@ -36,6 +36,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    
 */
 
+/* How to convert audio:
+   
+   - Launch Audacity.
+   - Tracks -> Stereo to Mono
+   - Tracks -> Resample (11025)
+   - Project Rate (11025)
+   - Export -> RAW (8 bit signed, 11025, mono)
+   - (Edit Metadata - OK)
+   
+*/
+
 /* 
 	- Check this error!!!!!!!!!!!!
 	AS_MP3Stop is broken: It doesn't set mp3file to NULL, so FILE_CLOSE is called twice 
