@@ -137,7 +137,8 @@ int _ds_objects_b13o01_manage(void *objp) {
 	object->inner[10]++;
 	if (object->inner[10] == 240) 
 		object->inner[10] = 0;
-	if ((object->inner[10] >= 10) && (object->inner[10] <= 90)) {
+	if ((object->inner[10] >= 10) && (object->inner[10] <= 90) &&
+		 ((object->inner[10] % 2) == 0))	 {
 	   particle = ds_objects_createParticle(object->x + 2, object->y - 12, object->layer, 42);
 	   gravity = 10 + PA_RandMinMax(0,4); 
 		ds_objects_lib_beh_particleMMF2_Init(particle, 
@@ -192,7 +193,8 @@ int _ds_objects_b13o02_manage(void *objp) {
 	object->inner[10]++;
 	if (object->inner[10] == 240) 
 		object->inner[10] = 0;
-	if ((object->inner[10] >= 10) && (object->inner[10] <= 40)) {
+	if ((object->inner[10] >= 10) && (object->inner[10] <= 40) &&
+		 ((object->inner[10] % 2) == 0)) {
 	   particle = ds_objects_createParticle(object->x + 2, object->y - 12, object->layer, 42);
 	   gravity = 10 + PA_RandMinMax(0,4); 
 	   speed = ((ds_objects_lib_distanceJuniX(object,1,1)) / 8) + 13 + PA_RandMinMax(0,5); // Correction
@@ -429,7 +431,8 @@ int _ds_objects_b13o05_manage(void *objp) {
 	object->inner[11] = (object->inner[11] + 1) % 120;
 	if (object->inner[11] == 0)
 		ds_objects_setBlink(object, DS_C_GAMESTATUS_BLINK);
-	if ((object->inner[11] > 0) && (object->inner[11] < 68)) {
+	if ((object->inner[11] > 0) && (object->inner[11] < 68) && 
+		 ((object->inner[11] % 2) == 0)) {
 	   // Rain!
 	   particle = ds_objects_createParticle(object->x + 8 + PA_RandMinMax(0,1), object->y, object->layer, 42);
 	   int gravity = 10 + PA_RandMinMax(0,4); 

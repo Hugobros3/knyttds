@@ -373,3 +373,31 @@ u8 PA_CompareText(char *text1, char *text2){
 	}
 	return ok;
 }
+
+/* Compare Bounding Box - Adapted from John Amato routine @ Gamedev*/
+int ds_boundingBox(int o1x, int o1y, int o1w, int o1h, 
+									int o2x, int o2y, int o2w, int o2h) {
+  
+    int left1, left2;
+    int right1, right2;
+    int top1, top2;
+    int bottom1, bottom2;
+
+    left1 = o1x;
+    left2 = o2x;
+    right1 = o1x + o1w;
+    right2 = o2x + o2w;
+    top1 = o1y;
+    top2 = o2y;
+    bottom1 = o1y + o1h;
+    bottom2 = o2y + o2h;
+
+    if (bottom1 < top2) return 0;
+    if (top1 > bottom2) return 0;
+
+    if (right1 < left2) return 0;
+    if (left1 > right2) return 0;
+
+    return 1;
+
+};

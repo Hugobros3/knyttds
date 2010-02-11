@@ -108,4 +108,8 @@ void ds_util_arrNum_Del(void *param, int id);
 /* Compare text, PAlib impl */
 u8 PA_CompareText(char *text1, char *text2);
 
+/* Compare Bounding Box - Adapted from John Amato routine @ Gamedev */
+int ds_boundingBox(int o1x, int o1y, int o1w, int o1h, 
+									int o2x, int o2y, int o2w, int o2h);
+
 #endif

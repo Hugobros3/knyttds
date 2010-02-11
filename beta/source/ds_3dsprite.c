@@ -58,6 +58,7 @@ F*** IMPORTANT - Render in advance in the 3D HW
 	continue throughout the whole display period), the rendered data is written to a small cache 
 	that can hold up to 48 scanlines.
 	(Note that the 3D engine "stops" aquiring data from VRAM @ 192-48 approx. Check flags.)
+	(Also, the 3D engine starts rendering in 262-48 (214), more or less)
 	
 ANOTHER DETAIL:
    Try NOT to load sprites that are going to delete themselves later ^_-
@@ -161,6 +162,7 @@ void* coGlobal[DS_C_MAX_OBJ_CO]; // * to IMA structure
 u8 spriteGlobalPainted[DS_C_MAX_BANK][DS_C_MAX_OBJ];
 u8 particleGlobalPainted[DS_C_MAX_OBJ_PART];
 u8 coGlobalPainted[DS_C_MAX_OBJ_CO];
+int _spriteLoad; // Number of LOAD sprites
 
 // RAW Size of the VRAM (not considering optimizations)
 int _vramSize3D = 0;
@@ -757,6 +759,8 @@ void ds_3dsprite_init1() {
    spriteListArr = ds_util_arrNumInit(_MAX_OBJSPRITE);
    
    sprite3DListArr = ds_util_arrNumInit(_MAX_OBJSPRITE);
+	
+	_spriteLoad = 0;
 
    for (j = 0; j < DS_C_MAX_BANK; j++) {
 	   for (i = 0; i < DS_C_MAX_OBJ; i++) {
@@ -839,6 +843,8 @@ void ds_3dsprite_reset(int force) {
    
 	ds_util_arrNumReset(spriteListArr);
 	ds_util_arrNumReset(sprite3DListArr);
+	
+	_spriteLoad = 0;
    
    // Resets the SpriteGlobal list and the ParticleGlobal list (Including the *Painted lists)
    for (j = 0; j < DS_C_MAX_BANK; j++) {
@@ -1169,6 +1175,7 @@ int ds_3dsprite_loadSpecial(u16 *texSpecial, int xs, int ys, int x, int y) {
 	// 4) Should create the HW texture... directly from the image... and the sprite too!
 	// ... BUT!!!!!... We will delay its uploading to after the VBlank
 	sprite->flags = ds_util_bitSet8(sprite->flags, _DS_C_3D_SPECIAL_LOAD); // Special!
+	_spriteLoad++;
 	
 	// 5) The final touches! (update, priority, spritelist)
 	spriteList[sprite->id] = sprite;
@@ -1494,9 +1501,11 @@ void ds_3dsprite_drawAll(int camX, int camY) {
    int corry;
    int _timer;
    _ds_t_sprite* sprite;
-         
+
+#ifdef DEBUG_KSDS         
    sprintf(ds_global_string,"3DDraw-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
    ds_gamestatus_debugOutput(1,0,0,ds_global_string,DS_C_STA_DEBUG);
+#endif
    // Just updates the 3D sprites ;-)
    for (i = 0; i <= ds_util_arrNumMax(spriteListArr); i++) {
       sprite = spriteList[i];
@@ -1516,14 +1525,18 @@ void ds_3dsprite_drawAll(int camX, int camY) {
 	}  
 	
 	// IDEA: Paint, before, and after the VBLANK :-). Use some registers (REG_VCOUNT?)
-			
+
+#ifdef DEBUG_KSDS			
    sprintf(ds_global_string,"UPD3D-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());			
    ds_gamestatus_debugOutput(1,0,1,ds_global_string,DS_C_STA_DEBUG);
-   
+#endif   
+
    PA_3DProcess();
-   
+	
+#ifdef DEBUG_KSDS   
    sprintf(ds_global_string,"3DPro-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
    ds_gamestatus_debugOutput(1,0,2,ds_global_string,DS_C_STA_DEBUG);
+#endif
       
    // <OPT> Do some optimizations before the VBlank, WAIT for VBlank
    if (ds_global_optimizationPreload) {
@@ -1544,16 +1557,22 @@ void ds_3dsprite_drawAll(int camX, int camY) {
 	}   	
 	
    // Now... paint map!!!!!!
-   sprintf(ds_global_string,"MapA-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());			
+#ifdef DEBUG_KSDS
+   sprintf(ds_global_string,"3DPro-End: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());			
    ds_gamestatus_debugOutput(1,0,3,ds_global_string,DS_C_STA_DEBUG);
-   _PA_3DUpdateGfxScreen3D(_screen3DTex, ds_global_map.tileMap, camX, camY, 1);
-   sprintf(ds_global_string,"MapZ-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
-   ds_gamestatus_debugOutput(1,0,4,ds_global_string,DS_C_STA_DEBUG);
+#endif
 	
-   sprintf(ds_global_string,"VRAMA-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());       		
-   ds_gamestatus_debugOutput(1,0,5,ds_global_string,DS_C_STA_DEBUG);
+   _PA_3DUpdateGfxScreen3D(_screen3DTex, ds_global_map.tileMap, camX, camY, 1);
+	
+#ifdef DEBUG_KSDS
+	sprintf(ds_global_string,"MapA-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());       		
+	ds_gamestatus_debugOutput(1,0,4,ds_global_string,DS_C_STA_DEBUG);
+#endif
       
-   // FIXME - ReUpdate the 3D sprites
+   // FIXME - reUpdate the 3D sprites, but only for a limited time ;-)
+	int sprite3DVactual;
+	int sprite3DVcount = PA_GetVcount();
+	
    int updated = 0;
    for (i = 0; i <= ds_util_arrNumMax(spriteListArr); i++) {      
       sprite = spriteList[i];
@@ -1607,6 +1626,7 @@ void ds_3dsprite_drawAll(int camX, int camY) {
 					}		   	   
 					// Update flags and alpha/priority		   	   
 					sprite->flags = ds_util_bitDel8(sprite->flags, _DS_C_3D_SPECIAL_LOAD);
+					_spriteLoad--;
 					if (ds_util_bitOne8(sprite->flags,_DS_C_3D_SPECIAL_ALPHA)) {
 					   int alphaint = sprite->data.alpha;
 					   ds_3dsprite_setAlpha(sprite->id,alphaint);
@@ -1624,22 +1644,41 @@ void ds_3dsprite_drawAll(int camX, int camY) {
 					_ds_3dsprite_updateSpriteInner(sprite,0,1,0,NULL);
 				}			
 				updated++;
+				
+				// Special test: If we have no time left, leave the updates for the next frame!
+				if (!_spriteLoad) { // Only if there is no LOAD sprites left
+					sprite3DVactual = PA_GetVcount();
+					// Special fix for 0...262
+					if (sprite3DVactual < sprite3DVcount)
+						sprite3DVactual += 262;
+					// Update only for a limited time (the value has been obtained empirically :-P)
+					if ((sprite3DVactual - sprite3DVcount) >= 16)
+						break; // Leave to the next frame!. It is OK, flags are not deleted ;-)
+				}
 			}			
 		}   
 	}  
 	
-	// Also, paints upper screen <TODO>
+	// Also, paints upper screen
+#ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"VRAMUp-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());       		
-	ds_gamestatus_debugOutput(1,0,6,ds_global_string,DS_C_STA_DEBUG);
+	ds_gamestatus_debugOutput(1,0,5,ds_global_string,DS_C_STA_DEBUG);
+#endif
 	
 	ds_gamestatus_updateScreen();
 
-	sprintf(ds_global_string,"VRAMZ-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());       		
-	ds_gamestatus_debugOutput(1,0,7,ds_global_string,DS_C_STA_DEBUG);		
+#ifdef DEBUG_KSDS
+   sprintf(ds_global_string,"GameS-Time: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());       		
+   ds_gamestatus_debugOutput(1,0,6,ds_global_string,DS_C_STA_DEBUG);
+#endif
+
+	// Finishes...
+#ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"Updated: [%d] %d (%d)          ",ds_util_arrNumMax(spriteListArr),updated,_maxtexture); 
-	ds_gamestatus_debugOutput(1,0,8,ds_global_string,DS_C_STA_DEBUG);
+	ds_gamestatus_debugOutput(1,0,7,ds_global_string,DS_C_STA_DEBUG);
 	sprintf(ds_global_string,"DEBUG VRAM: [%d]",_vramSize3D); 
-	ds_gamestatus_debugOutput(1,0,9,ds_global_string,DS_C_STA_DEBUG);	
+	ds_gamestatus_debugOutput(1,0,8,ds_global_string,DS_C_STA_DEBUG);	
+#endif
 	_maxtexture = 0;
 }
    

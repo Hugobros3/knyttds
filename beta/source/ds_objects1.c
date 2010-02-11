@@ -55,6 +55,7 @@ int _ds_objects_o01_manageWaterNormal(ds_t_object *object, int tick) {
 
 int _ds_objects_o01_manageWaterfall_ini(ds_t_object *object) {
    object->inner[2] = 0;
+	object->inner[3] = ds_3dsprite_getMaxFrame(object->sprite);
 
 	ds_3dsprite_setAlpha(object->sprite, 128);
    
@@ -64,12 +65,12 @@ int _ds_objects_o01_manageWaterfall_ini(ds_t_object *object) {
 int _ds_objects_o01_manageWaterfall(ds_t_object *object, int tick) {
 /* 
 	[2]:ACTUAL FRAME
+	[3]:MAX FRAME
 */ 
 	if ((ds_global_tick % tick) == 0) {
-		object->inner[2] = (object->inner[2] + 1) % ds_3dsprite_getMaxFrame(object->sprite);
+		object->inner[2] = (object->inner[2] + 1) % object->inner[3];
+		ds_3dsprite_setFrame(object->sprite,object->inner[2]);
 	}		
-	ds_3dsprite_setFrame(object->sprite,object->inner[2]);
-//	ds_3dsprite_updateSprite(object->sprite);
 	return 1;
 }
 

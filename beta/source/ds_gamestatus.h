@@ -55,6 +55,9 @@ void ds_gamestatus_setActualStatusScreen(int stat);
 /* Inits the gamestatus system. Loads a certain status screen (-1 if we use the "global" status screen) */
 int ds_gamestatus_launch(int stascr);
 
+/* Updates the gamestatus system AFTER a launch */
+int ds_gamestatus_launchAFTER(int stascr);
+
 /* Updates the status screen, in a normal way */
 int ds_gamestatus_updateScreen();
 

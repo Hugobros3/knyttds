@@ -879,7 +879,7 @@ int _ds_objects_b14o21_manage(void *objp) {
 	   // Particle creation!
 		ds_music_playSound("DiscBullet", 0, 0);
 	   int i,sx,sy;
-	   for (i=0; i<25; i++) {
+	   for (i=0; i<15; i++) {
 	      sx = -5 + PA_RandMax(10); // Speed - -5..5
 	      sy = PA_RandMax(5) + 5; // Speed - RAND(5)+5
 	      particle = ds_objects_createParticle(object->x + 8, object->y, object->layer, 43);
@@ -905,7 +905,7 @@ int _ds_objects_b14o22_manage(void *objp) {
 	   // Particle creation!
 		ds_music_playSound("DiscBullet", 0, 0);
 	   int i,sx,sy;
-	   for (i=0; i<25; i++) {
+	   for (i=0; i<15; i++) {
 	      sx = -5 + PA_RandMax(10); // Speed - -5..5
 	      sy = -(PA_RandMax(5) + 5); // Speed - RAND(5)+5
 	      particle = ds_objects_createParticle(object->x + 8, object->y - 12, object->layer, 43);
@@ -931,7 +931,7 @@ int _ds_objects_b14o23_manage(void *objp) {
 	   // Particle creation!
 		ds_music_playSound("DiscBullet", 0, 0);
 	   int i,sx,sy;
-	   for (i=0; i<25; i++) {
+	   for (i=0; i<15; i++) {
 	      sx = PA_RandMax(5) + 5; // Speed - RAND(5)+5
 	      sy = -5 + PA_RandMax(10); // Speed - -5..5
 	      particle = ds_objects_createParticle(object->x + 12, object->y - 8, object->layer, 43);
@@ -957,7 +957,7 @@ int _ds_objects_b14o24_manage(void *objp) {
 	   // Particle creation!
 		ds_music_playSound("DiscBullet", 0, 0);
 	   int i,sx,sy;
-	   for (i=0; i<25; i++) {
+	   for (i=0; i<15; i++) {
 	      sx = -(PA_RandMax(5) + 5); // Speed - RAND(5)+5
 	      sy = -5 + PA_RandMax(10); // Speed - -5..5
 	      particle = ds_objects_createParticle(object->x + 4, object->y - 8, object->layer, 43);

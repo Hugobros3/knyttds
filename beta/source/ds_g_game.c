@@ -153,10 +153,10 @@ void ds_g_game_start() {
 	strcat(tempstr,tempstr_1);
 
    /* Launches the upper screen system :-D */
-   ds_gamestatus_setActualStatusScreen(ds_state_var_getInt(5));
+   //ds_gamestatus_setActualStatusScreen(ds_state_var_getInt(5));
    int statGUI = ds_ini_getint(ds_global_world.worldini,
 								ds_ini_keyDictionary(ds_global_map.x,ds_global_map.y,DS_C_DICT_GUI,0,0,0,0),
-								ds_gamestatus_getActualStatusScreen());
+								ds_state_var_getInt(5));
 	statGUI = (statGUI <= 0)?-1:statGUI; // Correction - 0 and ...-1 are the "global" gui
    if (!ds_gamestatus_launch(statGUI)) {
       ds_global_errorHalt("ds_gamestatus_launch");
@@ -179,7 +179,8 @@ void ds_g_game_start() {
    }   
    ds_global_world.shift_cameFrom = 0;
 	
-	//ds_global_errorHalt(tempstr);
+	/* Paints something... */
+	ds_gamestatus_launchAFTER(statGUI);
 	   
    // Pops if fade to white!
 	ds_global_fadeWhitePop();

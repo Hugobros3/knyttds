@@ -1335,6 +1335,27 @@ void ds_15bpp_paintScreen(int dsscreen, ds_t_15bpp *ima, int x, int y, int flush
 	}	
 }
 
+/* Paints a 15bpp **directly** into the screen. Ignores alpha. The image must be x4. No check for boundaries (!).
+	Also uses special buffer to indicate whether a row should be updated or not */
+void ds_15bpp_paintScreenSpecial(int dsscreen, ds_t_15bpp *ima, int x, int y, int flush, u8 *buff) {
+	u16 * ptrori;
+	int j;
+	
+	if (flush)
+		DC_FlushAll();  // <TODO> DC_FlushRange(src,len); - DC_InvalidateRange(dst,len);?         
+	if (ima->loaded) {
+		ptrori = (ima->png_screen);
+		for (j=0; j < ima->height; j++) {
+		   //<TODO> If bugs, use memcopy <TODO> Check x4!!!!
+			if (buff[j])
+				DMA_Copy((ptrori + (j * ima->width)),
+								(void *)(PA_DrawBg[dsscreen] + ((j + y) << 8) + x),
+								ima->width >> 1,
+								DMA_32NOW);
+		}
+	}	
+}
+
 /* Paints a 15bpp into a certain screen buffer, Checking Limits. Ignores alpha. The image must be x4. */
 void ds_15bpp_putScreenCropped(u16 *screen, ds_t_15bpp *ima, int x, int y, int flush, int xi, int yi, int xf, int yf) {
 	u16 * ptrori;

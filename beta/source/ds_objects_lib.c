@@ -1075,7 +1075,7 @@ int ds_objects_lib_par_make4ParticleFalling(ds_t_object *object, int sec, int ma
 	   object->inner_tick = ds_global_tick;
 	}   
 	if (object->inner_tick != 0) {
-	   if ((ds_global_tick % 2) == 0) {
+	   if ((ds_global_tick % 4) == 0) {
 	      x = ds_3dsprite_getX(object->sprite);
 	      y = ds_3dsprite_getY(object->sprite);
 		   particle = ds_objects_createParticle(x + 14, y - 19, object->layer, 3); // UR
@@ -1129,7 +1129,7 @@ int ds_objects_lib_par_make2ParticleFalling(ds_t_object *object, int sec, int ma
 	   object->inner_tick = ds_global_tick;
 	}   
 	if (object->inner_tick != 0) {
-	   if ((ds_global_tick % 2) == 0) {
+	   if ((ds_global_tick % 4) == 0) {
 	      x = ds_3dsprite_getX(object->sprite);
 	      y = ds_3dsprite_getY(object->sprite);
 		   particle = ds_objects_createParticle(x + 14, y - 19, object->layer, 3);  // UR

@@ -49,6 +49,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // INTERNAL TYPES AND VARIABLES
 //-------------------------------------------------------------------------------------------------
 
+#define _DS_C_CT_LAUNCH 0
+#define _DS_C_CT_LAUNCHAFTER 1
+#define _DS_C_CT_UPDATE 2
+#define _DS_C_CT_CHANGEMODE 3
+#define _RADARSIZE 102
+
 int _ds_actualStatusScreen;
 int _ds_statusType;
 u32 _ds_statusType_var;
@@ -99,6 +105,8 @@ ds_t_15bpp minimap_24x24_redkey;
 ds_t_15bpp minimap_24x24_redkeyOK;
 ds_t_15bpp minimap_24x24_yellowkey;
 ds_t_15bpp minimap_24x24_yellowkeyOK;
+
+u8 minimap_radarBuffer[_RADARSIZE];
 
 //-------------------------------------------------------------------------------------------------
 // INTERNAL FUNCTIONS - TODO
@@ -641,6 +649,10 @@ void ds_gamestatus_initOnce() {
 void ds_gamestatus_initLoad() {
    _ds_actualStatusScreen = -2; // Since we load the game, we need to reload the GUI
    _ds_statusType = DS_C_STA_RADAR;
+	int i;
+	for (i = 0; i < _RADARSIZE; i++) {
+		minimap_radarBuffer[i] = 1; // Update
+	}	
 }   
 
 /* Resets the gamestatus system. Must be done *after* exiting a screen */
@@ -650,6 +662,12 @@ void ds_gamestatus_reset() {
    	ds_15bpp_delete(&minimap_600x240_smallImage);
    
    // Resets icons? No, they have to stay in memory
+
+	// Radar update
+	int i;
+	for (i = 0; i < _RADARSIZE; i++) {
+		minimap_radarBuffer[i] = 1; // Update
+	}	
 }
 
 /* Finishes the gamestatus system.*/
@@ -811,7 +829,7 @@ int _ds_gamestatus_paintItem(int global, int item, int owned) {
 }
 
 /* Executes an update to the upper screen. */
-int _ds_gamestatus_updateScreen(int stascr, int global, int change, int item) {
+int _ds_gamestatus_updateScreen(int stascr, int param) {
    char filen[255];
 	int generalGUI = 0;
 	ds_t_object *object;   
@@ -819,11 +837,49 @@ int _ds_gamestatus_updateScreen(int stascr, int global, int change, int item) {
 	int radarx, radary;
 	int radardraw;
 	int i,j,x,y;
+	int global = 0;
+	int change = 0;
+	int item = 0;
+	int minimap = 0;
+	int paint = 0;
+	int rc;
 	
    char tempstr[255];
    char tempstr_1[255];
 	sprintf(tempstr_1,"INIT: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+		
+	// Zero - update parameters
+	switch (param) {
+		case _DS_C_CT_LAUNCH:
+			global = 1;
+			change = 0;
+			item = 1;
+			minimap = 1;
+			paint = 0;
+			break;
+		case _DS_C_CT_LAUNCHAFTER:
+			global = 0;
+			change = 0;
+			item = 0;
+			minimap = 0;
+			paint = 1;
+			break;
+		case _DS_C_CT_UPDATE:
+			global = 0;
+			change = 0;
+			item = 0;
+			minimap = 1;
+			paint = 0;
+			break;
+		case _DS_C_CT_CHANGEMODE:
+			global = 0;
+			change = 1;
+			item = 1;
+			minimap = 1;
+			paint = 1;
+			break;
+	}
 
    // First, if this is a global update, puts the new upper screen in the Screen-1 buffer. 
    //-------------------------------------------------------------------------------------
@@ -988,185 +1044,202 @@ int _ds_gamestatus_updateScreen(int stascr, int global, int change, int item) {
 	sprintf(tempstr_1,"ITEMS: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
       	   
-	// Now, updates the miniscreen (always)
-	//-------------------------------------
-	if (_ds_statusType == DS_C_STA_RADAR) {
-	   // RADAR
-	   //--------------------------------------------------------
-		// First, copy the miniscreen onto the Screen Buffer (global) / Screen (local)
-		if (global) {
-			ds_15bpp_putScreen(ds_global_getScreen1(),&minimap_600x240_smallImage,0,32,
-				1);
-		} else {
-			ds_15bpp_paintScreen(1,&minimap_600x240_smallImage,0,32,
-				1);
-		}   		
-		// Now, get the objects and paint them in the screen
-		ds_t_15bpp *minimap_8x8_ = NULL;
-	   myiterator = ds_linkedlist_startIterator(&ds_global_objects);
-	   while ((object = ds_linkedlist_getIterator(&ds_global_objects,&myiterator)) != NULL) {
-	      if (ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_RADAR)) {
-	         // Get *Corrected* coordinates
-	         radardraw = 1;
-	         //radarx = ((object->x + ((object->xs > 24)?(object->xs >> 1):0) ) * 256) / 600;
-	         radarx = ((object->x + (object->xs >> 1) ) * 256) / 600;
-	         if ((radarx < 8) || (radarx > (256 - 8)))
-	         	radardraw = 0;
-	         //radary = ((object->y + ((object->ys > 24)?(object->ys >> 1):0) ) * 102) / 240;
-	         radary = ((object->y + (object->ys >> 1) ) * 102) / 240;
-	         if ((radary < 8) || (radary > (102 - 8)))
-	         	radardraw = 0;         
-	         // Choose the type of icon
-	         if (object->type == DS_C_OBJ_ITEM) {
-	            minimap_8x8_ = &minimap_8x8_blueIcon;
-	         } else {
-	            if (object->blink > 0) {
-	               if (((ds_global_tick % 4) < 2) == 0)
-	               	minimap_8x8_ = NULL;
-	               else 
-	               	minimap_8x8_ = &minimap_8x8_redIcon;
-	            }   
-	            else {
-	               if (ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_ENEMY)) {
-		               if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_WARN)) ||
-		                   (ds_util_bitOne16(object->flags,DS_C_OBJ_F_WARN_SPECIAL))) {
-		                  minimap_8x8_ = &minimap_8x8_yellowIcon;
-		               } else {   
-		            		minimap_8x8_ = &minimap_8x8_greenIcon;
-		           		} 		
-		         	} else {
-		         	   minimap_8x8_ = &minimap_8x8_greenIcon;
-						}     	
-	          	}  	
-				}
-				// Draw
-				if (minimap_8x8_ != NULL) {
-		         if (radardraw) {
-						if (global) {      
-			            ds_15bpp_putScreen(ds_global_getScreen1(),minimap_8x8_,radarx,32 + (radary),0);
-			         } else {
-			            ds_15bpp_paintScreen(1,minimap_8x8_,radarx,32 + (radary),0);
+	// Now, updates the miniscreen
+	//----------------------------
+	if (minimap) {
+		if (_ds_statusType == DS_C_STA_RADAR) {
+			// RADAR
+			//--------------------------------------------------------
+			// First, copy the miniscreen onto the Screen Buffer (global) / Screen (local)
+			if (global) {
+				ds_15bpp_putScreen(ds_global_getScreen1(),&minimap_600x240_smallImage,0,32,
+					1);
+			} else {
+				// We will update the screen part by part, need to save speed!
+				ds_15bpp_paintScreenSpecial(1,&minimap_600x240_smallImage,0,32,1,minimap_radarBuffer);
+				// Radar update
+				for (rc = 0; rc < _RADARSIZE; rc++) {
+					minimap_radarBuffer[rc] = 0; // DO NOT Update
+				}	
+
+			}   		
+			// Now, get the objects and paint them in the screen
+			ds_t_15bpp *minimap_8x8_ = NULL;
+			myiterator = ds_linkedlist_startIterator(&ds_global_objects);
+			while ((object = ds_linkedlist_getIterator(&ds_global_objects,&myiterator)) != NULL) {
+				if (ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_RADAR)) {
+					// Get *Corrected* coordinates
+					radardraw = 1;
+					//radarx = ((object->x + ((object->xs > 24)?(object->xs >> 1):0) ) * 256) / 600;
+					radarx = ((object->x + (object->xs >> 1) ) * 256) / 600;
+					if ((radarx < 8) || (radarx > (256 - 8)))
+						radardraw = 0;
+					//radary = ((object->y + ((object->ys > 24)?(object->ys >> 1):0) ) * 102) / 240;
+					radary = ((object->y + (object->ys >> 1) ) * 102) / 240;
+					if ((radary < 8) || (radary > (102 - 8)))
+						radardraw = 0;         
+					// Choose the type of icon
+					if (object->type == DS_C_OBJ_ITEM) {
+						minimap_8x8_ = &minimap_8x8_blueIcon;
+					} else {
+						if (object->blink > 0) {
+							if (((ds_global_tick % 4) < 2) == 0)
+								minimap_8x8_ = NULL;
+							else 
+								minimap_8x8_ = &minimap_8x8_redIcon;
+						}   
+						else {
+							if (ds_util_bitOne16(ds_global_juni.item,DS_C_JUNI_IT_ENEMY)) {
+								if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_WARN)) ||
+									 (ds_util_bitOne16(object->flags,DS_C_OBJ_F_WARN_SPECIAL))) {
+									minimap_8x8_ = &minimap_8x8_yellowIcon;
+								} else {   
+									minimap_8x8_ = &minimap_8x8_greenIcon;
+								} 		
+							} else {
+								minimap_8x8_ = &minimap_8x8_greenIcon;
+							}     	
+						}  	
+					}
+					// Draw
+					if (minimap_8x8_ != NULL) {
+						if (radardraw) {
+							if (global) {      
+								ds_15bpp_putScreen(ds_global_getScreen1(),minimap_8x8_,radarx,32 + (radary),0);
+							} else {
+								ds_15bpp_paintScreen(1,minimap_8x8_,radarx,32 + (radary),0);
+							}      
+						} else {			
+							if (global) {      
+								ds_15bpp_putScreenCropped(ds_global_getScreen1(),minimap_8x8_,radarx,32 + (radary),0,0,32,256,32 + 102);
+							} else {
+								ds_15bpp_paintScreenCropped(1,minimap_8x8_,radarx,32 + (radary),0,0,32,256,32 + 102);         
+							}      
+						} 
+						for (rc = radary; rc < radary + 8; rc++) {
+							minimap_radarBuffer[rc] = 1; // UPDATE
+							if (radary >= _RADARSIZE)
+								break;
+						}	
+					}			
+				}   
+			}   
+			// Finally, paints juni!!!!
+			radardraw = 1;
+			radarx = ((ds_global_juni.x + 12) * 256) / 600;
+			if ((radarx < 0) || (radarx >= (256 - 8)))
+				radardraw = 0;
+			radary = ((ds_global_juni.y + 12) * 102) / 240;
+			if ((radary < 0) || (radary >= (102 - 8)))
+				radardraw = 0;         
+			if (radardraw) {
+				if (global) {
+					ds_15bpp_putScreen(ds_global_getScreen1(),&minimap_8x8_juniIcon,radarx,32 + (radary),0);
+				} else {
+					ds_15bpp_paintScreen(1,&minimap_8x8_juniIcon,radarx,32 + (radary),0);
+				}     	
+			} else {
+				if (global) {
+					ds_15bpp_putScreenCropped(ds_global_getScreen1(),&minimap_8x8_juniIcon,radarx,32 + (radary),0,0,32,256,32 + 102);
+				} else {
+					ds_15bpp_paintScreenCropped(1,&minimap_8x8_juniIcon,radarx,32 + (radary),0,0,32,256,32 + 102);
+				}     	
+			}  
+			for (rc = radary; rc < radary + 8; rc++) {
+				minimap_radarBuffer[rc] = 1; // UPDATE
+				if (radary >= _RADARSIZE)
+					break;
+			}
+		}	// END RADAR
+		else if (_ds_statusType == DS_C_STA_MAP) {
+			// MAP
+			//--------------------------------------------------------
+			// Variables
+			ds_t_15bpp *mapIn = NULL;
+			ds_t_15bpp *mapIn2 = NULL;
+			ds_t_15bpp *mapOut = NULL;
+			int yini = 0;
+			int xini = 0;
+			int xsize = 0;
+			int ysize = 0;
+			int xxi = 0;
+			int xxe = 0;
+			int yyi = 0;
+			int yye = 0;
+			int xcorr = 0;
+			switch (ds_global_world.size) {
+				case 0: // SMALL
+					mapIn = &minimap_8x8_mapIn;
+					mapIn2 = &minimap_8x8_mapIn2;
+					mapOut = &minimap_8x8_mapOut;
+					yini = -12;
+					xini = -12;
+					xsize = 14;
+					ysize = 14;
+					xxi = -10;
+					xxe = 9;
+					yyi = -4;
+					yye = 4;
+					break;
+				case 1: // MEDIUM
+					mapIn = &minimap_8x8_mapIn_m;
+					mapIn2 = &minimap_8x8_mapIn2_m;
+					mapOut = &minimap_8x8_mapOut_m;
+					yini = -1;
+					xini = -3;
+					xsize = 10;
+					ysize = 10;
+					xxi = -13;
+					xxe = 13;
+					yyi = -5;
+					yye = 6;
+					xcorr = 1;
+					break;
+				case 2: // LARGE
+					mapIn = &minimap_8x8_mapIn_l;
+					mapIn2 = &minimap_8x8_mapIn2_l;
+					mapOut = &minimap_8x8_mapOut_l;
+					yini = -5;
+					xini = -5;
+					xsize = 7;
+					ysize = 7;
+					xxi = -20;
+					xxe = 18;
+					yyi = -8;
+					yye = 8;
+					xcorr = 1;
+					break;
+			}
+			if (mapIn == NULL) {
+				ds_global_errorHalt("ASS: Paint Radar");
+				// ----- HALT -----
+			}
+			// Minimap!
+			if ((global) || (change)) {
+				y = yini;
+				for (j = yyi; j <= yye; j++) {
+					x = xini;
+					for (i = xxi; i <= xxe; i++) {
+						if (ds_world_getVisitedRoom(ds_global_map.x + i,ds_global_map.y + j)) {
+							ds_15bpp_putScreenCropped(ds_global_getScreen1(),mapIn,x,32 + y,0,0,32,256,32 + 102);
+						} else {
+							ds_15bpp_putScreenCropped(ds_global_getScreen1(),mapOut,x,32 + y,0,0,32,256,32 + 102);
 						}      
-					} else {			
-						if (global) {      
-			            ds_15bpp_putScreenCropped(ds_global_getScreen1(),minimap_8x8_,radarx,32 + (radary),0,0,32,256,32 + 102);
-			         } else {
-			            ds_15bpp_paintScreenCropped(1,minimap_8x8_,radarx,32 + (radary),0,0,32,256,32 + 102);         
-						}      
-					} 
-				}			
-	      }   
-	   }   
-	   // Finally, paints juni!!!!
-	   radardraw = 1;
-	   radarx = ((ds_global_juni.x + 12) * 256) / 600;
-	   if ((radarx < 0) || (radarx >= (256 - 8)))
-	   	radardraw = 0;
-	   radary = ((ds_global_juni.y + 12) * 102) / 240;
-	   if ((radary < 0) || (radary >= (102 - 8)))
-	   	radardraw = 0;         
-	   if (radardraw) {
-	      if (global) {
-	   		ds_15bpp_putScreen(ds_global_getScreen1(),&minimap_8x8_juniIcon,radarx,32 + (radary),0);
-	 		} else {
-	 		   ds_15bpp_paintScreen(1,&minimap_8x8_juniIcon,radarx,32 + (radary),0);
-			}     	
-		} else {
-	      if (global) {
-	   		ds_15bpp_putScreenCropped(ds_global_getScreen1(),&minimap_8x8_juniIcon,radarx,32 + (radary),0,0,32,256,32 + 102);
-	 		} else {
-	 		   ds_15bpp_paintScreenCropped(1,&minimap_8x8_juniIcon,radarx,32 + (radary),0,0,32,256,32 + 102);
-			}     	
-		}  
-	}	// END RADAR
-	else if (_ds_statusType == DS_C_STA_MAP) {
-	   // MAP
-	   //--------------------------------------------------------
-		// Variables
-		ds_t_15bpp *mapIn = NULL;
-		ds_t_15bpp *mapIn2 = NULL;
-		ds_t_15bpp *mapOut = NULL;
-		int yini = 0;
-		int xini = 0;
-		int xsize = 0;
-		int ysize = 0;
-		int xxi = 0;
-		int xxe = 0;
-		int yyi = 0;
-		int yye = 0;
-		int xcorr = 0;
-		switch (ds_global_world.size) {
-			case 0: // SMALL
-				mapIn = &minimap_8x8_mapIn;
-				mapIn2 = &minimap_8x8_mapIn2;
-				mapOut = &minimap_8x8_mapOut;
-				yini = -12;
-				xini = -12;
-				xsize = 14;
-				ysize = 14;
-				xxi = -10;
-				xxe = 9;
-				yyi = -4;
-				yye = 4;
-				break;
-			case 1: // MEDIUM
-				mapIn = &minimap_8x8_mapIn_m;
-				mapIn2 = &minimap_8x8_mapIn2_m;
-				mapOut = &minimap_8x8_mapOut_m;
-				yini = -1;
-				xini = -3;
-				xsize = 10;
-				ysize = 10;
-				xxi = -13;
-				xxe = 13;
-				yyi = -5;
-				yye = 6;
-				xcorr = 1;
-				break;
-			case 2: // LARGE
-				mapIn = &minimap_8x8_mapIn_l;
-				mapIn2 = &minimap_8x8_mapIn2_l;
-				mapOut = &minimap_8x8_mapOut_l;
-				yini = -5;
-				xini = -5;
-				xsize = 7;
-				ysize = 7;
-				xxi = -20;
-				xxe = 18;
-				yyi = -8;
-				yye = 8;
-				xcorr = 1;
-				break;
-		}
-		if (mapIn == NULL) {
-			ds_global_errorHalt("ASS: Paint Radar");
-			// ----- HALT -----
-		}
-		// Minimap!
-	   if ((global) || (change)) {
-	      y = yini;
-	      for (j = yyi; j <= yye; j++) {
-	      	x = xini;
-	         for (i = xxi; i <= xxe; i++) {
-	            if (ds_world_getVisitedRoom(ds_global_map.x + i,ds_global_map.y + j)) {
-	               ds_15bpp_putScreenCropped(ds_global_getScreen1(),mapIn,x,32 + y,0,0,32,256,32 + 102);
-	            } else {
-	               ds_15bpp_putScreenCropped(ds_global_getScreen1(),mapOut,x,32 + y,0,0,32,256,32 + 102);
-					}      
-					x += xsize;
-	         }
-	         y += ysize;
-			}			   
-	   } else {
-	      if ((ds_global_tick % 60) == 0) {
-	         ds_15bpp_paintScreen(1,mapIn,xini + (xsize * abs(xxi)) + xcorr,
-					32 + yini + (ysize * abs(yyi)),0);
-	      } else if ((ds_global_tick % 60) == 30) {
-	         ds_15bpp_paintScreen(1,mapIn2,xini + (xsize * abs(xxi)) + xcorr,
-					32 + yini + (ysize * abs(yyi)),0);
+						x += xsize;
+					}
+					y += ysize;
+				}			   
+			} else {
+				if ((ds_global_tick % 60) == 0) {
+					ds_15bpp_paintScreen(1,mapIn,xini + (xsize * abs(xxi)) + xcorr,
+						32 + yini + (ysize * abs(yyi)),0);
+				} else if ((ds_global_tick % 60) == 30) {
+					ds_15bpp_paintScreen(1,mapIn2,xini + (xsize * abs(xxi)) + xcorr,
+						32 + yini + (ysize * abs(yyi)),0);
+				}     
 			}     
-		}     
-	}  // END MAP 
+		}  // END MAP 
+	}
 
 	sprintf(tempstr_1,"MAP: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
@@ -1175,9 +1248,9 @@ int _ds_gamestatus_updateScreen(int stascr, int global, int change, int item) {
 	// Updates the items stored by Juni
 	//---------------------------------
 	
-	// And finally... paints!... but only if it was global :-)
-	//--------------------------------------------------------
-	if ((global) || (change)) {
+	// And finally... paints!... but only if it was global or change :-)
+	//------------------------------------------------------------------
+	if (paint) {
    	ds_global_paintScreen(1,ds_global_getScreen1(),0,0); // <TODO> - Create a pSCropped 
    }  
    
@@ -1209,13 +1282,18 @@ int ds_gamestatus_launch(int stascr) {
 	}	
 
 	// Finally, paints everything!
-	int res = _ds_gamestatus_updateScreen(stascr, 1, 0, 1);
+	int res = _ds_gamestatus_updateScreen(stascr, _DS_C_CT_LAUNCH);
 	return res;
+}
+
+/* Updates the gamestatus system AFTER a launch */
+int ds_gamestatus_launchAFTER(int stascr) {
+	return _ds_gamestatus_updateScreen(stascr, _DS_C_CT_LAUNCHAFTER);
 }
 
 /* Updates the status screen, in a normal way */
 int ds_gamestatus_updateScreen() {
-   return _ds_gamestatus_updateScreen(-1, 0, 0, 0);
+   return _ds_gamestatus_updateScreen(-1, _DS_C_CT_UPDATE);
 }   
 
 #ifdef DEBUG_KSDS
@@ -1237,6 +1315,10 @@ void _changeMode(int mode) {
    switch (mode) {
       case DS_C_STA_MAP:
          _ds_statusType = DS_C_STA_RADAR;
+			int rc;
+			for (rc = 0; rc < _RADARSIZE; rc++) {
+				minimap_radarBuffer[rc] = 1; // DO NOT Update
+			}	
          break;
       case DS_C_STA_RADAR:
          _ds_statusType = DS_C_STA_DEBUG;
@@ -1252,7 +1334,7 @@ void _changeMode(int mode) {
 void _startMode(int mode) {
    switch (mode) {
       case DS_C_STA_MAP:
-         _ds_gamestatus_updateScreen(-1, 0, 1, 1);
+         _ds_gamestatus_updateScreen(-1, _DS_C_CT_CHANGEMODE);
          break;
       case DS_C_STA_RADAR:
          break;
@@ -1284,6 +1366,10 @@ void _changeMode(int mode) {
    switch (mode) {
       case DS_C_STA_MAP:
          _ds_statusType = DS_C_STA_RADAR;
+			int rc;
+			for (rc = 0; rc < _RADARSIZE; rc++) {
+				minimap_radarBuffer[rc] = 1; // Update
+			}
          break;
       case DS_C_STA_RADAR:
          _ds_statusType = DS_C_STA_MAP;
@@ -1293,7 +1379,7 @@ void _changeMode(int mode) {
 void _startMode(int mode) {
    switch (_ds_statusType) {
       case DS_C_STA_MAP:
-         _ds_gamestatus_updateScreen(-1, 0, 1, 1);
+         _ds_gamestatus_updateScreen(-1, _DS_C_CT_CHANGEMODE);
          break;
       case DS_C_STA_RADAR:
          break;
@@ -1335,9 +1421,6 @@ void ds_gamestatus_normalOutput(u8 screen, u16 x, u16 y, char* text) {
 
 /* Paints debug information */
 void ds_gamestatus_debugOutput(u8 screen, u16 x, u16 y, char* text, int type) {
-   if (_ds_statusType == type) {
-   	ds_gamestatus_normalOutput(screen,x,y,text);
-	}   
    if (_ds_statusType == type) {
    	ds_gamestatus_normalOutput(screen,x,y,text);
 	}   

@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_linkedlist.h"
 
 /* Debug Flag */
-// #define DEBUG_KSDS
+#define DEBUG_KSDS
 
 //--------------------------------------
 // CONSTANTS
@@ -67,8 +67,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Map-B/O-related constants
 #define DS_C_MAX_BANK 20
-#define DS_C_MAX_OBJ 50
-#define DS_C_MAX_OBJ_PART 100
+#define DS_C_MAX_OBJ 46      // Check bank 3
+#define DS_C_MAX_OBJ_PART 65 // Check ds_particles0.c
 #define DS_C_MAX_OBJ_CO 256
 
 // Map-Flag-related constants

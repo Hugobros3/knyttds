@@ -233,7 +233,7 @@ int ds_world_load(const char *world, int saveslot) {
 		ds_global_world.size = 0;
 	}
    
-   ds_customobj_load();
+   ds_customobj_load(); // CO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
    // Now loads, and store the normal savegame
    savegame = _ds_world_getSavegame(saveslot);

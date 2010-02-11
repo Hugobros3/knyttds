@@ -392,12 +392,17 @@ void ds_map_getBoundary(int boundary, int *mapx, int *mapy) {
 void ds_map_copyFlag(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* flag) {
    int i,j;
    int pos;
+	int yj600;
+	int jxsize;
    
    for (j = 0; j < ysize; j++) {
+		yj600 = ((y + j) * 600);
+		jxsize = (j * xsize);
    	for (i = 0; i < xsize; i++) {
-   	   if (ima[i + (j * xsize)] != 0) {
-   	   	pos = (x + i) + ((y + j) * 600);
-   	   	(*flag)[pos >> 3] = ds_util_bitSet8((*flag)[pos >> 3],pos & 0x07);
+   	   if (ima[i + jxsize] != 0) {
+   	   	pos = (x + i) + (yj600);
+   	   	//(*flag)[pos >> 3] = ds_util_bitSet8((*flag)[pos >> 3],pos & 0x07);
+				(*flag)[pos >> 3] = ((*flag)[pos >> 3]) | (1 << (pos & 0x07));
    		} 
    	}   
  	}
@@ -407,14 +412,19 @@ void ds_map_copyFlag(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* fla
 void ds_map_copyFlagValue(u8 val,int xsize,int ysize,int x,int y, ds_t_mapFlag* flag) {
    int i,j;
    int pos;
+	int yj600;
    
    for (j = 0; j < ysize; j++) {
+		yj600 = ((y + j) * 600);
    	for (i = 0; i < xsize; i++) {
-  	   	pos = (x + i) + ((y + j) * 600);
-  	   	if (val)
-   	   	(*flag)[pos >> 3] = ds_util_bitSet8((*flag)[pos >> 3],pos & 0x07);
-   	   else
-	   	   (*flag)[pos >> 3] = ds_util_bitDel8((*flag)[pos >> 3],pos & 0x07);
+  	   	pos = (x + i) + yj600;
+  	   	if (val) {
+   	   	//(*flag)[pos >> 3] = ds_util_bitSet8((*flag)[pos >> 3],pos & 0x07);
+				(*flag)[pos >> 3] = ((*flag)[pos >> 3]) | (1 << (pos & 0x07));
+   	   } else {
+	   	   //(*flag)[pos >> 3] = ds_util_bitDel8((*flag)[pos >> 3],pos & 0x07);
+				(*flag)[pos >> 3] = ((*flag)[pos >> 3]) & (255^(1 << (pos & 0x07)));
+			}
    	}   
  	}
 } 
@@ -423,12 +433,15 @@ void ds_map_copyFlagValue(u8 val,int xsize,int ysize,int x,int y, ds_t_mapFlag* 
 int ds_map_collideFlag(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* flag) {
    int i,j,yj,xi;
    int pos;
+	int jxsize;
+	int yj600;
 	
 	if ((y >= 0) && ((y+ysize)<240) && (x >= 0) && ((x+xsize)<600)) {
 	   // "No boundary" analysis
 		for (j = 0; j < ysize; j++) {
+			jxsize = j * xsize;
 	   	for (i = 0; i < xsize; i++) {
-			   if (ima[i + (j * xsize)] != 0) { // "Pixel inside"
+			   if (ima[i + jxsize] != 0) { // "Pixel inside"
    		   	pos = (x + i) + ((y + j) * 600);
    		   	if (((*flag)[pos >> 3] >> (pos & 0x07)) & 1)
 		   		//if (ds_util_bitOne8((*flag)[pos >> 3],pos & 0x07))
@@ -440,12 +453,14 @@ int ds_map_collideFlag(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* f
 	   // "Boundary" analysis 
 	   for (j = 0; j < ysize; j++) {
 	      yj = (y + j);
+			yj600 = yj * 600;
+			jxsize = j * xsize;
 	      if ((yj >= 0) && (yj < 240)) { // Inside screen (Y)
 		   	for (i = 0; i < xsize; i++) {
-	   		   if (ima[i + (j * xsize)] != 0) { // "Pixel inside"
+	   		   if (ima[i + jxsize] != 0) { // "Pixel inside"
 	   		      xi = (x + i);
 	   		      if ((xi >= 0) && (xi < 600)) { // Inside screen (X)
-		   		   	pos = xi + (yj * 600);
+		   		   	pos = xi + yj600;
 		   		   	if (((*flag)[pos >> 3] >> (pos & 0x07)) & 1)
 	   		   		//if (ds_util_bitOne8((*flag)[pos >> 3],pos & 0x07))
 		   		   		return 1;
@@ -462,6 +477,8 @@ int ds_map_collideFlag(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* f
 int ds_map_collideFlagCross(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFlag* flag) {
    int i,j,xi,yj,xx,yy,xs,ys;
    int pos;
+	int y600;
+	int yxsize;
 
 	ys = (ysize >> 1);
 	xs = (xsize >> 1);
@@ -480,9 +497,10 @@ int ds_map_collideFlagCross(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFl
 			}
 		}
 		// L-R Cross
+		y600 = yy * 600;
 	   for (i = 0; i < xsize; i++) {
 			if (ima[i + (ys * xsize)] != 0) { // "Pixel inside"
-				pos = (x + i) + ((yy) * 600);
+				pos = (x + i) + y600;
 				if (((*flag)[pos >> 3] >> (pos & 0x07)) & 1)
 				//if (ds_util_bitOne8((*flag)[pos >> 3],pos & 0x07))
 					return 1;
@@ -506,11 +524,13 @@ int ds_map_collideFlagCross(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFl
 		}
 		// L-R Cross
 		if ((yy >= 0) && (yy < 240)) { // Inside screen (Y)
+			y600 = yy * 600;
+			yxsize = ys * xsize;
 			for (i = 0; i < xsize; i++) {
 				xi = (x+i);
 				if ((xi >= 0) && (xi < 600)) { // Inside screen (X)
-					if (ima[i + (ys * xsize)] != 0) { // "Pixel inside"
-						pos = xi + ((yy) * 600);
+					if (ima[i + yxsize] != 0) { // "Pixel inside"
+						pos = xi + y600;
 						if (((*flag)[pos >> 3] >> (pos & 0x07)) & 1)
 						//if (ds_util_bitOne8((*flag)[pos >> 3],pos & 0x07))
 							return 1;
@@ -524,7 +544,7 @@ int ds_map_collideFlagCross(u16 *ima,int xsize,int ysize,int x,int y, ds_t_mapFl
   
 
 /* Checks if a pixel is out of the map */
-int _ds_map_outOfMapPix(int x, int y) {
+inline int _ds_map_outOfMapPix(int x, int y) {
    return ((x >= 600) || (x < 0) || (y >= 240) || (y < 0));
 }
 
@@ -623,7 +643,7 @@ void ds_map_manage() {
 }
 
 /* Returns "1" if there is a collision in that specific pixel */
-int ds_map_coll(int x, int y) {
+inline int ds_map_coll(int x, int y) {
    int pos;
    if (_ds_map_outOfMapPix(x,y))
    	return 0; // <TODO> Optimize this!

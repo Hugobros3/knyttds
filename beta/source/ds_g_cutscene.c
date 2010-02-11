@@ -289,10 +289,9 @@ void ds_g_cutscene_start() {
 				} 
 			}
 		}
+		// Final touch... eliminates fade to white
+		ds_global_fadeWhitePop();
 	}   
-	
-	// Final touch... eliminates fade to white
-	ds_global_fadeWhitePop();
 }   
 
 /* Finish this subScreen */

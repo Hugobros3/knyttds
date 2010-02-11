@@ -311,7 +311,7 @@ int _ds_objects_b07o08_manage(void *objp) {
    object->inner[0]--;
    if (object->inner[0] <= 0) {
       ds_objects_createParticle(object->x + PA_RandMax(23), object->y - 12, object->layer, part);
-      object->inner[0] = 10 + PA_RandMax(10); // More rain!
+      object->inner[0] = 20 + PA_RandMax(20); // Less rain!...
    }   
    
    // Everything went OK...

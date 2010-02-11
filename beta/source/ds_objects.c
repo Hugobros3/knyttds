@@ -1,16 +1,3 @@
-/*TODO:
-   
-   Check Access of particles in this library
-   Change spriteglobal in 3ds
-   change sprites in 3ds_hdd
-   
-   Also...
-   
-   For Pass (buttons), maybe allow the change of sprite of one object
-   	(load image into the 3dspritehdd system? Is easy, just load a sprite.
-		 next time, the sprite will still be in the system and a change of screen
-		 will reset the subsystem)*/
-
 /*
 Copyright (c) 2008 Rodrigo Roman and Ramon Roman (rrc2soft)
 (Original Game "Knytt Stories" copyright (c) Nicklas "Nifflas" Nygren)
@@ -34,10 +21,6 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-/*
-	<TODO> Cache of objects (to not create the 3Dsprite again)
 */
 
 #include "ds_util_bit.h"
@@ -271,7 +254,7 @@ void _ds_objects_initDirect() {
 	}			   
 }
 
-/* Resets part of the object subsystem - Object Managed */
+/* Resets the Object Managed subsystem */
 void _ds_objects_initManaged() {
    int i,j;
    // Reset object managed
@@ -287,9 +270,6 @@ void _ds_objects_initManaged() {
    for (i = 0; i < DS_C_MAX_OBJ_CO; i++) {
       coManaged[i] = 0;
 	}   	      
-	
-	// Other subsystems
-	ds_global_map.pass = 0; // Resets password subsystem
 }
 
 void _ds_objects_oneCycle_add(ds_t_object *object) {   
@@ -348,9 +328,6 @@ void _ds_objects_oneCycle_reset() {
 int _ds_objects_deleteObject(ds_t_object *object) {   
    // No need to do anything... there are no pointers in the objects
    // Besides, the 3DSubsystems clean themselves ^_-
-   
-   // TODO: Delete the object from the OneCycle list
-   
 	return 1;
 }   
 
@@ -481,17 +458,18 @@ void *_ds_objects_createObject(int xx, int yy, int zz, int bank, int obj, int ma
  	   	if (manageRoom) 
     	   	objectDirect[zz].id[yy][xx] = id_ll;
     	}  
-		 
-		// 4.1) If the object is of type OneCycle or OneInstance, add it to the list
-		if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE)) ||
-			 (ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE)))
-			_ds_objects_oneCycle_add(object);
-    	   
-    	// 4.2) If object voted for self-deletion, then bye-bye object. If not, post-management
-    	if (object->_deleteme)
-    		_ds_objects_deleteObjectSystem(object);
-    	else
+		
+		// 4.0) NOTE: Continue only if object did not voted for self-deletion
+    	if (!object->_deleteme) {
+			// 4.1) If the object is of type OneCycle or OneInstance, add it to the list
+			if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE)) ||
+				 (ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE)))
+				_ds_objects_oneCycle_add(object);
+							
+			// 4.2) Do Post-management
 			_ds_objects_postLoad(object);				    		
+		}
+		// Self-Delete objects erase themselves on the next management iteration
  	   
  	} else {
  	   if (manageRoom) {
@@ -541,15 +519,19 @@ int ds_objects_loadHDD() {
 		      obj = ds_global_map.room.objlayer[zz].obj[yy][xx];
 		      if (obj != 0) {
 					// Consider the size of the objects in the screen
-					// Only for certain banks
-					// Also, count objects
+					// Only for certain banks					
 					bank = ds_global_map.room.objlayer[zz].bank[yy][xx];
 					int xo,yo;
-					if ((bank != 16) || (bank != 15) || 
-					    (bank != 7) || (bank != 1) || 
+					if ((bank != 16) && (bank != 15) && 
+					    (bank != 7) && (bank != 1) && 
 						 (bank != 0)) {	      
 						ds_3dspritehdd_getXY(bank, obj, &xo, &yo);
 						totalsize += (ds_util_convertPow2(xo) * ds_util_convertPow2(yo));
+					}			
+					// Also, count objects for stories with too many critters (*cough*mushroom*cough*) 
+					if ((bank != 16) && (bank != 15) && 
+					    (bank != 7) && (bank != 1) && 
+						 (bank != 0) && (bank != 255)) {	      
 						nobj++;
 					}			
 				}			
@@ -613,7 +595,7 @@ int ds_objects_loadHDD() {
 void ds_objects_reset() {
    int i;
    ds_t_object *object = NULL;
- 
+	
  	// Delete the internal fields of objects <TODO> Use Iteration
  	for (i = 0; i < ds_linkedlist_len(&ds_global_objects); i++) {
    	object = ds_linkedlist_getPos(&ds_global_objects,i);
@@ -638,10 +620,7 @@ void ds_objects_collide(int layer, int xtile, int ytile) {
       if (object->fexecute != NULL) {
          // Execute!
       	object->fexecute((void *)object);
-      	// Post-Management
-      	if (object->_deleteme) {
-      	   _ds_objects_deleteObjectSystem(object);
-      	}   
+				// Delete? We delete later, @ management iteration :-)
    	}   
    }   
 }
@@ -650,10 +629,9 @@ void ds_objects_damageMatrix(ds_t_object *object) {
    if ((ds_util_bitOne16(object->flags,DS_C_OBJ_F_HARMFUL)) && 
 			(!ds_util_bitOne16(object->flags,DS_C_OBJ_F_INVISIBLE))) {
       // Damage Matrix
-      int distX = ds_objects_lib_distanceJuniX(object, 0, 1);
-      int distY = ds_objects_lib_distanceJuniY(object, 0, 1);
-      if ((distX < (object->xs * 2)) && // Optimization:
-          (distY < (object->ys * 2))) { // Only objets near Juni may harm her!!!!
+		int collide = ds_boundingBox(ds_global_juni.x, ds_global_juni.y, 24, 24, 
+									object->x, object->y, object->xs, object->ys);
+      if (collide) { // Only objets touching Juni may harm her!!!!
          // Before anything, check if I am a particle
          if (object->type == DS_C_OBJ_PARTICLE) {
             // If I am a particle, maybe the umbrella will stop me!
@@ -666,19 +644,18 @@ void ds_objects_damageMatrix(ds_t_object *object) {
          }   
          // Copy damage matrix
 	      ds_map_copyFlag(ds_3dsprite_getSpriteFrame(object->sprite, ds_3dsprite_getFrame(object->sprite)),
-								 ds_3dsprite_getXSize(object->sprite),
-								 ds_3dsprite_getYSize(object->sprite),
-								 ds_3dsprite_getX(object->sprite),
-								 ds_3dsprite_getY(object->sprite),
+								 object->xs,
+								 object->ys,
+								 object->x,
+								 object->y,
 								 &ds_global_map.tileMapDamTemp);
       }   
 	} 
 }   
 
 void ds_objects_postmanage(ds_t_object *object) {
-   // A.1) Delete thyself?
+   // A.1) Delete thyself? - Do nothing here :-), deletion will come later :-D
    if (object->_deleteme) {
-      _ds_objects_deleteObjectSystem(object); // Self-node deletion is OK during iteration
       return;
    }   
    
@@ -693,7 +670,7 @@ void ds_objects_postmanage(ds_t_object *object) {
 	// A.3) Blink management
 	if (object->blink > 0)
 		object->blink--;
-}   
+}
 
 /* Manages the objects of this screen */
 void ds_objects_manage() {
@@ -701,42 +678,60 @@ void ds_objects_manage() {
    _ds_t_objectOC *OC;
 	void *myiterator;
 	ds_t_fpostmanage *postFunction;
+	
+	// First, empties some structures related to the objects
+	ds_global_map.pass = 0; // Resets password subsystem
    
-   // First, empties the "I managed this type of object before" matrix + other things
+   // Now, empties the "I managed this type of object before" matrix
    _ds_objects_initManaged();
    
    // Now, starts the management!!!
    myiterator = ds_linkedlist_startIterator(&ds_global_objects);
    while ((object = ds_linkedlist_getIterator(&ds_global_objects,&myiterator)) != NULL) {
+		// Manages objects
       if (object->fmanage != NULL) {
          // Pretest: Already managed? OneCycle? 
          	// Note: Remember that OneInstance objects enter in this management area :-)
-         u8 *oManaged;
-         if (object->bank == DS_C_PART_BANK) 
-         	oManaged = &(particleManaged[object->obj]);
-         else if (object->bank == DS_C_CO_BANK) 
-         	oManaged = &(coManaged[object->obj]);
-         else
-         	oManaged = &(objectManaged[object->bank][object->obj]);
-         if (
-				((ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE)) &&
-         	 (*oManaged)) ||
-				(ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE))
-				 ) {
-         	// Do nothing! Nothing?... at least the collision check!!!!!
-         	ds_objects_damageMatrix(object);
-         } else {
-            // Managed...
-            (*oManaged) = 1;
-            
-            // A) Execute Management and POSTManagement...
-            object->fmanage((void *)object);
-            ds_objects_postmanage(object);
-         }   
+			u8 *oManaged = NULL;
+			if (object->bank < DS_C_MAX_BANK) {
+				if (object->obj < DS_C_MAX_OBJ)
+					oManaged = &(objectManaged[object->bank][object->obj]);
+			} else if (object->bank == DS_C_PART_BANK) {
+				if (object->obj < DS_C_MAX_OBJ_PART)
+					oManaged = &(particleManaged[object->obj]);
+			} else if (object->bank == DS_C_CO_BANK) {
+				if (object->obj < DS_C_MAX_OBJ_CO)
+					oManaged = &(coManaged[object->obj]);
+			}
+			if (oManaged != NULL) {
+				if (
+					((ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE)) &&
+					 (*oManaged)) ||
+					(ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE))
+					 ) { 
+					// Do nothing! Nothing?... at least the collision check!!!!!
+					ds_objects_damageMatrix(object);
+				} else {
+					// Managed...
+					(*oManaged) = 1;
+					
+					// A) Execute Management and POSTManagement...
+					object->fmanage((void *)object);
+					ds_objects_postmanage(object);
+				}   
+			}
       } else {
          // A) Execute *at least* POSTManagement...
          ds_objects_postmanage(object);
 		}      
+		// Deletes objects!!!!!
+		if (object->_deleteme) {
+			// OneCycle elements will be dealt with later :-)
+			if ((!ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE)) &&
+				 (!ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE)))
+				// HERE is where we delete objects ***during gameplay*** ;-)
+				_ds_objects_deleteObjectSystem(object); 
+		}
    }   
    
    // OK, special (OneCycle) Management
@@ -774,14 +769,18 @@ void ds_objects_manage() {
       // OK, execute one object
       object = ds_linkedlist_getPos(&OC->objects,rnd);
       if (object != NULL) {
-         // First, check if DELETE!
+         // First, check if DELETE! - Here is where we really manage the deletion of OC objects
          if (
 				 (object->_deleteme) 
 				 || 
 			    ((!ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE)) && 
 				  (!ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE)))
 				 ) {
+				// Here we delete this special list
             ds_linkedlist_finish(&OC->objects,0,0);
+				// And now we mark the object so it will be deleted on the next iteration :-)
+				object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE);
+				object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE);
          } else {   
             if (ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE)) {
 	      		// Now, execute management and POSTManagement...
