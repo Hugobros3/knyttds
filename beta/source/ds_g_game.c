@@ -256,9 +256,10 @@ void ds_g_game_input() {
 /* Manages the state of the game */
 void ds_g_game_state() {
    
-   
+#ifdef DEBUG_KSDS   
    sprintf(ds_global_string,"ST: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
    ds_gamestatus_debugOutput(1,0,0,ds_global_string,DS_C_STA_DEBUG2);
+#endif
    
    /* Initialize certain stuff */
    ds_global_juni.redGlow = 640;  // No Glow...
@@ -267,43 +268,59 @@ void ds_g_game_state() {
    
    /* Manages Dialogue... in fact, prepares it for the interaction with Juni */   
    ds_dialogue_manageFirst();
+#ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"ST<Dia>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,1,ds_global_string,DS_C_STA_DEBUG2);   
+#endif
 	
    /* Manage the things that are specific to the map */
    ds_map_manage();
+#ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"ST<Map>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,2,ds_global_string,DS_C_STA_DEBUG2);
+#endif
 			   
    /* Manage all the objects and entities that have an specific handler */
    ds_objects_manage();
+#ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"ST<Obj>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,3,ds_global_string,DS_C_STA_DEBUG2);
-		
+#endif
+
    /* Manages Juni */   
    ds_juni_manage();
+#ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"ST<Juni>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,4,ds_global_string,DS_C_STA_DEBUG2);
+#endif
 }   
 
 /* Paints this actual game state */
 void ds_g_game_paint() {
+#ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"PA: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,5,ds_global_string,DS_C_STA_DEBUG2);
+#endif
 	
    /* First, updates the system */
    ds_camera_update(ds_3dsprite_getX(ds_global_juni.sprite),ds_3dsprite_getY(ds_global_juni.sprite));
+	
+#ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"PA<Cam>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,6,ds_global_string,DS_C_STA_DEBUG2);
+#endif
 		
    /* Paints the dialogue */
    ds_dialogue_paint();   
+#ifdef DEBUG_KSDS
   	sprintf(ds_global_string,"PA<Dia>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,7,ds_global_string,DS_C_STA_DEBUG2);
+#endif
 		
    /* Paints the main screen - sprites */
    ds_3dsprite_drawAll(ds_camera_getX(),ds_camera_getY());
+#ifdef DEBUG_KSDS
   	sprintf(ds_global_string,"PA<Post3D>: %ld (%d)      ", Tick(ds_global_timer),PA_GetVcount());
 	ds_gamestatus_debugOutput(1,0,8,ds_global_string,DS_C_STA_DEBUG2);
-	
+#endif
 }

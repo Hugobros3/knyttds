@@ -1676,8 +1676,8 @@ void ds_3dsprite_drawAll(int camX, int camY) {
 #ifdef DEBUG_KSDS
 	sprintf(ds_global_string,"Updated: [%d] %d (%d)          ",ds_util_arrNumMax(spriteListArr),updated,_maxtexture); 
 	ds_gamestatus_debugOutput(1,0,7,ds_global_string,DS_C_STA_DEBUG);
-	sprintf(ds_global_string,"DEBUG VRAM: [%d]",_vramSize3D); 
-	ds_gamestatus_debugOutput(1,0,8,ds_global_string,DS_C_STA_DEBUG);	
+	//sprintf(ds_global_string,"DEBUG VRAM: [%d]",_vramSize3D); 
+	//ds_gamestatus_debugOutput(1,0,8,ds_global_string,DS_C_STA_DEBUG);	
 #endif
 	_maxtexture = 0;
 }

@@ -141,7 +141,7 @@ int ds_dialogue_reset() {
 
 /* Manages dialogue - At least it prepares the management of the dialogue. Things will be done while updating */
 int ds_dialogue_manageFirst() {
-   ds_v_dialogue.managedFrame = 0;
+   ds_v_dialogue.managedFrame = 0; // If someone calls _update, it means we have a dialogue!
    return 1;
 }   
 
@@ -208,6 +208,13 @@ int ds_dialogue_update(int type) {
 
 /* Paints dialogue. Also performs part of the management */
 int ds_dialogue_paint() {
+#ifdef DEBUG_KSDS
+	sprintf(ds_global_string,"ST: %d TY: %d MF: %d",
+							ds_v_dialogue.state,
+							ds_v_dialogue.type,
+							ds_v_dialogue.managedFrame);
+	ds_gamestatus_debugOutput(1,0,9,ds_global_string,DS_C_STA_DEBUG);	
+#endif
 	if (!ds_v_dialogue.managedFrame) {
 	   // Erase if needed
 	   if (ds_v_dialogue.state == DS_C_DIALOGSTATE_ON) {

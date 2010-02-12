@@ -397,7 +397,7 @@ void *_ds_objects_createObject(int xx, int yy, int zz, int bank, int obj, int ma
 	   ds_global_errorHalt(ds_global_string);
 	   //--HALT--//
 	}   
- 	   
+	 	   
  	// 2) Load management functions
  	if (_ds_objects_assign(bank,obj,object)) {
 	   if (absoluteCoord) {
@@ -412,7 +412,7 @@ void *_ds_objects_createObject(int xx, int yy, int zz, int bank, int obj, int ma
 	 	   object->ytile = yy;			    	    	      
 		}      
 	   object->layer = zz;
-	
+		
  	   // 3) Executes initialization
  	   ds_global_errorAssign(DS_C_ERR_); // Resets error. Needed due to design error (detection of entity object)
  	   if (!object->fcreate(bank,obj,(void *)object)) {
@@ -429,12 +429,17 @@ void *_ds_objects_createObject(int xx, int yy, int zz, int bank, int obj, int ma
     	   	ds_global_map.room.objlayer[zz].bank[yy][xx] = 0;
     		}   
  	   }
- 	   
+		
 		// 3.2a) Special: Update obj/bank if object changed it inside (e.g. shifts)   
-		if (ds_global_map.room.objlayer[zz].obj[yy][xx] != 0) {
-    	   	ds_global_map.room.objlayer[zz].obj[yy][xx] = object->obj;
-    	   	ds_global_map.room.objlayer[zz].bank[yy][xx] = object->bank;
-		}   
+		// ONLY for objects that are not particles!!!!!! - This was the "no dialogue" hidden bug ;-)
+		// Objects always have a valid xx/yy, but particles can be outside the screen :-P
+		if (bank != DS_C_PART_BANK) {
+			if (ds_global_map.room.objlayer[zz].obj[yy][xx] != 0) {
+					ds_global_map.room.objlayer[zz].obj[yy][xx] = object->obj;
+					ds_global_map.room.objlayer[zz].bank[yy][xx] = object->bank;
+			}   
+		}
+		
  	   // 3.3) Coord. Correction!! - If the sprite Y is < 24 AND NOT a CO, we need to put it on its place...
  	   if (bank != DS_C_CO_BANK) {
 	 	   if (ds_3dsprite_getYSize(object->sprite) < 24) {
@@ -442,7 +447,7 @@ void *_ds_objects_createObject(int xx, int yy, int zz, int bank, int obj, int ma
 	 	      ds_3dsprite_setY(object->sprite,object->y); // object->fcreate did this - now we need to do this again...
 	 	   }    	    	   
  		}   
- 		
+ 				
  	   // 3.4 Layer Correction! - The sprite must be adjusted to its layer ;-)
  	   // ...UNLESS We are talking about particles!!!
  	   int priolayer = (object->layer < 2)?object->layer:(object->layer+1); // (0-1) 2 (3-4) [5]
@@ -450,7 +455,7 @@ void *_ds_objects_createObject(int xx, int yy, int zz, int bank, int obj, int ma
  	   	ds_3dsprite_setPrio(object->sprite, (DS_C_PRIO * priolayer) + 52); // + 52? more priority, different polyID
  	   else
    		ds_3dsprite_setPrio(object->sprite, (DS_C_PRIO * priolayer) + 1); // + 1? BG Map is 0.
- 	   
+			 	   
  	   // 4) Saves object inside list, also saves id in "direct access" list
  	   id_ll = ds_linkedlist_add(&ds_global_objects,(void *)object);
  	   object->id = id_ll;
@@ -458,7 +463,7 @@ void *_ds_objects_createObject(int xx, int yy, int zz, int bank, int obj, int ma
  	   	if (manageRoom) 
     	   	objectDirect[zz].id[yy][xx] = id_ll;
     	}  
-		
+				
 		// 4.0) NOTE: Continue only if object did not voted for self-deletion
     	if (!object->_deleteme) {
 			// 4.1) If the object is of type OneCycle or OneInstance, add it to the list
@@ -620,7 +625,14 @@ void ds_objects_collide(int layer, int xtile, int ytile) {
       if (object->fexecute != NULL) {
          // Execute!
       	object->fexecute((void *)object);
-				// Delete? We delete later, @ management iteration :-)
+			// Delete? If is a normal object... :-)
+			if (object->_deleteme) {
+				// OneCycle elements will be dealt with later :-)
+				if ((!ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE)) &&
+					 (!ds_util_bitOne16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE)))
+					// HERE is where we delete objects ***during gameplay*** ;-)
+					_ds_objects_deleteObjectSystem(object); 
+			}
    	}   
    }   
 }
@@ -693,15 +705,15 @@ void ds_objects_manage() {
          // Pretest: Already managed? OneCycle? 
          	// Note: Remember that OneInstance objects enter in this management area :-)
 			u8 *oManaged = NULL;
-			if (object->bank < DS_C_MAX_BANK) {
-				if (object->obj < DS_C_MAX_OBJ)
-					oManaged = &(objectManaged[object->bank][object->obj]);
-			} else if (object->bank == DS_C_PART_BANK) {
+			if (object->bank == DS_C_PART_BANK) {
 				if (object->obj < DS_C_MAX_OBJ_PART)
 					oManaged = &(particleManaged[object->obj]);
 			} else if (object->bank == DS_C_CO_BANK) {
 				if (object->obj < DS_C_MAX_OBJ_CO)
 					oManaged = &(coManaged[object->obj]);
+			} else if (object->bank < DS_C_MAX_BANK) {
+				if (object->obj < DS_C_MAX_OBJ)
+					oManaged = &(objectManaged[object->bank][object->obj]);
 			}
 			if (oManaged != NULL) {
 				if (
@@ -911,5 +923,15 @@ Iteration:
    Do not manage OCs
 2nd Iteration:
    Manage OCs
+	
+- Remnants of the "search dialogue bug" code
+	//------
+	if ((ds_global_map.x == 1010) && (ds_global_map.y == 998)) {
+		if (ds_global_map.room.objlayer[0].obj[6][12] != 17) {
+			sprintf(ds_global_string,"SO on fmanage [%d:%d](%d)",object->bank,object->obj,object->_deleteme);
+			ds_global_errorHalt(ds_global_string);	
+		}
+	}
+	//------
 
 */   

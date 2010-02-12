@@ -912,12 +912,12 @@ void ds_music_manage() {
 	}
 #ifdef DEBUG_KSDS
 	// <DEBUG>
-	for (i = 0; i < DS_C_MUSIC_RAWCHMAX; i++) {
-			PA_OutputText(1,i,13,"%d",(_rawList[i].phyChannel != -1)?1:0);
-	}
-	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
-			PA_OutputText(1,i,14,"%d",(_rawBuffer[i].rawContent != NULL)?1:0);
-	}
+//	for (i = 0; i < DS_C_MUSIC_RAWCHMAX; i++) {
+//			PA_OutputText(1,i,13,"%d",(_rawList[i].phyChannel != -1)?1:0);
+//	}
+//	for (i = 0; i < DS_C_MUSIC_RAWBUFFMAX; i++) {
+//			PA_OutputText(1,i,14,"%d",(_rawBuffer[i].rawContent != NULL)?1:0);
+//	}
 #endif
 }   
 

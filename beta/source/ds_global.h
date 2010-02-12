@@ -66,7 +66,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DS_C_CO_BANK 255
 
 // Map-B/O-related constants
-#define DS_C_MAX_BANK 20
+#define DS_C_MAX_BANK 20	  // 19? particles
 #define DS_C_MAX_OBJ 46      // Check bank 3
 #define DS_C_MAX_OBJ_PART 65 // Check ds_particles0.c
 #define DS_C_MAX_OBJ_CO 256
