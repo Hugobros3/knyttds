@@ -844,10 +844,13 @@ int _ds_gamestatus_updateScreen(int stascr, int param) {
 	int paint = 0;
 	int rc;
 	
+#ifdef DEBUG_KSDS	
    char tempstr[255];
    char tempstr_1[255];
+	
 	sprintf(tempstr_1,"INIT: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 		
 	// Zero - update parameters
 	switch (param) {
@@ -928,8 +931,10 @@ int _ds_gamestatus_updateScreen(int stascr, int param) {
 		ds_15bpp_putScreen(ds_global_getScreen1(),&minimap_256x192_menu,0,0,1);
 	}
 	
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"LOAD: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 	
 	// Now, put the items that Juni has
 	//---------------------------------
@@ -1041,8 +1046,10 @@ int _ds_gamestatus_updateScreen(int stascr, int param) {
 	   }   
 	}
 	
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"ITEMS: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
       	   
 	// Now, updates the miniscreen
 	//----------------------------
@@ -1241,8 +1248,10 @@ int _ds_gamestatus_updateScreen(int stascr, int param) {
 		}  // END MAP 
 	}
 
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"MAP: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 
 	
 	// Updates the items stored by Juni
@@ -1254,8 +1263,10 @@ int _ds_gamestatus_updateScreen(int stascr, int param) {
    	ds_global_paintScreen(1,ds_global_getScreen1(),0,0); // <TODO> - Create a pSCropped 
    }  
    
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"PAINT: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 	
 	//ds_global_errorHalt(tempstr);
    

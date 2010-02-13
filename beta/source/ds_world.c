@@ -57,13 +57,9 @@ int _ds_world_opt_loadMapIndex() {
 	}
 		
 	while (!ds_mapfile_eof(gzf)) {
-	   //sprintf(ds_global_string,"(%d)",++d); // DEBUG
 	   // Advance one position
-	   //PA_OutputText(1,0,0,ds_global_string); // DEBUG
 	   ds_util_getroomheader(gzf, &xx, &yy);
-	   //PA_OutputText(1,0,1,ds_global_string); // DEBUG
 	   offset = ds_mapfile_tell(gzf);
-	   //PA_OutputText(1,0,2,ds_global_string); // DEBUG
 	   if (ds_mapfile_read(gzf,&room,sizeof(ds_t_room)) != sizeof(ds_t_room)) {
 	      //ds_mapfile_close(gzf);
 	      //return 0;
@@ -72,7 +68,6 @@ int _ds_world_opt_loadMapIndex() {
 	      	ds_global_errorHalt(ds_global_string);
 	   	}   
 	   }	   
-	   //PA_OutputText(1,0,3,ds_global_string); // DEBUG
 	   // Store in the structure
 	   int cy = yy - 800;
 	   int cx = xx - 800;
@@ -95,13 +90,9 @@ int _ds_world_opt_loadMapIndex() {
 	   	   ds_global_world.opt_mapIndex[yy - 800]->offset[i] = -1;
 	   	}   
 		}  	
-		//PA_OutputText(1,0,4,ds_global_string); // DEBUG
 	   ds_global_world.opt_mapIndex[yy - 800]->offset[xx - 800] = offset;
-	   //PA_OutputText(1,0,5,ds_global_string); // DEBUG
 	}
-	//PA_OutputText(1,0,6,"Closing"); // DEBUG
 	ds_mapfile_close(gzf);
-	//PA_OutputText(1,0,7,"Closed"); // DEBUG
 
 	return 1;   
 }    

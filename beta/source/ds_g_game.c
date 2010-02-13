@@ -93,8 +93,10 @@ int _ds_g_game_checkflags(int type) {
 
 /* Starts this subScreen */
 void ds_g_game_start() {   
+#ifdef DEBUG_KSDS
    char tempstr[255];
    char tempstr_1[255];
+#endif
       
    /* BEFORE ANYTHING... I have to check the Flags of this room, and modify state[0][1] accordingly */
    if (!_ds_g_game_checkflags(DS_C_ELETYPE_A))
@@ -102,20 +104,26 @@ void ds_g_game_start() {
    		_ds_g_game_checkflags(DS_C_ELETYPE_C);
 	   
    /* Load the map and its associated information from the file subsystem */
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"INIT: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
    if (!ds_map_loadHDD(ds_state_var_getInt(0),ds_state_var_getInt(1))) {
       ds_global_errorHalt("ds_map_loadHDD");
    }  
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"loadHDD: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 		
    /* Paints the basic map */
    if (!ds_map_loadHDDPaint(ds_state_var_getInt(0),ds_state_var_getInt(1))) {
       ds_global_errorHalt("ds_map_loadHDD");
    }
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"loadHDDPaint: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 	
 	/* Map loaded? I visited this map! Mark it */
 	ds_world_setVisitedRoom(ds_state_var_getInt(0),ds_state_var_getInt(1));   
@@ -128,20 +136,26 @@ void ds_g_game_start() {
    	   
    /* Load the objects from the world */
    ds_objects_loadHDD();
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"loadObjects: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
          
    /* Make the necessary changes to Juni */
    ds_juni_init(ds_state_var_getInt(2),ds_state_var_getInt(3),
 						ds_util_bitOne16(ds_state_var_getInt(4),1),
 						ds_util_bitOne16(ds_state_var_getInt(4),2));
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"IniJuni: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 	
 	/* Dialog system too! */
 	ds_dialogue_init();
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"IniDialogue: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
    
    /* Put the camera ;-) - Only necessary to tell the system the type of camera
 		-> Why? It will update itself in the next iteration :-D */
@@ -149,8 +163,10 @@ void ds_g_game_start() {
    
    /* After we have loaded everything (expect music), prepare some things on the map */
    ds_map_loadHDDPOST();
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"loadHDDPOST: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 
    /* Launches the upper screen system :-D */
    //ds_gamestatus_setActualStatusScreen(ds_state_var_getInt(5));
@@ -161,16 +177,20 @@ void ds_g_game_start() {
    if (!ds_gamestatus_launch(statGUI)) {
       ds_global_errorHalt("ds_gamestatus_launch");
    } 
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"IniGUI: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
                
    /* Launch some music! (or not ^_-) 
 		Why it is here? - if no memory, then is OK :-P */
    ds_music_playMusicAndAmbiance(ds_global_map.room.music,
 				ds_global_map.room.atmosA,ds_global_map.room.atmosB,
 				0); // Both mp3 and raw can be played here
+#ifdef DEBUG_KSDS
 	sprintf(tempstr_1,"final: %ld\n ", Tick(ds_global_timer));
 	strcat(tempstr,tempstr_1);
+#endif
 	
    /* And... if I came from a shift, do special things */
    if (ds_global_world.shift_cameFrom) {

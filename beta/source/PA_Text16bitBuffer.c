@@ -144,8 +144,6 @@ for (i = 0; (text[i] && y <= ylimiy && i < limit); i++) {
 			wordx += lx;
 			wordletter++;
 		}
-		//wordletter = 4;
-		//PA_OutputText(0, 0, 0, "%d, %d, %d", i, wordletter, wordx);
 		
 		if (x + wordx >= maxx ) {  // On dépasse en X...
 //		if (x + lx >= maxx ) {  // On dépasse en X...
