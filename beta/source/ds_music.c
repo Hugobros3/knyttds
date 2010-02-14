@@ -48,9 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* 
-	- Check this error!!!!!!!!!!!!
-	AS_MP3Stop is broken: It doesn't set mp3file to NULL, so FILE_CLOSE is called twice 
-	on the same file handle if you stop and then play another mp3.	
+	- NOTE TO SELF: Documenting the code saves your time!!!!! (I should have done it... V_V)	
 */
 
 // Includes
@@ -276,14 +274,16 @@ void _ds_music_channelStop(ds_t_channel *mChannel) {
    switch (mChannel->slot.format) {
       case DS_C_MUSIC_MP3:
          // Stop an MP3...
-         if (mChannel->rawContent != NULL)
+         if (mChannel->rawContent != NULL) {
          	AS_MP3Stop();
+			}
          break;
       case DS_C_MUSIC_RAW:
          // Stop a RAW file...
-         if (mChannel->rawContent != NULL)
+         if (mChannel->rawContent != NULL) {
          	AS_SoundStop(mChannel->phyChannel);
-		   break;   
+		   }
+			break;   
    }  
 	
 	// Empty the channel...
@@ -297,7 +297,6 @@ int _ds_music_channelLoad(ds_t_channel *mChannel) {
    if (file == NULL) {
       // No file? Then, do not play music ;-)
       _ds_music_channelInit(mChannel, 1);
-      //PA_OutputText(1,0,17,"Getting ...-Playing-NO FILE.  ");
       return 0;
    }
    // File size...
@@ -310,7 +309,6 @@ int _ds_music_channelLoad(ds_t_channel *mChannel) {
 	if (mChannel->rawContent == NULL) {
       // No memory? Then, do not play music ;-)
       _ds_music_channelInit(mChannel, 1);
-      //PA_OutputText(1,0,17,"Getting ...-Playing-NO MEM.  ");
       fclose(file);
       return 0;	   	
 	}
@@ -382,15 +380,13 @@ ds_t_channel *_ds_music_channelListGetFree(ds_t_musicSlot *mSlot) {
    
 void _ds_music_channelListAdd(ds_t_musicSlot *mSlot) {
 	ds_t_channel *mChannel;
-	//PA_OutputText(1,0,17,"Getting %d-            ",mSlot->number);
 	mChannel = _ds_music_channelListGetFree(mSlot);
 	if (mChannel == NULL)
 		return;
-	//PA_OutputText(1,0,17,"Getting %d-Playing-    ",mSlot->number);
 	mChannel->slot = *mSlot;
 	if (_ds_music_channelLoad(mChannel)) {
 		if (_ds_music_channelPlay(mChannel)) {
-			//	PA_OutputText(1,0,17,"Getting %d-Playing-OK. ",mSlot->number);
+			//PA_OutputText(1,0,17,"Getting %d-Playing-OK. ",mSlot->number);
 		}	
 	}
 }        
@@ -730,17 +726,17 @@ int ds_music_playOnlyMusic(int m) {
       mSlotPnt = _ds_music_listGet(mList, i);
       if (_ds_music_channelListExistMark(mSlotPnt)) {
          _ds_music_listDel(mList, i);
+			i--; // ? Yup, we have one element less :-P
+			mListLen = _ds_music_listLen(mList); // Recalculate number of elements!
       }      
 	}	 
 	_ds_music_channelListPurgeDo();
    
    // 3rd Iteration: Add (Include the new music)
-   //PA_OutputText(1,0,18,"                                 ");
    mListLen = _ds_music_listLen(mList);
    for (i=0; i < mListLen; i++) {
       mSlotPnt = _ds_music_listGet(mList, i);
       _ds_music_channelListAdd(mSlotPnt);
-      //PA_OutputText(1,0,18,"Added %d                      ", i);
 	}   
 	
    // Das Ende
@@ -756,7 +752,7 @@ int ds_music_playOnlyAmbiance(int a1) {
    ds_t_musicList *mList;
    int i;
    int mListLen;
-
+	
    // First! "optimization"
    if (!ds_global_optimizationMusic) {
       a1 = 0;
@@ -778,6 +774,8 @@ int ds_music_playOnlyAmbiance(int a1) {
       mSlotPnt = _ds_music_listGet(mList, i);
       if (_ds_music_channelListExistMark(mSlotPnt)) {
          _ds_music_listDel(mList, i);
+			i--; // ? Yup, we have one element less :-P
+			mListLen = _ds_music_listLen(mList); // Recalculate number of elements!
       }      
 	}	 
 	_ds_music_channelListPurgeDo();
@@ -803,7 +801,7 @@ int ds_music_playMusicAndAmbiance(int m, int a1, int a2, int onlymp3) {
    ds_t_musicList *mList;
    int i;
    int mListLen;
-
+	
    // First! "optimization"
    if (!ds_global_optimizationMusic) {
       m = 0; // Sorry...
@@ -835,6 +833,8 @@ int ds_music_playMusicAndAmbiance(int m, int a1, int a2, int onlymp3) {
       mSlotPnt = _ds_music_listGet(mList, i);
       if (_ds_music_channelListExistMark(mSlotPnt)) {
          _ds_music_listDel(mList, i);
+			i--; // ? Yup, we have one element less :-P
+			mListLen = _ds_music_listLen(mList); // Recalculate number of elements!
       }      
 	}	 
 	_ds_music_channelListPurgeDo();

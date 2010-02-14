@@ -122,6 +122,9 @@ void _ds_g_cutscene_changeToGame() {
 
 	// Stops all music
 	ds_music_playOnlyMusic(0);
+	
+   // Resets the music subsystem - No need for menu sounds
+   ds_music_reset();
       
    // Changes Juni
    ds_global_juni.flag = ds_global_world.sv_flags;
@@ -253,19 +256,6 @@ void ds_g_cutscene_start() {
    if ((!cutscene_specialDSMode) && (!cutscene_normalMode)) {
       _ds_g_cutscene_change();
    } else {      
-	   // Load image system (Preview OR Normal)
-   	_ds_g_cutscene_loadImages();
-   
-	   // Now, create the buttons and subsystems
-   	_ds_g_cutscene_createButtons();
-
-		// Tells itself that it needs to be drawn
-   	cutscene_drawUp = 1;
-	   cutscene_drawDown = 1;
-	   
-		// <HACK> "Cleans" the 3D sprite system, if there are sprites floating around :-)
-		ds_3dsprite_cleanHWSprites();
-		
 		// Music! Cutscenes have their own music ;-)
 		sprintf(cutscene_string,"Cutscene Music:%s",ds_state_var_getStr());
 		sprintf(ds_global_string,ds_ini_getstring(ds_global_world.worldini,cutscene_string,"-1"));
@@ -279,6 +269,8 @@ void ds_g_cutscene_start() {
 				if (cutscene_music != 0) {
 					// Ambiance!
 					ds_music_playOnlyAmbiance(cutscene_music);
+				} else {
+					ds_music_playOnlyMusic(0);
 				}
 			} else {
 				// Normal sound!
@@ -286,9 +278,27 @@ void ds_g_cutscene_start() {
 				if (cutscene_music != 0) {
 					// Normal
 					ds_music_playOnlyMusic(cutscene_music);
-				} 
+				} else {
+					ds_music_playOnlyMusic(0);
+				}
 			}
+		} else {
+			ds_music_playOnlyMusic(0);
 		}
+	
+	   // Load image system (Preview OR Normal)
+   	_ds_g_cutscene_loadImages();
+   
+	   // Now, create the buttons and subsystems
+   	_ds_g_cutscene_createButtons();
+
+		// Tells itself that it needs to be drawn
+   	cutscene_drawUp = 1;
+	   cutscene_drawDown = 1;
+	   
+		// <HACK> "Cleans" the 3D sprite system, if there are sprites floating around :-)
+		ds_3dsprite_cleanHWSprites();
+		
 		// Final touch... eliminates fade to white
 		ds_global_fadeWhitePop();
 	}   

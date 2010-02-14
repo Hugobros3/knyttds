@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_world.h"
 #include "ds_util.h"
 #include "ds_gamestatus.h"
+#include "ds_music.h"
 
 /* Starts this subScreen */
 void ds_g_loadgame_start() {
@@ -65,6 +66,9 @@ void ds_g_loadgame_input() {
 void _ds_g_loadgame_changeToGame() {
    int flag = 0;
 	int sound = ds_state_var_getInt(3);
+	
+   // Resets the music subsystem - No need for menu sounds
+   ds_music_reset();
       
    // Changes Juni
    ds_global_juni.flag = ds_global_world.sv_flags;
