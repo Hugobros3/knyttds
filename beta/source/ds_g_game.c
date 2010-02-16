@@ -65,16 +65,44 @@ int _ds_g_game_checkflags(int type) {
    int y = ds_state_var_getInt(1);
    int newx;
    int newy;
-   
-   // Get the condition
-   i = (ds_ini_getint(ds_global_world.worldini,
-		   ds_ini_keyDictionary(x,y,DS_C_DICT_FLAG,type,0,0,0),
-   		-1));
-   if (i == -1)
-   	return 0; // Flag(type) doesn't exists
+	int powershift;
+	
+	// Get the condition
+	sprintf(ds_global_string,"%s",
+				ds_ini_getstring(ds_global_world.worldini,
+					ds_ini_keyDictionary(x,y,DS_C_DICT_FLAG,type,0,0,0),
+					"-")
+			);
+	if (!PA_CompareText(ds_global_string,"-")) {
+		// Flag ON!
+		if ((ds_global_string[0] >= '0') && (ds_global_string[0] <= '9')) {
+			// Number of Flag!!!!
+			if (sscanf(ds_global_string, "%d", &i) > 0) {
+				powershift = 0; // This is a "Flag" shift
+			} else {
+				return 0; // Flag(type) doesn't exists
+			}  
+		} else {
+			// Juni's Power!
+			if (sscanf(ds_global_string, "Power%d", &i) > 0) {
+				powershift = 1; // This is a "Power" shift
+			} else {
+				return 0; // Flag(type) doesn't exists
+			}  
+		}      
+	} else {
+		return 0; // Flag(type) doesn't exists
+	}  
+
    	
    // Test the Condition
-   if (ds_util_bitOne16(ds_global_juni.flag,i)) {
+	int cond = 0;
+	if (!powershift) {
+		cond = ds_util_bitOne16(ds_global_juni.flag,i);
+	} else {
+		cond = ds_util_bitOne16(ds_global_juni.item,i);
+	}
+   if (cond) {
       // Apply Changes
       newx = x + (ds_ini_getint(ds_global_world.worldini,
 		   				ds_ini_keyDictionary(x,y,DS_C_DICT_FLAGWARPX,type,0,0,0),
