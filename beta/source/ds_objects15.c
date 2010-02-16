@@ -452,12 +452,14 @@ int _ds_objects_b15opblock_create(u8 bank, u8 obj, void *objp) {
 int _ds_objects_b15opblock_manage(void *objp) {
    ds_t_object *object = objp;
 
-	if ((!object->_deleteme) && // Guard against management after deletion (it WAS a onecycle)
-	    (ds_global_map.pass == ds_global_map.passMax) && // Password is known!!!! 
-	    (object->inner[10] == 0)) { // we are not fading already
-	   // Password achieved!
-	   ds_objects_addAfterManagementFunction((void *) _ds_objects_b15_PasswordTriggered);
-	}      
+	if (ds_global_map.passMax > 0) { // Only if we have passwords :-)
+		if ((!object->_deleteme) && // Guard against management after deletion (it WAS a onecycle)
+			 (ds_global_map.pass == ds_global_map.passMax) && // Password is known!!!! 
+			 (object->inner[10] == 0)) { // we are not fading already
+			// Password achieved!
+			ds_objects_addAfterManagementFunction((void *) _ds_objects_b15_PasswordTriggered);
+		}      
+	}
    
    return 1;
 }
