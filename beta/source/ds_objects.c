@@ -473,8 +473,12 @@ void *_ds_objects_createObject(int xx, int yy, int zz, int bank, int obj, int ma
 							
 			// 4.2) Do Post-management
 			_ds_objects_postLoad(object);				    		
+		} else {
+			// Self-Delete objects erase themselves on the next management iteration
+			// ...but we need to tell the system that they are not ONE* objects anymore! (HACK)
+			object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONECYCLE);
+			object->flags = ds_util_bitDel16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE_ONEINSTANCE);
 		}
-		// Self-Delete objects erase themselves on the next management iteration
  	   
  	} else {
  	   if (manageRoom) {

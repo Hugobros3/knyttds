@@ -108,11 +108,10 @@ int _ds_juni_checkSticky() {
    if (!ds_util_bitOne16(ds_global_map.flag,DS_C_MAP_STICKY))
    	return 0; // No STICKY tiles in this map
    if (ds_map_collBankObj(ds_global_juni.x + (24 >> 1), ds_global_juni.y + (24), 0, 13)) { // STICKY Object
-   	return 1;
+   	return 1; // Sticky below me
 	} 
    if (ds_map_collBankObj(ds_global_juni.x + (24 >> 1), ds_global_juni.y + (24 >> 1), 0, 13)) { // STICKY Object
-   	// <TODO> - Touching a STICKY tile - Area of Juni
-   	return 1;
+   	return 1; // Sticky at juni's tile
 	} 
 	return 0;
 }
@@ -444,7 +443,6 @@ void _ds_juni_manageMovementWallSwim() {
 	}
 	// Other keys (jump, up) are managed in the movement
 	if (!heldMov) {
-	
 		if (!_ds_juni_faceRight())
 			direction = -1; // Left
 		else direction = 1; // Right
@@ -493,6 +491,15 @@ void _ds_juni_manageMovementWallSwim() {
 	   } 
 	}
 	
+	// 1.5a) Special case... if sticky... stop!!!!!
+	if (ds_juni_isOnTheGround())
+	if ((ds_global_juni.state != DS_C_JUNI_ST_STOP_L) && (ds_global_juni.state != DS_C_JUNI_ST_STOP_R))	
+	if (_ds_juni_checkSticky()) {
+	   newstate = (_ds_juni_faceRight())?DS_C_JUNI_ST_STOP_R:DS_C_JUNI_ST_STOP_L;
+	   _ds_juni_change(newstate,1);
+	   ds_global_juni.movstateX = DS_C_JUNI_MOVST_X_STOP;			   	   
+	}
+	
 	// 2) Set movements
 	//-----------------
 	ds_global_juni.velY = ((ds_global_juni.actualpix % 4) == 0)?-1:0; // By defect...
@@ -512,7 +519,9 @@ void _ds_juni_manageMovementWallSwim() {
 		ds_global_juni.velY = ((ds_global_juni.actualpix % 2) == 0)?1:0;
 	}
 	if (ds_util_bitOne16(ds_global_input.Newpress,DS_C_IN_TJUMP)) {
-		ds_global_juni.velY = ((ds_global_juni.actualpix % 2) == 0)?1:1;
+		if (!_ds_juni_checkNoJump()) {
+			ds_global_juni.velY = ((ds_global_juni.actualpix % 2) == 0)?1:1;
+		}
 	}
 	
 	// 2a) Set movements
@@ -1475,6 +1484,7 @@ void _ds_juni_manageMovement() {
          	   // Falls
 				   newstate = (ds_global_juni.state == DS_C_JUNI_ST_CLIMB_L)?DS_C_JUNI_ST_FALL_L:DS_C_JUNI_ST_FALL_R;
 				   _ds_juni_change(newstate,1);
+					ds_global_juni.inDblJump = 1; // After state change. This means: I "may" DblJump later
 				   ds_global_juni.movstateY = DS_C_JUNI_MOVST_Y_FALL;				   
          	} else {
          	   // Goes up

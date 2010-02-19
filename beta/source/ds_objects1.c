@@ -185,7 +185,8 @@ int _ds_objects_b01oStillDeepWater_create(u8 bank, u8 obj, void *objp) {
 		
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_IMA);
 	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_GLOBAL_MANAGE);
-	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STATICHARMFUL);
+	//object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_STATICHARMFUL); NO!!!
+	object->flags = ds_util_bitSet16(object->flags,DS_C_OBJ_F_FULLCOLLIDE);
 	
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
