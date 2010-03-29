@@ -1189,8 +1189,13 @@ void _ds_juni_manageMovement() {
 		   	break;		   	
 		case DS_C_JUNI_MOVST_Y_FALL:
 		   	if (_ds_juni_umbrellaOn()) {
-		   		ds_global_juni.actualpix = 0; // Never fall!
-		   		ds_global_juni.velY = 1;
+					if (!ds_util_bitOne16(ds_global_input.Held,DS_C_IN_TJUMP)) {
+						ds_global_juni.actualpix = 0; // Never fall!
+						ds_global_juni.velY = 1;
+					} else {
+						// ds_global_juni.actualpix = 0; // Special fall!
+						ds_global_juni.velY = ((ds_global_juni.actualpix % 6) == 0)?0:1;
+					}
 		   	} else
 	   	   if (ds_global_juni.actualpix < 12) { // First 12 frames, fall 24 px
 	   	      if (ds_global_juni.actualpix < 4)
@@ -1458,9 +1463,9 @@ void _ds_juni_manageMovement() {
 		         // If Juni was jumping... now she shall lose some jumping power ;-)
 			      if ((ds_global_juni.state == DS_C_JUNI_ST_JUMP_L) || 
 					    (ds_global_juni.state == DS_C_JUNI_ST_JUMP_R)) {
-					   if (ds_global_juni.actualpix < 8 + 14 + 7)
-					   	ds_global_juni.actualpix = 8 + 14 + 7;
-					   	ds_global_juni.framepix = 8 + 14 + 7;
+					   if (ds_global_juni.actualpix < 8 + 14 + 2) // OK, we allow partial "ceiling hover" for supporting certain levels
+					   	ds_global_juni.actualpix = 8 + 14 + 2;
+					   	ds_global_juni.framepix = 8 + 14 + 2;
 					}      
 		      }   
 		   }   
