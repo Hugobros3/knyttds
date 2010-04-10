@@ -69,17 +69,17 @@ int _ds_world_opt_loadMapIndex() {
 	   	}   
 	   }	   
 	   // Store in the structure
-	   int cy = yy - 800;
+	   int cy = yy - 750;
 	   int cx = xx - 800;
-	   if ((cy < 0) || (cy > 400) || (cx < 0) || (cx > 400)) {
+	   if ((cy < 0) || (cy > 500) || (cx < 0) || (cx > 400)) {
 			   ds_global_errorAssign(DS_C_ERR_NOMAPBIN);
 			   sprintf(ds_global_string,"Map.bin too big. Sorry!");
 			   ds_global_errorHalt(ds_global_string);
 			   //--HALT--//   	   	   	      
 	   }   
-	   if (ds_global_world.opt_mapIndex[yy - 800] == NULL) {
-	   	ds_global_world.opt_mapIndex[yy - 800] = malloc(sizeof(ds_t_world_opt_mapindex));
-	   	if (ds_global_world.opt_mapIndex[yy - 800] == NULL) {
+	   if (ds_global_world.opt_mapIndex[yy - 750] == NULL) {
+	   	ds_global_world.opt_mapIndex[yy - 750] = malloc(sizeof(ds_t_world_opt_mapindex));
+	   	if (ds_global_world.opt_mapIndex[yy - 750] == NULL) {
 	   	   // WTF!!!!!!!!!!!!!!!!!!!!!!!!!
 			   ds_global_errorAssign(DS_C_ERR_NOMEMORY);
 			   sprintf(ds_global_string,"CALL opt_loadMapIndex\n[%d]",yy);
@@ -87,10 +87,10 @@ int _ds_world_opt_loadMapIndex() {
 			   //--HALT--//   	   	   
 	   	}   
 	   	for (i=0; i < 400; i++) {
-	   	   ds_global_world.opt_mapIndex[yy - 800]->offset[i] = -1;
+	   	   ds_global_world.opt_mapIndex[yy - 750]->offset[i] = -1;
 	   	}   
 		}  	
-	   ds_global_world.opt_mapIndex[yy - 800]->offset[xx - 800] = offset;
+	   ds_global_world.opt_mapIndex[yy - 750]->offset[xx - 800] = offset;
 	}
 	ds_mapfile_close(gzf);
 
@@ -99,7 +99,7 @@ int _ds_world_opt_loadMapIndex() {
 
 void _ds_world_opt_destroyMapIndex() {
    int i;
-   for (i=0; i < 400;i++) {
+   for (i=0; i < 500;i++) {
       if (ds_global_world.opt_mapIndex[i] != NULL) {
          free(ds_global_world.opt_mapIndex[i]);
          ds_global_world.opt_mapIndex[i] = NULL;
@@ -126,7 +126,7 @@ void _ds_world_loadVisited(void *savegame) {
    char _string[16];
 	// First, cleans
    int i,j;
-   for (i=0; i < 400; i++) {
+   for (i=0; i < 500; i++) {
       for (j=0; j < 50; j++) {
    		ds_global_world.opt_mapVisited[i].offset[j] = 0;
   		}
@@ -134,8 +134,8 @@ void _ds_world_loadVisited(void *savegame) {
 	}	   		
 
 	// Now, loads
-   for (i=0; i < 400; i++) {
-      sprintf(_string,"Minimap(%d):Row",800 + i);
+   for (i=0; i < 500; i++) {
+      sprintf(_string,"Minimap(%d):Row",750 + i);
       strncpy(ds_global_string,ds_ini_getstring(savegame,_string,""),256);
       if (!PA_CompareText("",ds_global_string)) {
          ds_global_world.opt_mapVisitedRow[i] = 1;
@@ -150,9 +150,9 @@ void _ds_world_saveVisited(FILE *file) {
 	int i;  
 	
 	// First and Last, saves
-   for (i=0; i < 400; i++) {
+   for (i=0; i < 500; i++) {
   		if (ds_global_world.opt_mapVisitedRow[i]) {
-  		   fprintf(file,"[Minimap(%d)]\r\n",800 + i); 
+  		   fprintf(file,"[Minimap(%d)]\r\n",750 + i); 
   		   ds_util_bin2str(ds_global_string, ds_global_world.opt_mapVisited[i].offset, 50);
   		   fprintf(file,"Row=%s\r\n",ds_global_string);
   		}   
@@ -172,11 +172,11 @@ void ds_world_init() {
    
    // Optimization subsystems
    int i;
-   for (i=0; i < 400; i++) {
+   for (i=0; i < 500; i++) {
       ds_global_world.opt_mapIndex[i] = NULL;
    }   
    int j;
-   for (i=0; i < 400; i++) {
+   for (i=0; i < 500; i++) {
       for (j=0; j < 50; j++) {
    		ds_global_world.opt_mapVisited[i].offset[j] = 0;
   		}
@@ -355,26 +355,26 @@ int ds_world_updateSavegame() {
 /* Returns the offset of a certain room in the Map.bin file */
 u32 ds_world_getOffsetRoom(int x, int y) {
    // Check first
-   int cy = y - 800;
+   int cy = y - 750;
    int cx = x - 800;
-   if ((cy < 0) || (cy > 400) || (cx < 0) || (cx > 400)) {
+   if ((cy < 0) || (cy > 500) || (cx < 0) || (cx > 400)) {
 		   ds_global_errorAssign(DS_C_ERR_NOMAPBIN);
 		   sprintf(ds_global_string,"Map.bin too big. Sorry!");
 		   ds_global_errorHalt(ds_global_string);
 		   //--HALT--//   	   	   	      
    }   
 	// Execute the function
-   if (ds_global_world.opt_mapIndex[y - 800] == NULL)
+   if (ds_global_world.opt_mapIndex[y - 750] == NULL)
    	return -1;
-   return ds_global_world.opt_mapIndex[y - 800]->offset[x - 800];
+   return ds_global_world.opt_mapIndex[y - 750]->offset[x - 800];
 }
 
 /* Returns if a room has been visited or not */
 int ds_world_getVisitedRoom(int x, int y) {
    // Check first
-   int cy = y - 800;
+   int cy = y - 750;
    int cx = x - 800;
-   if ((cy < 0) || (cy > 400) || (cx < 0) || (cx > 400)) {
+   if ((cy < 0) || (cy > 500) || (cx < 0) || (cx > 400)) {
 		   ds_global_errorAssign(DS_C_ERR_NOMAPBIN);
 		   sprintf(ds_global_string,"Map.bin out of bounds. Sorry!");
 		   ds_global_errorHalt(ds_global_string);
@@ -382,28 +382,28 @@ int ds_world_getVisitedRoom(int x, int y) {
    }   
 	// Execute the function
    return ds_util_bitOne8(
-   			ds_global_world.opt_mapVisited[y - 800].offset[(x - 800) / 8],
+   			ds_global_world.opt_mapVisited[y - 750].offset[(x - 800) / 8],
    			(x - 800) % 8);
 }
 
 /* Sets a room as visited */
 void ds_world_setVisitedRoom(int x, int y) {
    // Check first
-   int cy = y - 800;
+   int cy = y - 750;
    int cx = x - 800;
-   if ((cy < 0) || (cy > 400) || (cx < 0) || (cx > 400)) {
+   if ((cy < 0) || (cy > 500) || (cx < 0) || (cx > 400)) {
 		   ds_global_errorAssign(DS_C_ERR_NOMAPBIN);
 		   sprintf(ds_global_string,"Map.bin too big. Sorry!");
 		   ds_global_errorHalt(ds_global_string);
 		   //--HALT--//   	   	   	      
    }   
 	// Execute the function
-   ds_global_world.opt_mapVisited[y - 800].offset[(x - 800) / 8] = 
+   ds_global_world.opt_mapVisited[y - 750].offset[(x - 800) / 8] = 
    	ds_util_bitSet8(
-   			ds_global_world.opt_mapVisited[y - 800].offset[(x - 800) / 8],
+   			ds_global_world.opt_mapVisited[y - 750].offset[(x - 800) / 8],
    			(x - 800) % 8);
    			
-   ds_global_world.opt_mapVisitedRow[y - 800] = 1;
+   ds_global_world.opt_mapVisitedRow[y - 750] = 1;
 }
 
 

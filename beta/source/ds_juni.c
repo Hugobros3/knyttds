@@ -72,7 +72,8 @@ void _ds_juni_change(u8 state, u8 reset) {
 	if (reset) {
 		ds_global_juni.actualpix = 0;
 		ds_global_juni.framepix = 0;		
-		if ((state != DS_C_JUNI_ST_FALL_L) && (state != DS_C_JUNI_ST_FALL_R)) // Maintain the "CanDblJump flag"?
+		if ((state != DS_C_JUNI_ST_FALL_L) && (state != DS_C_JUNI_ST_FALL_R) &&
+		    (state != DS_C_JUNI_ST_FLY_L) && (state != DS_C_JUNI_ST_FLY_R)) // Maintain the "CanDblJump flag"?
 			ds_global_juni.inDblJump = 0;
 		ds_global_juni.inNoBtnJump = 0; //  Special flag... that can be modified later :-)	
 	}		
@@ -1046,8 +1047,11 @@ void _ds_juni_manageMovement() {
 	   if (_ds_juni_umbrellaOn())
 	   if (_ds_juni_checkWind(ds_global_juni.x,ds_global_juni.y)) {
 	      // Wind! Let's ride it!
+			int wasGround = ds_juni_isOnTheGround();
 		   newstate = (_ds_juni_faceRight())?DS_C_JUNI_ST_FLY_R:DS_C_JUNI_ST_FLY_L;
 		   _ds_juni_change(newstate,1);
+			if (wasGround)
+				ds_global_juni.inDblJump = 1; // After state change. This means: I "may" DblJump later
 	   	ds_global_juni.movstateY = (ds_global_juni.velY > 0)?DS_C_JUNI_MOVST_Y_FLYSTART:DS_C_JUNI_MOVST_Y_FLY; 
 	   	if (ds_global_juni.movstateY == DS_C_JUNI_MOVST_Y_FLYSTART) {
 	   	   ds_global_juni.actualpix = 0 - (ds_global_juni.velY);

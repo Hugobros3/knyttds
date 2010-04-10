@@ -469,9 +469,9 @@ typedef struct ds_tt_world {
    u16 sv_flags;
    int sv_gui;
    // Optimization information - map indexes
-   ds_t_world_opt_mapindex *opt_mapIndex[400]; // 800-1199 (Y)
-   ds_t_world_opt_mapvisited opt_mapVisited[400]; // 800-1199 (Y). 20KB is OK :-P
-   u8 opt_mapVisitedRow[400]; // Did I visit whis row?
+   ds_t_world_opt_mapindex *opt_mapIndex[500]; // 750-1249 (Y)
+   ds_t_world_opt_mapvisited opt_mapVisited[500]; // 750-1249 (Y). 20-30KB is OK :-P
+   u8 opt_mapVisitedRow[500]; // Did I visit whis row?
    // "Shift" done
    int shift;
    // "Came from Shift" information

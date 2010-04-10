@@ -33,6 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ds_map.h"
 #include "ds_music.h"
 
+#define _DS_C_LASER 93
+
 // BANK 13 [B03]
 //=================================================================================================
 
@@ -40,7 +42,7 @@ void _ds_objects_Laser_init(ds_t_object *object, int maxTime, int value) {
    object->inner[0] = value; // Actual state (0-Always, 1-on, 2-off)   
    object->inner[1] = 1; // Waiting time (Update next frame))
    object->inner[2] = (value == 2)?3:0; // Frame         
-   object->inner[3] = maxTime; // Time for change...
+   object->inner[3] = maxTime >> 1; // Time for change... (initial)
 	ds_3dsprite_setFrame(object->sprite,object->inner[2]);
 	if ((value == 0) || (value == 1)) {
 	   ds_3dsprite_markInvisible(object->sprite,0); // ON!
@@ -551,7 +553,7 @@ int _ds_objects_b13Laser1_create(u8 bank, u8 obj, void *objp) {
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
 		
-	_ds_objects_Laser_init(object,120,1); // Turned ON		
+	_ds_objects_Laser_init(object,_DS_C_LASER,1); // Turned ON		
 
 	// Specific Operations
    object->type = DS_C_OBJ_OBJECT;
@@ -573,7 +575,7 @@ int _ds_objects_b13Laser1_manage(void *objp) {
 	}
 	// Continue
 	object->inner[10] = object->inner[0];
-	_ds_objects_Laser_exe(object,2,120);
+	_ds_objects_Laser_exe(object,2,_DS_C_LASER);
    return 1;
 }
 
@@ -594,7 +596,7 @@ int _ds_objects_b13Laser0_create(u8 bank, u8 obj, void *objp) {
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
 		
-	_ds_objects_Laser_init(object,120,2); // Turned OFF
+	_ds_objects_Laser_init(object,_DS_C_LASER,2); // Turned OFF
 
 	// Specific Operations
    object->type = DS_C_OBJ_OBJECT;
@@ -616,7 +618,7 @@ int _ds_objects_b13Laser0_manage(void *objp) {
 	}
 	// Continue
 	object->inner[10] = object->inner[0];
-	_ds_objects_Laser_exe(object,2,120);
+	_ds_objects_Laser_exe(object,2,_DS_C_LASER);
    return 1;
 }
 
@@ -637,7 +639,7 @@ int _ds_objects_b13LaserC_create(u8 bank, u8 obj, void *objp) {
 	if (ds_objects_lib_initObjectImage(bank, obj, object) == 0)
 		return 0;
 		
-	_ds_objects_Laser_init(object,120,0); // Constant		
+	_ds_objects_Laser_init(object,_DS_C_LASER,0); // Constant		
 
 	// Specific Operations
    object->type = DS_C_OBJ_OBJECT;
@@ -651,7 +653,7 @@ int _ds_objects_b13LaserC_manage(void *objp) {
    ds_t_object *object = objp;
 
 	// Never changes...
-	_ds_objects_Laser_exe(object,2,120);
+	_ds_objects_Laser_exe(object,2,_DS_C_LASER);
    return 1;
 }
 

@@ -68,6 +68,7 @@ int _ds_map2raw_raws;
 int _ds_map2raw_forcePNG;
 int _ds_map2raw_cntPaint;
 int _ds_map2raw_nextVBlank;
+int _ds_map2raw_debug;
 
 /* Put this declaration here to be used by other functions */
 void ds_g_map2raw_paint();
@@ -266,10 +267,13 @@ void ds_g_map2raw_state_checkPng() {
 	// For every tileset that was marked...
 	for (i = 0; i < 256; i++) {
 	   // Shall we paint?
+		_ds_map2raw_debug = -1;
 	   ds_g_map2raw_paint();
 	   // Checked?
-	   if (_ds_map2raw_tilesets[i]) {
+		if (_ds_map2raw_tilesets[i]){
+			_ds_map2raw_debug = i;
 	      _ds_map2raw_raws--;
+			ds_g_map2raw_paint();
 	      // OK! Now, check the type of tileset (world-specific or general)
          sprintf(ds_global_string,"%s%s/%s%s/Tileset%d.png",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr(),DS_DIR_TILE,i);
 			isGlobal = (!ds_util_fileExists(ds_global_string));
@@ -304,10 +308,13 @@ void ds_g_map2raw_state_checkPng() {
 	// Now, for every gradient that was marked...
 	for (i = 0; i < 256; i++) {
 	   // Shall we paint?
+		_ds_map2raw_debug = -1;
 	   ds_g_map2raw_paint();
 	   // Checked?
 	   if (_ds_map2raw_gradients[i]) {
+			_ds_map2raw_debug = i;
 	      _ds_map2raw_raws--;
+			ds_g_map2raw_paint();
 	      // OK! Now, check the type of gradient (world-specific or general)
          sprintf(ds_global_string,"%s%s/%s%s/Gradient%d.png",DS_DIR_MAIN,DS_DIR_WORLD,ds_state_var_getStr(),DS_DIR_GRAD,i);
 			isGlobal = (!ds_util_fileExists(ds_global_string));
@@ -423,6 +430,10 @@ void ds_g_map2raw_paint() {
    }   
 	// Check if we are in state for painting something (after VBlank!)
 	if ((PA_GetVcount() > 192) && (_ds_map2raw_nextVBlank)) {
+	/*
+		_ds_map2raw_nextVBlank = 0;
+		if ((PA_GetVcount() >= 0) && (!_ds_map2raw_nextVBlank)) {
+	*/
 	   _ds_map2raw_nextVBlank = 0; // Do not paint this anymore on this cycle
 	   // Angle!
 	   _ds_map2raw_cntPaint += 3; // One per 1/2 second
@@ -441,7 +452,8 @@ void ds_g_map2raw_paint() {
          sprintf(ds_global_string,"Please Wait (map)...");
       } else if (_ds_map2raw_state == _DS_MAP2RAW_CHECKPNG) {
          ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_CYANGLOW, 0);
-         sprintf(ds_global_string,"Please Wait (%d to go)...",_ds_map2raw_raws);
+         //sprintf(ds_global_string,"Please Wait[%i] (%d to go)...",_ds_map2raw_debug,_ds_map2raw_raws);
+			sprintf(ds_global_string,"Please Wait (%d to go)...",_ds_map2raw_raws);
 		} else {
 			if (_ds_map2raw_err == 1) {
 				ima = ds_3dspritehdd_getSprite(DS_C_JUNI_BANKSP, DS_C_JUNI_SP_REDGLOW, 0);
