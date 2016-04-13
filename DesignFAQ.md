@@ -1,0 +1,9 @@
+# Introduction #
+
+This page contains a FAQ of the design decisions and the source code of Knytt Stories DS.
+
+# 1. Questions regarding the source code #
+
+## 1.1. Where is _main()_? ##
+
+_main()_ can be found at main.c :-)
